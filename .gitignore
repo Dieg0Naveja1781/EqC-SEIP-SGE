@@ -3,13 +3,73 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
+# ==========================================
+# 1. ARCHIVOS SENSIBLES (¡CRÍTICO!)
+# ==========================================
+# Nunca subir contraseñas, tokens o llaves maestras
+.env
+*.env
+env/
+venv/
+ENV/
+.venv/
+auth_key.json
+
+# ==========================================
+# 2. BACKEND (Django & Python)
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.sqlite3
+db.sqlite3-journal
+/static/
+/media/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ==========================================
+# 3. FRONTEND (React + Vite + Node)
+# ==========================================
+node_modules/
+dist/
+dist-ssr/
+*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.eslintcache
+
+# ==========================================
+# 4. EDITORES Y SISTEMA (VS Code / JetBrains)
+# ==========================================
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.iws
+*.iml
+*.ipr
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==========================================
+# 5. ARCHIVOS TEMPORALES
+# ==========================================
+*.log
+*.tmp
+*.temp
+
 # User-specific files
 *.rsuser
 *.suo
 *.user
 *.userosscache
 *.sln.docstates
-*.env
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
@@ -47,19 +107,6 @@ bld/
 
 # Visual Studio 2017 auto generated files
 Generated\ Files/
-
-# MSTest test Results
-[Tt]est[Rr]esult*/
-[Bb]uild[Ll]og.*
-*.trx
-
-# NUnit
-*.VisualState.xml
-TestResult.xml
-nunit-*.xml
-
-# Approval Tests result files
-*.received.*
 
 # Build Results of an ATL Project
 [Dd]ebugPS/
@@ -136,9 +183,6 @@ ipch/
 # Visual Studio Trace Files
 *.e2e
 
-# TFS 2012 Local Workspace
-$tf/
-
 # Guidance Automation Toolkit
 *.gpState
 
@@ -191,9 +235,6 @@ DocProject/Help/*.hhk
 DocProject/Help/*.hhp
 DocProject/Help/Html2
 DocProject/Help/html
-
-# Click-Once directory
-publish/
 
 # Publish Web Output
 *.[Pp]ublish.xml
@@ -264,9 +305,6 @@ orleans.codegen.cs
 # (https://github.com/github/gitignore/pull/1529#issuecomment-104372622)
 #bower_components/
 
-# RIA/Silverlight projects
-Generated_Code/
-
 # Backup & report files from converting an old project file
 # to a newer Visual Studio version. Backup files are not needed,
 # because we have git ;-)
@@ -300,26 +338,6 @@ FakesAssemblies/
 # Node.js Tools for Visual Studio
 .ntvs_analysis.dat
 node_modules/
-
-# Visual Studio 6 build log
-*.plg
-
-# Visual Studio 6 workspace options file
-*.opt
-
-# Visual Studio 6 auto-generated workspace file (contains which files were open etc.)
-*.vbw
-
-# Visual Studio 6 auto-generated project file (contains which files were open etc.)
-*.vbp
-
-# Visual Studio 6 workspace and project file (working project files containing files to include in project)
-*.dsw
-*.dsp
-
-# Visual Studio 6 technical files
-*.ncb
-*.aps
 
 # Visual Studio LightSwitch build output
 **/*.HTMLClient/GeneratedArtifacts
