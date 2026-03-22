@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -275,3 +276,56 @@ class ExpedienteContenido(models.Model):
     
     def __str__(self):
         return f"{self.id_exp.nombre_convocatoria} → {self.id_doc.titulo_doc}"
+=======
+from django.db import models
+from django.contrib.auth.models import User
+from django.utils import timezone
+
+class Login(models.Model):
+    """
+    Modelo para registrar intentos de login de usuarios
+    Cada vez que un usuario inicia sesión, se crea un registro aquí
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='login_records')
+    login_time = models.DateTimeField(auto_now_add=True, help_text="Fecha y hora del login")
+    logout_time = models.DateTimeField(null=True, blank=True, help_text="Fecha y hora del logout")
+    ip_address = models.GenericIPAddressField(null=True, blank=True, help_text="Dirección IP del usuario")
+    user_agent = models.TextField(blank=True, help_text="Navegador/dispositivo usado")
+    is_active = models.BooleanField(default=True, help_text="¿La sesión está activa?")
+    
+    class Meta:
+        db_table = 'login'
+        verbose_name = 'Login'
+        verbose_name_plural = 'Logins'
+        ordering = ['-login_time']
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.login_time.strftime('%Y-%m-%d %H:%M:%S')}"
+
+
+class UserProfile(models.Model):
+    """
+    Modelo extendido de usuario con información adicional
+    """
+    ROLE_CHOICES = [
+        ('estudiante', 'Estudiante'),
+        ('profesor', 'Profesor'),
+        ('admin', 'Administrador'),
+    ]
+    
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='estudiante')
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    university_id = models.CharField(max_length=20, blank=True, null=True, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_verified = models.BooleanField(default=False)
+    
+    class Meta:
+        db_table = 'user_profile'
+        verbose_name = 'Perfil de Usuario'
+        verbose_name_plural = 'Perfiles de Usuarios'
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.role}"
+>>>>>>> Stashed changes
