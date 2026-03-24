@@ -104,7 +104,7 @@ const Login = () => {
         </form>
 
         <div className="footer-links">
-          ¿No tienes cuenta? <a href="../Createaccount/Registro.html">Regístrate aquí</a>
+          ¿No tienes cuenta? <a href="../create_account/Registro.html">Regístrate aquí</a>
         </div>
       </div>
     </div>

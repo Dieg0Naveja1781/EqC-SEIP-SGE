@@ -145,7 +145,7 @@ function Register() {
                 </form>
 
                 <div className="footer-links">
-                    ¿Ya tienes cuenta? <a href="../Login/Login.html">Inicia sesión aquí</a>
+                    ¿Ya tienes cuenta? <a href="../login/Login.html">Inicia sesión aquí</a>
                 </div>
             </div>
         </div>
