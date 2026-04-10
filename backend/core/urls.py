@@ -4,12 +4,10 @@ URL configuration for core project.
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from api.views import AuthViewSet, LoginHistoryViewSet
 
-# Crear router para los ViewSets
+# Router para registrar los ViewSets de la app
 router = DefaultRouter()
-router.register(r'auth', AuthViewSet, basename='auth')
-router.register(r'login-history', LoginHistoryViewSet, basename='login-history')
+# Aquí se agregarán las rutas conforme se desarrollen las vistas
 
 urlpatterns = [
     path('admin/', admin.site.urls),
