@@ -48,7 +48,6 @@ export function UserData() {
             </select>
             <input type="text" placeholder="987654321" className="input-id" />
           </div>
-          <button className="btn-agregar-id">Agregar ID</button>
         </div>
 
         <div className="campo-grupo">
@@ -59,8 +58,8 @@ export function UserData() {
           <div className="campo-fila">
             <input type="text" placeholder="Ej. Empresa" className="input-empresa" />
             <input type="text" placeholder="ID personalizado" className="input-id" />
+            <button className="btn-agregar-id">Agregar ID</button>
           </div>
-          <button className="btn-agregar-id">Agregar ID</button>
         </div>
 
         <div className="campo-grupo">
@@ -72,8 +71,8 @@ export function UserData() {
         <option value="investigador">Investigador</option>
         <option value="administrativo">Administrativo</option>
       </select>
+      <button className="btn-gestionar">🔒 Gestionar Contraseña</button>
     </div>
-    <button className="btn-gestionar">🔒 Gestionar Contraseña</button>
     <button className="btn-guardar">Guardar Cambios</button>
   </div>
 </div>

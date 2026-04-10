@@ -26,3 +26,79 @@ img {
   font-size: 20px;
   font-weight: bold;
 }
+
+.datos-editables {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-top: 60px;
+  margin-left: 80px;
+  margin-right: 80px;
+}
+
+.campo-grupo {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+::placeholder {
+  color: #999;
+  margin-left: 10px;
+}
+
+input {
+  width: 100%;
+  border-radius: 10px;
+  border: 2px solid #d9d9d9;
+  padding: 7px;
+}
+
+.campo-fila {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+}
+
+.select-id {
+  width: 100%;
+  border-radius: 10px;
+  border: 2px solid #d9d9d9;
+  padding: 7px;
+}
+
+button {
+  background-color: #1984C2;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+    white-space: nowrap;
+}
+
+.btn-agregar-id {
+  padding: 0 25px;
+}
+
+.select-puesto {
+  width: 200px;
+  border-radius: 10px;
+  border: 2px solid #d9d9d9;
+  padding: 7px;
+}
+
+.btn-gestionar {
+  padding: 0 20px;
+  border-radius: 10px;
+  background-color: white;
+  color: #1e1e1e;
+  border: 2px solid #d9d9d9;
+}
+
+.btn-guardar {
+  padding: 10px 30px;;
+}
