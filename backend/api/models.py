@@ -1,4 +1,4 @@
-<<<<<<< Updated upstream
+# backend/api/models.py - VERSIÓN RESUELTA
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -6,13 +6,10 @@ from django.core.validators import FileExtensionValidator
 from django.utils import timezone
 
 # ============================================================================
-# TABLA 1: user_profe - Usuarios del Sistema (Profesores/Investigadores)
+# TABLA 1: UserProfe - Usuarios del Sistema
 # ============================================================================
 class UserProfe(models.Model):
-    """
-    Tabla de usuarios del sistema.
-    3NF: Contiene solo atributos que dependen únicamente de id_profesor (PK)
-    """
+    """Tabla de usuarios del sistema (Profesores/Investigadores)"""
     GENDER_CHOICES = [
         ('M', 'Masculino'),
         ('F', 'Femenino'),
@@ -46,14 +43,10 @@ class UserProfe(models.Model):
 
 
 # ============================================================================
-# TABLA 2: inf_curp - Información Adicional del Profesor
+# TABLA 2: InfCurp - Información Adicional del Profesor
 # ============================================================================
 class InfCurp(models.Model):
-    """
-    Información complementaria del profesor.
-    3NF: Relación 1:1 con UserProfe, FK a user_profe
-    Separada para evitar dependencia parcial en 2NF
-    """
+    """Información complementaria del profesor"""
     id_curp = models.AutoField(primary_key=True)
     id_profesor = models.OneToOneField(
         UserProfe, 
@@ -75,14 +68,10 @@ class InfCurp(models.Model):
 
 
 # ============================================================================
-# TABLA 3: categorias_doc - Categorías/Tipos de Documentos
+# OTROS MODELOS DE DOCUMENTOS Y EXPEDIENTES (DEL STASHED)
 # ============================================================================
 class CategoriasDoc(models.Model):
-    """
-    Tipos de documentos que pueden cargarse.
-    3NF: Tabla de referencia independiente
-    Ejemplos: Artículos, Cursos, Evaluaciones, Constancias, Certificados, etc.
-    """
+    """Tipos de documentos que pueden cargarse"""
     id_tipo = models.AutoField(primary_key=True)
     nombre_categoria = models.CharField(max_length=100, unique=True)
     descripcion = models.TextField(null=True, blank=True)
@@ -98,14 +87,57 @@ class CategoriasDoc(models.Model):
 
 
 # ============================================================================
-# TABLA 4: inf_carpeta - Carpetas de Almacenamiento
+# TABLA 7: LOGIN & USERPROFILE - Para autenticación moderna
+# ============================================================================
+class Login(models.Model):
+    """Modelo para registrar intentos de login de usuarios"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='login_records')
+    login_time = models.DateTimeField(auto_now_add=True)
+    logout_time = models.DateTimeField(null=True, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    
+    class Meta:
+        db_table = 'login'
+        verbose_name = 'Login'
+        verbose_name_plural = 'Logins'
+        ordering = ['-login_time']
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.login_time.strftime('%Y-%m-%d %H:%M:%S')}"
+
+
+class UserProfile(models.Model):
+    """Modelo extendido de usuario con información adicional"""
+    ROLE_CHOICES = [
+        ('estudiante', 'Estudiante'),
+        ('profesor', 'Profesor'),
+        ('admin', 'Administrador'),
+    ]
+    
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='estudiante')
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    university_id = models.CharField(max_length=20, blank=True, null=True, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_verified = models.BooleanField(default=False)
+    
+    class Meta:
+        db_table = 'user_profile'
+        verbose_name = 'Perfil de Usuario'
+        verbose_name_plural = 'Perfiles de Usuarios'
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.role}"
+
+
+# ============================================================================
+# MODELOS DE DOCUMENTOS Y EXPEDIENTES (continuación)
 # ============================================================================
 class InfCarpeta(models.Model):
-    """
-    Sistema de carpetas para organizar documentos y expedientes.
-    3NF: Estructura jerárquica con auto-referencia (id_padre = NULL si es raíz)
-    FK a user_profe (propietario)
-    """
+    """Sistema de carpetas para organizar documentos"""
     id_folder = models.AutoField(primary_key=True)
     nombre_carpeta = models.CharField(max_length=50)
     id_profesor = models.ForeignKey(
@@ -133,18 +165,8 @@ class InfCarpeta(models.Model):
         return f"{self.nombre_carpeta}"
 
 
-# ============================================================================
-# TABLA 5: doc_documento - Documentos Cargados
-# ============================================================================
 class DocDocumento(models.Model):
-    """
-    Documentos subidos por los profesores.
-    3NF: 
-    - FK a user_profe (propietario)
-    - FK a inf_carpeta (ubicación)
-    - FK a categorias_doc (tipo/categoría)
-    - Versiones en tabla separada (version_doc)
-    """
+    """Documentos cargados por los profesores"""
     id_doc = models.AutoField(primary_key=True)
     id_profesor = models.ForeignKey(
         UserProfe,
@@ -180,16 +202,8 @@ class DocDocumento(models.Model):
         return f"{self.titulo_doc} - {self.id_profesor.correo_profe}"
 
 
-# ============================================================================
-# TABLA 6: version_doc - Historial de Versiones de Documentos
-# ============================================================================
 class VersionDoc(models.Model):
-    """
-    Historial de versiones de documentos.
-    3NF: 
-    - FK a doc_documento
-    - Tabla separada para mantener 1NF (evita atributos multivaluados)
-    """
+    """Historial de versiones de documentos"""
     id_version = models.AutoField(primary_key=True)
     id_doc = models.ForeignKey(
         DocDocumento,
@@ -212,16 +226,8 @@ class VersionDoc(models.Model):
         return f"v{self.num_version} de {self.id_doc.titulo_doc}"
 
 
-# ============================================================================
-# TABLA 7: doc_expediente - Expedientes Generados
-# ============================================================================
 class DocExpediente(models.Model):
-    """
-    Expedientes creados por profesores (colecciones de documentos).
-    3NF:
-    - FK a user_profe (propietario)
-    - Relación M:N con documentos mediante expediente_contenido
-    """
+    """Expedientes creados por profesores"""
     id_exp = models.AutoField(primary_key=True)
     id_profesor = models.ForeignKey(
         UserProfe,
@@ -244,16 +250,8 @@ class DocExpediente(models.Model):
         return f"{self.nombre_convocatoria} - {self.id_profesor.correo_profe}"
 
 
-# ============================================================================
-# TABLA 8: expediente_contenido - Relación M:N (Expediente ↔ Documentos)
-# ============================================================================
 class ExpedienteContenido(models.Model):
-    """
-    Tabla de unión para la relación M:N entre expedientes y documentos.
-    3NF:
-    - Clave primaria compuesta: (id_exp, id_doc)
-    - Evita redundancia en la relación M:N
-    """
+    """Relación M:N entre expedientes y documentos"""
     id_exp = models.ForeignKey(
         DocExpediente,
         on_delete=models.CASCADE,
@@ -276,56 +274,3 @@ class ExpedienteContenido(models.Model):
     
     def __str__(self):
         return f"{self.id_exp.nombre_convocatoria} → {self.id_doc.titulo_doc}"
-=======
-from django.db import models
-from django.contrib.auth.models import User
-from django.utils import timezone
-
-class Login(models.Model):
-    """
-    Modelo para registrar intentos de login de usuarios
-    Cada vez que un usuario inicia sesión, se crea un registro aquí
-    """
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='login_records')
-    login_time = models.DateTimeField(auto_now_add=True, help_text="Fecha y hora del login")
-    logout_time = models.DateTimeField(null=True, blank=True, help_text="Fecha y hora del logout")
-    ip_address = models.GenericIPAddressField(null=True, blank=True, help_text="Dirección IP del usuario")
-    user_agent = models.TextField(blank=True, help_text="Navegador/dispositivo usado")
-    is_active = models.BooleanField(default=True, help_text="¿La sesión está activa?")
-    
-    class Meta:
-        db_table = 'login'
-        verbose_name = 'Login'
-        verbose_name_plural = 'Logins'
-        ordering = ['-login_time']
-    
-    def __str__(self):
-        return f"{self.user.username} - {self.login_time.strftime('%Y-%m-%d %H:%M:%S')}"
-
-
-class UserProfile(models.Model):
-    """
-    Modelo extendido de usuario con información adicional
-    """
-    ROLE_CHOICES = [
-        ('estudiante', 'Estudiante'),
-        ('profesor', 'Profesor'),
-        ('admin', 'Administrador'),
-    ]
-    
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='estudiante')
-    phone = models.CharField(max_length=20, blank=True, null=True)
-    university_id = models.CharField(max_length=20, blank=True, null=True, unique=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    is_verified = models.BooleanField(default=False)
-    
-    class Meta:
-        db_table = 'user_profile'
-        verbose_name = 'Perfil de Usuario'
-        verbose_name_plural = 'Perfiles de Usuarios'
-    
-    def __str__(self):
-        return f"{self.user.username} - {self.role}"
->>>>>>> Stashed changes

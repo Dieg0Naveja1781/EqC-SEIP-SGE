@@ -1,8 +1,3 @@
-<<<<<<< Updated upstream
-from django.shortcuts import render
-
-# Create your views here.
-=======
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -211,4 +206,3 @@ class LoginHistoryViewSet(viewsets.ReadOnlyModelViewSet):
             'success': True,
             'active_sessions': serializer.data
         }, status=status.HTTP_200_OK)
->>>>>>> Stashed changes
