@@ -1,3 +1,4 @@
+#Aquí es donde haremos la conexión a PostgreSQL y configuraremos la seguridad para prevenir SQL Injection. y se activara la app gestion_expedientes
 """
 Django settings for root project.
 
@@ -37,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'gestion_expedientes',
 ]
 
 MIDDLEWARE = [
@@ -74,8 +76,12 @@ WSGI_APPLICATION = 'root.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+      'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'sge_db',      
+        'USER': 'postgres',      
+        'PASSWORD': '1banana1', 
+        'HOST': '127.0.0.1', 
+        'PORT': '5432',
     }
 }
 
