@@ -1,7 +1,7 @@
 .main-page-wrap {
   --main-page-bg: var(--bg-main);
   --main-header-bg: var(--bg-card);
-  --main-search-bg: var(--bg-card);
+  --main-search-bg: var(--search-bar-bg);
   --main-surface-card: var(--bg-card);
   --main-surface-soft: #f9fcff;
   --main-text-main: var(--text-primary);
@@ -16,6 +16,10 @@
   --main-accent-primary-soft: var(--color-300);
   min-height: 100vh;
   background: var(--main-page-bg);
+}
+
+[data-theme="dark"] .main-page-wrap {
+  --main-surface-soft: var(--color-900);
 }
 
 .main-top-header {
