@@ -12,7 +12,6 @@ function App() {
           Inicio
         </Link>
         <Link to="/perfil" style={{ color: "white", marginRight: "10px" }}>
-        <Link to="/perfil" style={{ color: "white", marginRight: "10px" }}>
           Ver Perfil de Usuario
         </Link>
         <Link to="/archive_list" style={{ color: "white" }}>
@@ -28,7 +27,6 @@ function App() {
         />
         <Route path="/main" element={<MainPage />} />
         <Route path="/perfil" element={<UserData />} />
-        <Route path="/archive_list" element={<ArchiveList />} />
         <Route path="/archive_list" element={<ArchiveList />} />
       </Routes>
     </BrowserRouter>
