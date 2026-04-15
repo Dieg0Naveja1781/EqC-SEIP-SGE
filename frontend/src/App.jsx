@@ -11,13 +11,14 @@ function App() {
         <Link to="/" style={{ color: "white", marginRight: "10px" }}>
           Inicio
         </Link>
+        <Link to="/main" style={{ color: 'white', marginRight: '10px' }}>Main Page
+        </Link>
         <Link to="/perfil" style={{ color: "white", marginRight: "10px" }}>
           Ver Perfil de Usuario
         </Link>
         <Link to="/archive_list" style={{ color: "white" }}>
           Gestión de Archivos
         </Link>
-        <Link to="/main" style={{ color: 'white', marginRight: '10px' }}>Main Page</Link>
       </nav>
 
       <Routes>
