@@ -1,4 +1,4 @@
-<<<<<<< Updated upstream
+
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -276,7 +276,7 @@ class ExpedienteContenido(models.Model):
     
     def __str__(self):
         return f"{self.id_exp.nombre_convocatoria} → {self.id_doc.titulo_doc}"
-=======
+
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -328,4 +328,4 @@ class UserProfile(models.Model):
     
     def __str__(self):
         return f"{self.user.username} - {self.role}"
->>>>>>> Stashed changes
+

@@ -24,15 +24,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-<<<<<<< Updated upstream
-=======
+    'modules.usuarios_backend',
+    'modules.gestion_expedientes_backend',
+
     
     # Aplicaciones terceras
     'rest_framework',
     'corsheaders',
     
     # Aplicaciones locales
->>>>>>> Stashed changes
+
     'api',
 ]
 
