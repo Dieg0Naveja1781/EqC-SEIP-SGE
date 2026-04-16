@@ -18,7 +18,7 @@ Sistema Gestor de Expedientes para las materias de Ingeniería de Software y Pro
 ## Requisitos previos
 Los de Frontend deben tener descargado *Node.js (v18 o superior)*
 
-Los de Backend deben tener descargado *Python (v3.10 o superior)*
+Los de Backend deben tener descargado *Python (v12 o superior) para evitar errores con Django*
 
 Descargen el repositorio como siempre lo han hecho *(Con git clone)*
 ### Frontend

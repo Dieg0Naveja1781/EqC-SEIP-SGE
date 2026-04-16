@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiDrive | Login</title>
+    
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <link rel="stylesheet" href="../Styles/App.css">
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        function Login() {
+            // Estado para el tema oscuro
+            const [isDark, setIsDark] = React.useState(true);
+
+            React.useEffect(() => {
+                document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+            }, [isDark]);
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                console.log("Iniciando sesión...");
+            };
+
+            return (
+                /* Clase unificada en App.css para centrado total */
+                <div className="login-page-container">
+                    
+                    {/* Switch de Tema Estético */}
+                    <div className="theme-switcher-container">
+                        <label className="theme-toggle-switch">
+                            <input 
+                                type="checkbox" 
+                                checked={isDark} 
+                                onChange={() => setIsDark(!isDark)} 
+                            />
+                            <span className="theme-slider">
+                                <span className="theme-icon sun-icon">☀️</span>
+                                <span className="theme-icon moon-icon">🌙</span>
+                            </span>
+                        </label>
+                    </div>
+
+                    {/* Logo y Nombre */}
+                    <div className="brand-section">
+                        <div className="logo-box">LOGO</div>
+                        <h1 style={{ color: 'var(--color-500)', margin: 0 }}>
+                            AUNNOSE
+                        </h1>
+                    </div>
+
+                    {/* Tarjeta de Login */}
+                    <div className="login-card">
+                        <h2 style={{ textAlign: 'center' }}>Bienvenido</h2>
+                        <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+                            Ingresa tus credenciales para continuar.
+                        </p>
+
+                        <form onSubmit={handleSubmit}>
+                            <div className="input-group">
+                                <label>Correo Electrónico</label>
+                                <input 
+                                    type="email" 
+                                    placeholder="ejemplo@correo.com" 
+                                    required 
+                                />
+                            </div>
+                            <div className="input-group">
+                                <label>Contraseña</label>
+                                <input 
+                                    type="password" 
+                                    placeholder="••••••••" 
+                                    required 
+                                />
+                            </div>
+                            <button type="submit" className="btn-login">Entrar</button>
+                        </form>
+                        
+                        <div className="footer-links">
+                            <a href="#" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                ¿Olvidaste tu contraseña?
+                            </a>
+                            <div style={{ marginTop: '15px' }}>
+                                ¿No tienes cuenta? <a href="../create_account/Registro.html">Regístrate aquí</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<Login />);
+    </script>
+</body>
+</html>

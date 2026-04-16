@@ -1,94 +1,47 @@
-import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { authService } from '../../../services/authService';
-import '../Auth.css';
+import React, { useState, useEffect } from "react";
+import "../../Styles/App.css";
 
 const Login = () => {
-  const navigate = useNavigate();
-
-  // Estado del Tema
+  //Estado del Tema con persistencia (Lee del localStorage al cargar)  AUN NECESITO REPARARLO
   const [isDark, setIsDark] = useState(() => {
-    const savedTheme = localStorage.getItem('theme');
-    return savedTheme ? savedTheme === 'dark' : true;
+    const savedTheme = localStorage.getItem("theme");
+    // Si no hay nada guardado, por defecto es oscuro (true)
+    return savedTheme ? savedTheme === "dark" : true;
   });
 
-  // Estado del Formulario
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
+  //Estado para los datos del formulario
+  const [formData, setFormData] = useState({ email: "", password: "" });
 
-  // Estado de carga y errores
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-
-  // Aplicar tema
+  //Efecto para aplicar el tema al HTML y guardarlo
   useEffect(() => {
-    const theme = isDark ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
+    const theme = isDark ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
   }, [isDark]);
 
-  // Manejar cambios en inputs
+  //Manejador de cambios en los inputs
   const handleChange = (e) => {
-    const { id, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [id]: value,
-    }));
-    // Limpiar mensajes de error al escribir
-    if (error) setError('');
-    if (success) setSuccess('');
+    setFormData({
+      ...formData,
+      [e.target.id]: e.target.value,
+    });
   };
 
-  // Manejar envío del formulario
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-
-    // Validar que no estén vacíos
-    if (!formData.email.trim() || !formData.password.trim()) {
-      setError('Por favor completa todos los campos');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      // Llamar al servicio de autenticación
-      const result = await authService.login(
-        formData.email,
-        formData.password
-      );
-
-      if (result.success) {
-        setSuccess('Login exitoso');
-
-        // Redirigir al dashboard después de 1.5 segundos
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 1500);
-      } else {
-        setError(result.message || 'Error al iniciar sesión');
-      }
-    } catch {
-      setError('Error de conexión con el servidor');
-    } finally {
-      setLoading(false);
-    }
+    console.log("Intentando iniciar sesión con:", formData);
+    // Aquí iría la lógica de conexión al backend
   };
 
   return (
-    <div className="auth-page-container">
+    <div className="login-page-container">
       {/* Switch de Cambio de Tema */}
       <div className="theme-switcher-container">
         <label className="theme-toggle-switch">
           <input
             type="checkbox"
             checked={isDark}
-            onChange={() => setIsDark((prev) => !prev)}
+            onChange={() => setIsDark(!isDark)}
           />
           <span className="theme-slider">
             <span className="theme-icon">☀️</span>
@@ -99,25 +52,42 @@ const Login = () => {
 
       {/* Brand Section */}
       <div className="brand-section">
-        <div className="logo-box">
+        <div
+          className="logo-box"
+          style={{
+            width: "60px",
+            height: "60px",
+            background: "var(--color-500)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: "12px",
+            color: "white",
+            fontWeight: "bold",
+            marginBottom: "10px",
+          }}
+        >
           LOGO
         </div>
-        <h1 style={{ color: 'var(--color-500)', margin: 0, fontSize: '1.45rem' }}>
+        <h1
+          style={{ color: "var(--color-500)", margin: 0, fontSize: "1.5rem" }}
+        >
           NOMBRE DEL SITIO
         </h1>
       </div>
 
       {/* Tarjeta de Login */}
-      <div className="auth-card">
-        <h2 className="auth-title">Bienvenido</h2>
-        <p className="auth-subtitle">
+      <div className="login-card">
+        <h2>Bienvenido</h2>
+        <p
+          style={{
+            textAlign: "center",
+            color: "var(--text-secondary)",
+            marginBottom: "1.5rem",
+          }}
+        >
           Ingresa tus credenciales para continuar
         </p>
-
-        {/* Mostrar mensajes de error o éxito */}
-        {error && <div className="auth-alert error">{error}</div>}
-
-        {success && <div className="auth-alert success">{success}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className="input-group">
@@ -129,7 +99,6 @@ const Login = () => {
               value={formData.email}
               onChange={handleChange}
               required
-              disabled={loading}
             />
           </div>
 
@@ -142,17 +111,17 @@ const Login = () => {
               value={formData.password}
               onChange={handleChange}
               required
-              disabled={loading}
             />
           </div>
 
-          <button type="submit" className="auth-button" disabled={loading}>
-            {loading ? 'Autenticando...' : 'Entrar'}
+          <button type="submit" className="btn-login">
+            Entrar
           </button>
         </form>
 
         <div className="footer-links">
-          ¿No tienes cuenta? <Link to="/register">Regístrate aquí</Link>
+          ¿No tienes cuenta?{" "}
+          <a href="../create_account/Registro.html">Regístrate aquí</a>
         </div>
       </div>
     </div>
