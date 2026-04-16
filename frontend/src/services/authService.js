@@ -23,11 +23,14 @@ export const authService = {
         })
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
       const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || 'Credenciales inválidas'
+        };
+      }
       
       if (data.success) {
         // Guardar información del usuario
@@ -133,6 +136,14 @@ export const authService = {
       });
 
       const data = await response.json();
+      if (!response.ok) {
+        return {
+          success: false,
+          errors: data.errors,
+          message: data.message || 'No se pudo registrar'
+        };
+      }
+
       return data;
     } catch (error) {
       console.error('Error en registro:', error);

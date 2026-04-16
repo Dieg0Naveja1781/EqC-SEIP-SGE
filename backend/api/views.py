@@ -52,9 +52,16 @@ class AuthViewSet(viewsets.ViewSet):
         password = serializer.validated_data.get('password')
         ip_address = serializer.validated_data.get('ip_address')
         user_agent = serializer.validated_data.get('user_agent', '')
-        
+
+        # Permite autenticación por username o email
+        auth_username = username
+        if '@' in username:
+            found_user = User.objects.filter(email__iexact=username).first()
+            if found_user:
+                auth_username = found_user.username
+
         # Autenticar usuario
-        user = authenticate(username=username, password=password)
+        user = authenticate(username=auth_username, password=password)
         
         if user is not None:
             # Usuario autenticado exitosamente
@@ -66,7 +73,10 @@ class AuthViewSet(viewsets.ViewSet):
                 is_active=True
             )
             
-            user_profile = UserProfile.objects.get(user=user)
+            user_profile, _ = UserProfile.objects.get_or_create(
+                user=user,
+                defaults={'role': 'estudiante'}
+            )
             
             return Response({
                 'success': True,
