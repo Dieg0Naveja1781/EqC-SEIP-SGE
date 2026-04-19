@@ -1,0 +1,303 @@
+.main-page-wrap {
+  --main-page-bg: var(--bg-main);
+  --main-header-bg: var(--bg-card);
+  --main-search-bg: var(--search-bar-bg);
+  --main-surface-card: var(--bg-card);
+  --main-surface-soft: #f9fcff;
+  --main-text-main: var(--text-primary);
+  --main-text-secondary: var(--text-secondary);
+  --main-text-muted: var(--text-secondary);
+  --main-search-text-color: var(--text-primary);
+  --main-empty-row-color: var(--text-primary);
+  --main-stroke-soft: var(--border);
+  --main-border-regular: var(--border);
+  --main-border-soft: #f1f5f9;
+  --main-accent-primary: var(--color-600);
+  --main-accent-primary-soft: var(--color-300);
+  min-height: 100vh;
+  background: var(--main-page-bg);
+}
+
+[data-theme="dark"] .main-page-wrap {
+  --main-surface-soft: var(--color-900);
+}
+
+.main-top-header {
+  background: var(--main-header-bg);
+  border-bottom: 1px solid #dfdad2;
+}
+
+.main-header {
+  width: 100%;
+  margin: 0;
+  min-height: 78px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  position: relative;
+  gap: 0.75rem;
+  padding: 0.75rem clamp(0.75rem, 2.2vw, 2rem);
+  box-sizing: border-box;
+}
+
+.main-search-pill {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(560px, calc(100% - 8rem));
+  background: var(--main-search-bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  min-height: 44px;
+  padding: 0 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--main-search-text-color);
+}
+
+.main-left-tools {
+  position: absolute;
+  left: clamp(0.75rem, 2.2vw, 2rem);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+}
+
+.main-theme-toggle {
+  border: 1px solid var(--main-border-regular);
+  border-radius: 999px;
+  padding: 0.45rem 0.8rem;
+  min-height: 38px;
+  background: var(--main-surface-card);
+  color: var(--main-text-main);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.main-theme-toggle:hover {
+  background: var(--main-surface-soft);
+  border-color: var(--main-accent-primary);
+}
+
+.main-theme-toggle:focus-visible {
+  outline: 3px solid var(--color-300);
+  outline-offset: 2px;
+}
+
+.main-search-text {
+  font-size: 0.96rem;
+}
+
+.main-search-icon {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.main-profile-area {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-left: auto;
+  position: relative;
+  z-index: 1;
+}
+
+.main-profile-name {
+  color: var(--main-text-main);
+  font-weight: 500;
+}
+
+.main-profile-bubble {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--main-stroke-soft);
+  background: var(--main-accent-primary-soft);
+}
+
+.main-page {
+  width: 100%;
+  margin: 1.75rem 0 2.5rem;
+  padding-inline: clamp(0.75rem, 2.2vw, 2rem);
+  box-sizing: border-box;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.main-section {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.main-title {
+  margin: 0;
+  color: var(--main-text-main);
+  font-size: clamp(1.3rem, 1.7vw, 1.8rem);
+  text-align: center;
+}
+
+.quick-actions-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(90px, 1fr));
+  gap: 0.9rem;
+}
+
+.quick-action-square {
+  border: 1px solid var(--main-border-regular);
+  border-radius: 10px;
+  background: var(--main-surface-soft);
+  padding: 0.75rem;
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.12s ease;
+}
+
+.quick-action-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: var(--main-accent-primary);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  transition: background-color 0.2s ease;
+}
+
+.quick-action-label {
+  font-size: 0.9rem;
+  color: var(--main-text-secondary);
+  transition: color 0.2s ease;
+}
+
+.quick-action-square:hover {
+  background: var(--color-100);
+  border-color: var(--main-accent-primary);
+}
+
+.quick-action-square:hover .quick-action-icon {
+  background: var(--color-600);
+}
+
+.quick-action-square:hover .quick-action-label {
+  color: var(--color-900);
+}
+
+.quick-action-square:active {
+  background: var(--color-200);
+  border-color: var(--color-700);
+  transform: scale(0.97);
+}
+
+.quick-action-square:active .quick-action-icon {
+  background: var(--color-800);
+}
+
+.quick-action-square:focus-visible {
+  outline: 3px solid var(--color-300);
+  outline-offset: 2px;
+}
+
+.section-title {
+  margin: 0;
+  color: var(--main-text-main);
+  font-size: 1.25rem;
+  text-align: center;
+}
+
+.table-widget {
+  border: 1px solid var(--main-border-regular);
+  border-radius: 12px;
+  padding: 0.85rem;
+  background: var(--main-surface-card);
+}
+
+.table-controls {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.75rem;
+}
+
+.sort-btn {
+  border: 1px solid var(--main-border-regular);
+  border-radius: 8px;
+  padding: 0.5rem 0.8rem;
+  background: var(--main-accent-primary-soft);
+  color: var(--main-text-main);
+  cursor: pointer;
+}
+
+.session-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.session-table th,
+.session-table td {
+  text-align: left;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--main-border-soft);
+}
+
+.session-table thead th {
+  font-weight: 600;
+  color: var(--main-text-secondary);
+}
+
+.session-table tbody td {
+  color: var(--main-text-main);
+}
+
+.empty-table-row {
+  text-align: center !important;
+  color: var(--main-empty-row-color) !important;
+  font-style: italic;
+}
+
+@media (max-width: 860px) {
+  .main-header {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.6rem;
+  }
+
+  .main-left-tools {
+    position: static;
+    transform: none;
+    order: 1;
+    justify-self: start;
+  }
+
+  .main-search-pill {
+    position: static;
+    left: auto;
+    transform: none;
+    width: min(560px, 100%);
+    justify-self: center;
+    order: 2;
+  }
+
+  .main-profile-area {
+    margin-left: 0;
+    z-index: auto;
+    order: 1;
+    justify-self: end;
+  }
+
+  .quick-actions-row {
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  }
+}
+
+@media (min-width: 1920px) {
+  .quick-action-square {
+    width: 70%;
+    justify-self: center;
+  }
+}
