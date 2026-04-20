@@ -1,36 +1,90 @@
 import React, { useState, useEffect } from "react";
-import "../../Styles/App.css";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
+import "../../modules/auth/Styles/App.css";
 
 const Login = () => {
-  //Estado del Tema con persistencia (Lee del localStorage al cargar)  AUN NECESITO REPARARLO
+  const navigate = useNavigate();
+  const { login, loading, user } = useAuth();
+
+  // Estado del Tema
   const [isDark, setIsDark] = useState(() => {
     const savedTheme = localStorage.getItem("theme");
-    // Si no hay nada guardado, por defecto es oscuro (true)
     return savedTheme ? savedTheme === "dark" : true;
   });
 
-  //Estado para los datos del formulario
+  // Estado del formulario
   const [formData, setFormData] = useState({ email: "", password: "" });
+  const [errors, setErrors] = useState({});
+  const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  //Efecto para aplicar el tema al HTML y guardarlo
+  // Si ya está logueado, redirigir a main
+  useEffect(() => {
+    if (user) {
+      navigate("/main");
+    }
+  }, [user, navigate]);
+
+  // Efecto para aplicar el tema
   useEffect(() => {
     const theme = isDark ? "dark" : "light";
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("theme", theme);
   }, [isDark]);
 
-  //Manejador de cambios en los inputs
+  // Validación
+  const validate = () => {
+    let tempErrors = {};
+    if (!formData.email.trim()) {
+      tempErrors.email = "El usuario o email es obligatorio";
+    }
+    if (!formData.password.trim()) {
+      tempErrors.password = "La contraseña es obligatoria";
+    }
+    setErrors(tempErrors);
+    return Object.keys(tempErrors).length === 0;
+  };
+
+  // Manejador de cambios
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.id]: e.target.value,
     });
+    // Limpiar error cuando el usuario vuelve a escribir
+    if (errors[e.target.id]) {
+      setErrors({ ...errors, [e.target.id]: null });
+    }
   };
 
-  const handleSubmit = (e) => {
+  // Manejador de envío
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Intentando iniciar sesión con:", formData);
-    // Aquí iría la lógica de conexión al backend
+    
+    if (!validate()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setMessage("");
+
+    try {
+      const result = await login(formData.email, formData.password);
+      
+      if (result.success) {
+        setMessage("✅ " + result.message);
+        // La redirección ocurre automáticamente por el useEffect que monitorea 'user'
+      } else {
+        setMessage("❌ " + result.message);
+        setErrors({ form: result.message });
+      }
+    } catch (error) {
+      setMessage("❌ Error inesperado al iniciar sesión");
+      console.error("Login error:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -42,6 +96,7 @@ const Login = () => {
             type="checkbox"
             checked={isDark}
             onChange={() => setIsDark(!isDark)}
+            aria-label="Cambiar tema"
           />
           <span className="theme-slider">
             <span className="theme-icon">☀️</span>
@@ -67,12 +122,12 @@ const Login = () => {
             marginBottom: "10px",
           }}
         >
-          LOGO
+          📋
         </div>
         <h1
           style={{ color: "var(--color-500)", margin: 0, fontSize: "1.5rem" }}
         >
-          NOMBRE DEL SITIO
+          SEIP - Sistema de Expedientes
         </h1>
       </div>
 
@@ -89,17 +144,41 @@ const Login = () => {
           Ingresa tus credenciales para continuar
         </p>
 
-        <form onSubmit={handleSubmit}>
+        {/* Mensajes */}
+        {message && (
+          <div
+            style={{
+              padding: "10px",
+              marginBottom: "15px",
+              borderRadius: "4px",
+              backgroundColor: message.includes("✅") ? "#d4edda" : "#f8d7da",
+              color: message.includes("✅") ? "#155724" : "#721c24",
+              textAlign: "center",
+            }}
+          >
+            {message}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} noValidate>
           <div className="input-group">
             <label htmlFor="email">Usuario / Email</label>
             <input
               type="text"
               id="email"
-              placeholder="Ingresa tu correo"
+              placeholder="Ingresa tu correo o usuario"
               value={formData.email}
               onChange={handleChange}
-              required
+              disabled={isSubmitting || loading}
+              style={{
+                borderColor: errors.email ? "red" : "inherit",
+              }}
             />
+            {errors.email && (
+              <span style={{ color: "red", fontSize: "0.8rem" }}>
+                {errors.email}
+              </span>
+            )}
           </div>
 
           <div className="input-group">
@@ -110,18 +189,36 @@ const Login = () => {
               placeholder="••••••••"
               value={formData.password}
               onChange={handleChange}
-              required
+              disabled={isSubmitting || loading}
+              style={{
+                borderColor: errors.password ? "red" : "inherit",
+              }}
             />
+            {errors.password && (
+              <span style={{ color: "red", fontSize: "0.8rem" }}>
+                {errors.password}
+              </span>
+            )}
           </div>
 
-          <button type="submit" className="btn-login">
-            Entrar
+          <button
+            type="submit"
+            className="btn-login"
+            disabled={isSubmitting || loading}
+            style={{
+              opacity: isSubmitting || loading ? 0.6 : 1,
+              cursor: isSubmitting || loading ? "not-allowed" : "pointer",
+            }}
+          >
+            {isSubmitting || loading ? "Iniciando..." : "Entrar"}
           </button>
         </form>
 
         <div className="footer-links">
           ¿No tienes cuenta?{" "}
-          <a href="../create_account/Registro.html">Regístrate aquí</a>
+          <Link to="/register" style={{ color: "var(--color-500)" }}>
+            Regístrate aquí
+          </Link>
         </div>
       </div>
     </div>

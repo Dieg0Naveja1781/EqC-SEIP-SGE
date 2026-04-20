@@ -12,6 +12,19 @@ from .serializers import (
     RegisterSerializer,
     UserSerializer
 )
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from .models import (
+    UserProfe, DocDocumento, InfCarpeta, DocExpediente, 
+    CategoriasDoc, VersionDoc, ExpedienteContenido
+)
+from .serializers import (
+    UserProfessorSerializer, DocumentoSerializer, CarpetaSerializer,
+    ExpedienteSerializer, CategoriasDocSerializer
+)
+
 
 
 class AuthViewSet(viewsets.ViewSet):
@@ -216,3 +229,184 @@ class LoginHistoryViewSet(viewsets.ReadOnlyModelViewSet):
             'success': True,
             'active_sessions': serializer.data
         }, status=status.HTTP_200_OK)
+
+
+
+class UserProfessorViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para gestión de profesores/usuarios del sistema
+    - GET /api/usuarios/ - Listar usuarios
+    - POST /api/usuarios/ - Crear usuario
+    - GET /api/usuarios/{id}/ - Obtener usuario
+    - PUT /api/usuarios/{id}/ - Actualizar usuario
+    - DELETE /api/usuarios/{id}/ - Eliminar usuario
+    """
+    queryset = UserProfe.objects.all()
+    serializer_class = UserProfessorSerializer
+    permission_classes = [IsAuthenticated]
+    search_fields = ['correo_profe', 'numero_profe']
+    ordering_fields = ['fecha_registro', 'correo_profe']
+
+
+class DocumentoViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para gestión de documentos
+    - GET /api/documentos/ - Listar documentos
+    - POST /api/documentos/ - Crear documento
+    - GET /api/documentos/{id}/ - Obtener documento
+    - PUT /api/documentos/{id}/ - Actualizar documento
+    - DELETE /api/documentos/{id}/ - Eliminar documento
+    """
+    queryset = DocDocumento.objects.all()
+    serializer_class = DocumentoSerializer
+    permission_classes = [IsAuthenticated]
+    search_fields = ['titulo_doc', 'id_profesor__correo_profe']
+    ordering_fields = ['fecha_creacion', 'titulo_doc']
+
+    def get_queryset(self):
+        """Filtrar documentos del usuario autenticado"""
+        user = self.request.user
+        return DocDocumento.objects.filter(id_profesor__correo_profe=user.email)
+
+    @action(detail=False, methods=['get'])
+    def mis_documentos(self, request):
+        """
+        Obtener solo documentos del usuario autenticado
+        GET /api/documentos/mis_documentos/
+        """
+        documentos = self.get_queryset()
+        serializer = self.get_serializer(documentos, many=True)
+        return Response({
+            'success': True,
+            'count': len(documentos),
+            'documentos': serializer.data
+        })
+
+
+class CarpetaViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para gestión de carpetas
+    - GET /api/carpetas/ - Listar carpetas
+    - POST /api/carpetas/ - Crear carpeta
+    - GET /api/carpetas/{id}/ - Obtener carpeta
+    - PUT /api/carpetas/{id}/ - Actualizar carpeta
+    - DELETE /api/carpetas/{id}/ - Eliminar carpeta
+    """
+    queryset = InfCarpeta.objects.all()
+    serializer_class = CarpetaSerializer
+    permission_classes = [IsAuthenticated]
+    search_fields = ['nombre_carpeta']
+    ordering_fields = ['fecha_creacion', 'nombre_carpeta']
+
+    def get_queryset(self):
+        """Filtrar carpetas del usuario autenticado"""
+        user = self.request.user
+        return InfCarpeta.objects.filter(id_profesor__correo_profe=user.email)
+
+    @action(detail=False, methods=['get'])
+    def mis_carpetas(self, request):
+        """
+        Obtener solo carpetas del usuario autenticado
+        GET /api/carpetas/mis_carpetas/
+        """
+        carpetas = self.get_queryset()
+        serializer = self.get_serializer(carpetas, many=True)
+        return Response({
+            'success': True,
+            'count': len(carpetas),
+            'carpetas': serializer.data
+        })
+
+    @action(detail=False, methods=['get'])
+    def raiz(self, request):
+        """
+        Obtener carpetas raíz (sin padre)
+        GET /api/carpetas/raiz/
+        """
+        carpetas_raiz = self.get_queryset().filter(id_padre__isnull=True)
+        serializer = self.get_serializer(carpetas_raiz, many=True)
+        return Response({
+            'success': True,
+            'carpetas_raiz': serializer.data
+        })
+
+
+class ExpedienteViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para gestión de expedientes
+    - GET /api/expedientes/ - Listar expedientes
+    - POST /api/expedientes/ - Crear expediente
+    - GET /api/expedientes/{id}/ - Obtener expediente
+    - PUT /api/expedientes/{id}/ - Actualizar expediente
+    - DELETE /api/expedientes/{id}/ - Eliminar expediente
+    """
+    queryset = DocExpediente.objects.all()
+    serializer_class = ExpedienteSerializer
+    permission_classes = [IsAuthenticated]
+    search_fields = ['nombre_convocatoria', 'id_profesor__correo_profe']
+    ordering_fields = ['fecha_creacion', 'nombre_convocatoria']
+
+    def get_queryset(self):
+        """Filtrar expedientes del usuario autenticado"""
+        user = self.request.user
+        return DocExpediente.objects.filter(id_profesor__correo_profe=user.email)
+
+    @action(detail=False, methods=['get'])
+    def mis_expedientes(self, request):
+        """
+        Obtener solo expedientes del usuario autenticado
+        GET /api/expedientes/mis_expedientes/
+        """
+        expedientes = self.get_queryset()
+        serializer = self.get_serializer(expedientes, many=True)
+        return Response({
+            'success': True,
+            'count': len(expedientes),
+            'expedientes': serializer.data
+        })
+
+    @action(detail=True, methods=['get'])
+    def contenido(self, request, pk=None):
+        """
+        Obtener todos los documentos de un expediente
+        GET /api/expedientes/{id}/contenido/
+        """
+        try:
+            expediente = self.get_object()
+            contenido = ExpedienteContenido.objects.filter(id_exp=expediente).order_by('orden')
+            
+            datos = []
+            for item in contenido:
+                datos.append({
+                    'documento_id': item.id_doc.id_doc,
+                    'titulo': item.id_doc.titulo_doc,
+                    'orden': item.orden,
+                    'fecha_agregado': item.fecha_agregado
+                })
+            
+            return Response({
+                'success': True,
+                'expediente': expediente.nombre_convocatoria,
+                'documentos': datos
+            })
+        except DocExpediente.DoesNotExist:
+            return Response({
+                'success': False,
+                'message': 'Expediente no encontrado'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+
+class CategoriasDocViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para gestión de categorías de documentos
+    - GET /api/categorias-doc/ - Listar categorías
+    - POST /api/categorias-doc/ - Crear categoría
+    - GET /api/categorias-doc/{id}/ - Obtener categoría
+    - PUT /api/categorias-doc/{id}/ - Actualizar categoría
+    - DELETE /api/categorias-doc/{id}/ - Eliminar categoría
+    """
+    queryset = CategoriasDoc.objects.all()
+    serializer_class = CategoriasDocSerializer
+    permission_classes = [IsAuthenticated]
+    search_fields = ['nombre_categoria']
+    ordering_fields = ['nombre_categoria']
