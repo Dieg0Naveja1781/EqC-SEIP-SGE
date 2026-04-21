@@ -1,4 +1,5 @@
 from django.contrib import admin
+
 from .models import (
     UserProfe, InfCurp, CategoriasDoc, 
     InfCarpeta, DocDocumento, VersionDoc, 
@@ -21,8 +22,6 @@ admin.site.register(InfCarpeta)
 admin.site.register(VersionDoc)
 admin.site.register(DocExpediente)
 admin.site.register(ExpedienteContenido)
-<<<<<<< HEAD
-=======
 
 from .models import Login, UserProfile
 
@@ -68,4 +67,3 @@ class UserProfileAdmin(admin.ModelAdmin):
         }),
     )
 
->>>>>>> d82b83b5b880bd83ac23398a27c809c90a82c5d3

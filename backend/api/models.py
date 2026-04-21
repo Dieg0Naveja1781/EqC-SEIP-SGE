@@ -1,147 +1,120 @@
 
 
 from django.db import models
-
+from django.contrib.auth.models import User
+from django.core.validators import FileExtensionValidator
+from django.utils import timezone
 
 # ============================================================================
-# TABLA 1: UserProfe - Usuarios del Sistema
+# TABLA 1: user_profe - Usuarios del Sistema (Profesores/Investigadores)
 # ============================================================================
 class UserProfe(models.Model):
+    """
+    Tabla de usuarios del sistema.
+    3NF: Contiene solo atributos que dependen únicamente de id_profesor (PK)
+    """
     GENDER_CHOICES = [
-        ('M',  'Masculino'),
-        ('F',  'Femenino'),
-        ('O',  'Otro'),
+        ('M', 'Masculino'),
+        ('F', 'Femenino'),
+        ('O', 'Otro'),
         ('ND', 'Prefiero no decir'),
     ]
+    
     ROL_CHOICES = [
-        ('INVESTIGADOR',    'Investigador'),
-        ('MEDIO_TIEMPO',    'Profesor Medio Tiempo'),
+        ('INVESTIGADOR', 'Investigador'),
+        ('MEDIO_TIEMPO', 'Profesor Medio Tiempo'),
         ('TIEMPO_COMPLETO', 'Profesor Tiempo Completo'),
     ]
-
-    id_profesor    = models.AutoField(primary_key=True)
-    correo_profe   = models.EmailField(unique=True, max_length=254)
+    
+    id_profesor = models.AutoField(primary_key=True)
+    correo_profe = models.EmailField(unique=True, max_length=254)
     password_profe = models.CharField(max_length=60)
-    numero_profe   = models.IntegerField(null=True, blank=True)
-    genero_profe   = models.CharField(max_length=2, choices=GENDER_CHOICES, null=True, blank=True)
-    rol_profe      = models.CharField(max_length=20, choices=ROL_CHOICES)
+    numero_profe = models.IntegerField(null=True, blank=True)
+    genero_profe = models.CharField(max_length=2, choices=GENDER_CHOICES, null=True, blank=True)
+    rol_profe = models.CharField(max_length=20, choices=ROL_CHOICES)
     fecha_registro = models.DateTimeField(auto_now_add=True)
-    activo         = models.BooleanField(default=True)
-
+    activo = models.BooleanField(default=True)
+    
     class Meta:
         db_table = 'user_profe'
         verbose_name = 'Profesor'
         verbose_name_plural = 'Profesores'
         ordering = ['correo_profe']
-
+    
     def __str__(self):
         return f"{self.correo_profe} - {self.rol_profe}"
 
 
 # ============================================================================
-# TABLA 2: InfCurp - Información Personal del Profesor
+# TABLA 2: inf_curp - Información Adicional del Profesor
 # ============================================================================
 class InfCurp(models.Model):
-    id_curp          = models.AutoField(primary_key=True)
-    id_profesor      = models.OneToOneField(
-        UserProfe,
-        on_delete=models.CASCADE,
+    """
+    Información complementaria del profesor.
+    3NF: Relación 1:1 con UserProfe, FK a user_profe
+    Separada para evitar dependencia parcial en 2NF
+    """
+    id_curp = models.AutoField(primary_key=True)
+    id_profesor = models.OneToOneField(
+        UserProfe, 
+        on_delete=models.CASCADE, 
+        to_field='id_profesor',
         related_name='curp_info'
     )
-    # Campos nuevos agregados en 0002
-    curp             = models.CharField(max_length=18, null=True, blank=True)
-    nombres          = models.CharField(max_length=75, null=True, blank=True)
-    apellidos        = models.CharField(max_length=75, null=True, blank=True)
-    # Campo anterior conservado para no romper 0001
-    full_name        = models.CharField(max_length=150, null=True, blank=True)
+    full_name = models.CharField(max_length=150)
     fecha_nacimiento = models.DateTimeField(null=True, blank=True)
-
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+    
     class Meta:
         db_table = 'inf_curp'
         verbose_name = 'Información CURP'
         verbose_name_plural = 'Información CURP'
-
+    
     def __str__(self):
-        return f"{self.nombres} {self.apellidos}" if self.nombres else self.full_name or ''
+        return f"CURP de {self.full_name}"
 
 
 # ============================================================================
-# TABLA 3: RolProfe - Roles (TABLA NUEVA)
-# ============================================================================
-class RolProfe(models.Model):
-    id_rol      = models.AutoField(primary_key=True)
-    id_profesor = models.ForeignKey(
-        UserProfe,
-        on_delete=models.CASCADE,
-        related_name='roles'
-    )
-    rol = models.CharField(max_length=100)
-
-    class Meta:
-        db_table = 'rol_profe'
-        verbose_name = 'Rol'
-        verbose_name_plural = 'Roles'
-
-    def __str__(self):
-        return self.rol
-
-
-# ============================================================================
-# TABLA 4: IDSProfe - Identificadores Académicos (TABLA NUEVA)
-# ============================================================================
-class IDSProfe(models.Model):
-    id_identificador   = models.AutoField(primary_key=True)
-    id_profesor        = models.ForeignKey(
-        UserProfe,
-        on_delete=models.CASCADE,
-        related_name='identificadores'
-    )
-    cvu                = models.IntegerField(null=True, blank=True)
-    orc                = models.CharField(max_length=20,  null=True, blank=True)
-    thomson_researcher = models.CharField(max_length=12,  null=True, blank=True)
-    arxiv_autor        = models.CharField(max_length=128, null=True, blank=True)
-    pubmed_autor       = models.IntegerField(null=True, blank=True)
-    open               = models.CharField(max_length=128, null=True, blank=True)
-
-    class Meta:
-        db_table = 'ids_profe'
-        verbose_name = 'Identificador Académico'
-        verbose_name_plural = 'Identificadores Académicos'
-
-    def __str__(self):
-        return f"IDs del profesor {self.id_profesor_id}"
-
-
-# ============================================================================
-# TABLA 5: CategoriasDoc - Tipos de Documentos
+# TABLA 3: categorias_doc - Categorías/Tipos de Documentos
 # ============================================================================
 class CategoriasDoc(models.Model):
-    id_tipo          = models.AutoField(primary_key=True)
+    """
+    Tipos de documentos que pueden cargarse.
+    3NF: Tabla de referencia independiente
+    Ejemplos: Artículos, Cursos, Evaluaciones, Constancias, Certificados, etc.
+    """
+    id_tipo = models.AutoField(primary_key=True)
     nombre_categoria = models.CharField(max_length=100, unique=True)
-    descripcion      = models.TextField(null=True, blank=True)
-
+    descripcion = models.TextField(null=True, blank=True)
+    
     class Meta:
         db_table = 'categorias_doc'
         verbose_name = 'Categoría de Documento'
         verbose_name_plural = 'Categorías de Documentos'
         ordering = ['nombre_categoria']
-
+    
     def __str__(self):
         return self.nombre_categoria
 
 
 # ============================================================================
-# TABLA 6: InfCarpeta - Carpetas de Documentos
+# TABLA 4: inf_carpeta - Carpetas de Almacenamiento
 # ============================================================================
 class InfCarpeta(models.Model):
-    id_folder      = models.AutoField(primary_key=True)
+    """
+    Sistema de carpetas para organizar documentos y expedientes.
+    3NF: Estructura jerárquica con auto-referencia (id_padre = NULL si es raíz)
+    FK a user_profe (propietario)
+    """
+    id_folder = models.AutoField(primary_key=True)
     nombre_carpeta = models.CharField(max_length=50)
-    id_profesor    = models.ForeignKey(
+    id_profesor = models.ForeignKey(
         UserProfe,
         on_delete=models.CASCADE,
+        to_field='id_profesor',
         related_name='carpetas'
     )
-    id_padre       = models.ForeignKey(
+    id_padre = models.ForeignKey(
         'self',
         on_delete=models.CASCADE,
         null=True,
@@ -149,118 +122,151 @@ class InfCarpeta(models.Model):
         related_name='subcarpetas'
     )
     fecha_creacion = models.DateTimeField(auto_now_add=True)
-
+    
     class Meta:
         db_table = 'inf_carpeta'
         verbose_name = 'Carpeta'
         verbose_name_plural = 'Carpetas'
         unique_together = ('id_profesor', 'nombre_carpeta', 'id_padre')
-
+    
     def __str__(self):
-        return self.nombre_carpeta
+        return f"{self.nombre_carpeta}"
 
 
 # ============================================================================
-# TABLA 7: DocDocumento - Documentos Cargados
+# TABLA 5: doc_documento - Documentos Cargados
 # ============================================================================
 class DocDocumento(models.Model):
-    id_doc           = models.AutoField(primary_key=True)
-    id_profesor      = models.ForeignKey(
+    """
+    Documentos subidos por los profesores.
+    3NF: 
+    - FK a user_profe (propietario)
+    - FK a inf_carpeta (ubicación)
+    - FK a categorias_doc (tipo/categoría)
+    - Versiones en tabla separada (version_doc)
+    """
+    id_doc = models.AutoField(primary_key=True)
+    id_profesor = models.ForeignKey(
         UserProfe,
         on_delete=models.CASCADE,
+        to_field='id_profesor',
         related_name='documentos'
     )
-    titulo_doc       = models.CharField(max_length=50)
-    fecha_creacion   = models.DateTimeField(auto_now_add=True)
+    titulo_doc = models.CharField(max_length=50)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_expedicion = models.DateTimeField(null=True, blank=True)
-    ruta_archivo     = models.TextField()
-    id_folder        = models.ForeignKey(
+    ruta_archivo = models.TextField()
+    id_folder = models.ForeignKey(
         InfCarpeta,
         on_delete=models.SET_NULL,
         null=True,
-        blank=True,
+        to_field='id_folder',
         related_name='documentos'
     )
-    id_tipo          = models.ForeignKey(
+    id_tipo = models.ForeignKey(
         CategoriasDoc,
         on_delete=models.PROTECT,
+        to_field='id_tipo',
         related_name='documentos'
     )
-
+    
     class Meta:
         db_table = 'doc_documento'
         verbose_name = 'Documento'
         verbose_name_plural = 'Documentos'
         unique_together = ('id_profesor', 'titulo_doc')
-
+    
     def __str__(self):
-        return self.titulo_doc
+        return f"{self.titulo_doc} - {self.id_profesor.correo_profe}"
 
 
 # ============================================================================
-# TABLA 8: VersionDoc - Historial de Versiones
+# TABLA 6: version_doc - Historial de Versiones de Documentos
 # ============================================================================
 class VersionDoc(models.Model):
-    id_version   = models.AutoField(primary_key=True)
-    id_doc       = models.ForeignKey(
+    """
+    Historial de versiones de documentos.
+    3NF: 
+    - FK a doc_documento
+    - Tabla separada para mantener 1NF (evita atributos multivaluados)
+    """
+    id_version = models.AutoField(primary_key=True)
+    id_doc = models.ForeignKey(
         DocDocumento,
         on_delete=models.CASCADE,
+        to_field='id_doc',
         related_name='versiones'
     )
     ruta_archivo = models.CharField(max_length=255)
-    num_version  = models.IntegerField()
+    num_version = models.IntegerField()
     fecha_subida = models.DateTimeField(auto_now_add=True)
-
+    
     class Meta:
         db_table = 'version_doc'
         verbose_name = 'Versión de Documento'
         verbose_name_plural = 'Versiones de Documentos'
         unique_together = ('id_doc', 'num_version')
         ordering = ['-num_version']
-
+    
     def __str__(self):
-        return f"v{self.num_version} — {self.id_doc.titulo_doc}"
+        return f"v{self.num_version} de {self.id_doc.titulo_doc}"
 
 
 # ============================================================================
-# TABLA 9: DocExpediente - Expedientes
+# TABLA 7: doc_expediente - Expedientes Generados
 # ============================================================================
 class DocExpediente(models.Model):
-    id_exp              = models.AutoField(primary_key=True)
-    id_profesor         = models.ForeignKey(
+    """
+    Expedientes creados por profesores (colecciones de documentos).
+    3NF:
+    - FK a user_profe (propietario)
+    - Relación M:N con documentos mediante expediente_contenido
+    """
+    id_exp = models.AutoField(primary_key=True)
+    id_profesor = models.ForeignKey(
         UserProfe,
         on_delete=models.CASCADE,
+        to_field='id_profesor',
         related_name='expedientes'
     )
     nombre_convocatoria = models.CharField(max_length=50)
-    fecha_creacion      = models.DateTimeField(auto_now_add=True)
-    fecha_expedicion    = models.DateTimeField(null=True, blank=True)
-    descripcion         = models.TextField(null=True, blank=True)
-    documentos          = models.ManyToManyField(
-        DocDocumento,
-        through='ExpedienteContenido',
-        related_name='expedientes'
-    )
-
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_expedicion = models.DateTimeField(null=True, blank=True)
+    descripcion = models.TextField(null=True, blank=True)
+    
     class Meta:
         db_table = 'doc_expediente'
         verbose_name = 'Expediente'
         verbose_name_plural = 'Expedientes'
         unique_together = ('id_profesor', 'nombre_convocatoria')
-
+    
     def __str__(self):
-        return self.nombre_convocatoria
+        return f"{self.nombre_convocatoria} - {self.id_profesor.correo_profe}"
 
 
 # ============================================================================
-# TABLA 10: ExpedienteContenido - Relación M:N Expediente ↔ Documento
+# TABLA 8: expediente_contenido - Relación M:N (Expediente ↔ Documentos)
 # ============================================================================
 class ExpedienteContenido(models.Model):
-    id_exp         = models.ForeignKey(DocExpediente, on_delete=models.CASCADE)
-    id_doc         = models.ForeignKey(DocDocumento,  on_delete=models.CASCADE)
-    orden          = models.IntegerField(default=0)
+    """
+    Tabla de unión para la relación M:N entre expedientes y documentos.
+    3NF:
+    - Clave primaria compuesta: (id_exp, id_doc)
+    - Evita redundancia en la relación M:N
+    """
+    id_exp = models.ForeignKey(
+        DocExpediente,
+        on_delete=models.CASCADE,
+        to_field='id_exp'
+    )
+    id_doc = models.ForeignKey(
+        DocDocumento,
+        on_delete=models.CASCADE,
+        to_field='id_doc'
+    )
+    orden = models.IntegerField(default=0)
     fecha_agregado = models.DateTimeField(auto_now_add=True)
-
+    
     class Meta:
         db_table = 'expediente_contenido'
         verbose_name = 'Contenido de Expediente'
@@ -275,6 +281,24 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 
+class Login(models.Model):
+    """
+    Modelo para registrar intentos de login de usuarios
+    Cada vez que un usuario inicia sesión, se crea un registro aquí
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='login_records')
+    login_time = models.DateTimeField(auto_now_add=True, help_text="Fecha y hora del login")
+    logout_time = models.DateTimeField(null=True, blank=True, help_text="Fecha y hora del logout")
+    ip_address = models.GenericIPAddressField(null=True, blank=True, help_text="Dirección IP del usuario")
+    user_agent = models.TextField(blank=True, help_text="Navegador/dispositivo usado")
+    is_active = models.BooleanField(default=True, help_text="¿La sesión está activa?")
+    
+    class Meta:
+        db_table = 'login'
+        verbose_name = 'Login'
+        verbose_name_plural = 'Logins'
+        ordering = ['-login_time']
+    
     def __str__(self):
         return f"{self.user.username} - {self.login_time.strftime('%Y-%m-%d %H:%M:%S')}"
 
