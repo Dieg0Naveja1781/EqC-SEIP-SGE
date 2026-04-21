@@ -17,7 +17,7 @@ function LastSessionTable({ records = [] }) {
 
   return (
     <section className="main-section">
-      <h2 className="section-title">Ultima Sesion</h2>
+      <h2 className="section-title">Última Sesión</h2>
 
       <div className="table-widget">
         <div className="table-controls">
