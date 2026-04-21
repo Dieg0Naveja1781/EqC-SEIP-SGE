@@ -24,6 +24,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'modules.usuarios_backend',
+    'modules.gestion_expedientes_backend',
 
     
     # Aplicaciones terceras

@@ -31,16 +31,20 @@ CREATE INDEX idx_user_profe_activo ON user_profe(activo);
 CREATE TABLE inf_curp (
     id_curp SERIAL PRIMARY KEY,
     id_profesor INTEGER UNIQUE NOT NULL,
+    curp_profe VARCHAR(18) UNIQUE NOT NULL,
     full_name VARCHAR(150) NOT NULL,
     fecha_nacimiento TIMESTAMP,
     fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
+    -- formato legal para la curp
+    CONSTRAINT check_curp_format
+        CHECK (curp_profe ~ '^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[A-Z0-9]{2}$'),
+
     CONSTRAINT fk_inf_curp_profesor FOREIGN KEY (id_profesor) 
         REFERENCES user_profe(id_profesor) ON DELETE CASCADE
 );
 
 CREATE INDEX idx_inf_curp_profesor ON inf_curp(id_profesor);
-
+CREATE INDEX idx_inf_curp_string ON inf_curp(curp_profe);
 -- ============================================================================
 -- TABLA 3: categorias_doc - Tipos de Documentos
 -- ============================================================================
@@ -91,20 +95,21 @@ CREATE TABLE doc_documento (
     ruta_archivo TEXT NOT NULL,
     id_folder INTEGER,
     id_tipo INTEGER NOT NULL,
-    
+    tamano_bytes BIGINT,
+    extension_archivo VARCHAR(10),
     CONSTRAINT fk_doc_documento_profesor FOREIGN KEY (id_profesor) 
         REFERENCES user_profe(id_profesor) ON DELETE CASCADE,
     CONSTRAINT fk_doc_documento_carpeta FOREIGN KEY (id_folder) 
         REFERENCES inf_carpeta(id_folder) ON DELETE SET NULL,
     CONSTRAINT fk_doc_documento_tipo FOREIGN KEY (id_tipo) 
-        REFERENCES categorias_doc(id_tipo) ON DELETE PROTECT,
+        REFERENCES categorias_doc(id_tipo) ON DELETE RESTRICT,
     CONSTRAINT unique_doc_por_profesor UNIQUE(id_profesor, titulo_doc)
 );
 
 CREATE INDEX idx_doc_documento_profesor ON doc_documento(id_profesor);
 CREATE INDEX idx_doc_documento_carpeta ON doc_documento(id_folder);
 CREATE INDEX idx_doc_documento_tipo ON doc_documento(id_tipo);
-
+CREATE INDEX idx_doc_titulo_fts ON doc_documento USING gin(to_tsvector('spanish', titulo_doc));
 -- ============================================================================
 -- TABLA 6: version_doc - Historial de Versiones
 -- ============================================================================
@@ -113,6 +118,7 @@ CREATE TABLE version_doc (
     id_version SERIAL PRIMARY KEY,
     id_doc INTEGER NOT NULL,
     ruta_archivo VARCHAR(255) NOT NULL,
+    comentario_cambio TEXT,
     num_version INTEGER NOT NULL,
     fecha_subida TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
@@ -171,6 +177,7 @@ CREATE VIEW v_profesores_completo AS
 SELECT 
     up.id_profesor,
     up.correo_profe,
+    ic.curp_profe,
     up.numero_profe,
     up.genero_profe,
     up.rol_profe,

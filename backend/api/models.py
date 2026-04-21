@@ -1,3 +1,5 @@
+
+
 from django.db import models
 
 
@@ -265,6 +267,41 @@ class ExpedienteContenido(models.Model):
         verbose_name_plural = 'Contenidos de Expedientes'
         unique_together = ('id_exp', 'id_doc')
         ordering = ['orden']
-
+    
     def __str__(self):
         return f"{self.id_exp.nombre_convocatoria} → {self.id_doc.titulo_doc}"
+
+from django.db import models
+from django.contrib.auth.models import User
+from django.utils import timezone
+
+    def __str__(self):
+        return f"{self.user.username} - {self.login_time.strftime('%Y-%m-%d %H:%M:%S')}"
+
+
+class UserProfile(models.Model):
+    """
+    Modelo extendido de usuario con información adicional
+    """
+    ROLE_CHOICES = [
+        ('estudiante', 'Estudiante'),
+        ('profesor', 'Profesor'),
+        ('admin', 'Administrador'),
+    ]
+    
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='estudiante')
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    university_id = models.CharField(max_length=20, blank=True, null=True, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_verified = models.BooleanField(default=False)
+    
+    class Meta:
+        db_table = 'user_profile'
+        verbose_name = 'Perfil de Usuario'
+        verbose_name_plural = 'Perfiles de Usuarios'
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.role}"
+
