@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import { UserData } from "./modules/user-data/UserData"; // Importar módulo de datos de usuario
 import { ArchiveList } from "./modules/archives_list/archive_list";
 import { MainPage } from './modules/main'; // Importar módulo de la página principal
+import { SubirDoc } from './modules/upload-files';
 
 function App() {
   return (
@@ -19,6 +20,9 @@ function App() {
         <Link to="/archive_list" style={{ color: "white" }}>
           Gestión de Archivos
         </Link>
+        <Link to="/subir_doc" style={{ color: "white" }}>
+          Subir Archivos
+        </Link>
       </nav>
 
       <Routes>
@@ -29,6 +33,7 @@ function App() {
         <Route path="/main" element={<MainPage />} />
         <Route path="/perfil" element={<UserData />} />
         <Route path="/archive_list" element={<ArchiveList />} />
+        <Route path="/subir_doc" element={<SubirDoc />} />
       </Routes>
     </BrowserRouter>
   );
