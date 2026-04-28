@@ -1,10 +1,10 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 // Importación de Módulos (Cada uno en su carpeta correspondiente)
-import  LandingPage  from "./modules/landing-page/landing.jsx"; 
-import  { MainPage }  from "./modules/main";
-import  { UserData }  from "./modules/user-data/UserData";
-import  { ArchiveList }  from "./modules/archives_list/archive_list";
+import LandingPage from "./modules/landing-page/pages/landing.jsx";
+import { MainPage } from "./modules/main";
+import { UserData } from "./modules/user-data/UserData";
+import { ArchiveList } from "./modules/archives_list/archive_list";
 
 function App() {
   return (
