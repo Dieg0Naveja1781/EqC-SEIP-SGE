@@ -1,5 +1,5 @@
 import Footer from "../components/Footer";
-import "./landing.css";
+import "../styles/landing.css"
 
 function LandingPage() {
   return (
