@@ -18,6 +18,8 @@ function App() {
         <Route path="/main" element={<MainPage />} />
         <Route path="/perfil" element={<UserData />} />
         <Route path="/archive_list" element={<ArchiveList />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
       </Routes>
     </BrowserRouter>
   );

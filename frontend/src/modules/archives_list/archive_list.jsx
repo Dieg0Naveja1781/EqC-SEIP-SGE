@@ -1,42 +1,165 @@
-import React, { useState } from "react";
-import "./Styles/archive_list.css"; 
+import React, { useEffect, useRef, useState } from "react";
+import "./Styles/archive_list.css";
 import { useTheme } from "../../shared/context/ThemeContext";
+import { documentsService } from "../../shared/api/documentsService";
 
 const MONTHS = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
 ];
 
-{/* === se agrega un array para pruebas === */}
-const initialFiles = [
-  { id: 1, type: "folder", name: "Carpeta de Prueba", date: "10/03/2026" },
-  { id: 2, type: "folder", name: "Carpeta de Prueba", date: "19/03/2026" },
-  { id: 3, type: "folder", name: "Carpeta de Prueba", date: "14/01/2026" },
-  { id: 4, type: "pdf",    name: "Archivo.pdf",        date: "20/03/2026" },
-  { id: 5, type: "pdf",    name: "Archivo.pdf",        date: "30/01/2026" },
-  { id: 6, type: "pdf",    name: "Archivo.pdf",        date: "15/02/2026" },
-];
+function formatFecha(iso) {
+  if (!iso) return "";
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString("es-MX");
+  } catch {
+    return iso;
+  }
+}
 
 export function ArchiveList() {
   const [anio, setAnio] = useState("Cualquier Año");
   const [mes, setMes] = useState("Cualquier Mes");
   const [dia, setDia] = useState("Cualquier Día");
-  const [files, setFiles] = useState(initialFiles);
+  const [files, setFiles] = useState([]);
+  const [categorias, setCategorias] = useState([]);
   const [filtrosAvanzados, setFiltrosAvanzados] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const fileInputRef = useRef(null);
   const { isDark, toggleTheme } = useTheme();
+
+  const cargarDatos = async () => {
+    setLoading(true);
+    setErrorMsg("");
+    try {
+      const [carpetasRes, docsRes, catsRes] = await Promise.all([
+        documentsService.listFolders().catch(() => ({ carpetas: [] })),
+        documentsService.listDocuments().catch(() => ({ documentos: [] })),
+        documentsService.listCategories().catch(() => ({ categorias: [] })),
+      ]);
+
+      const carpetas = (carpetasRes?.carpetas || []).map((c) => ({
+        id: `f-${c.id_folder}`,
+        type: "folder",
+        name: c.nombre_carpeta,
+        date: formatFecha(c.fecha_creacion),
+      }));
+
+      const docs = (docsRes?.documentos || []).map((d) => ({
+        id: `d-${d.id_doc}`,
+        id_doc: d.id_doc,
+        type: "pdf",
+        name: d.titulo_doc,
+        date: formatFecha(d.fecha_creacion),
+      }));
+
+      setFiles([...carpetas, ...docs]);
+      setCategorias(catsRes?.categorias || []);
+    } catch (err) {
+      setErrorMsg(
+        err?.status === 401
+          ? "Debes iniciar sesión para ver tus archivos"
+          : err?.data?.error || "Error al cargar datos"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    cargarDatos();
+  }, []);
+
+  const handleNuevaCarpeta = async () => {
+    const nombre = window.prompt("Nombre de la nueva carpeta:");
+    if (!nombre) return;
+    try {
+      const res = await documentsService.createFolder(nombre);
+      if (res?.success) {
+        cargarDatos();
+      } else {
+        alert(res?.error || "No se pudo crear la carpeta");
+      }
+    } catch (err) {
+      alert(err?.data?.error || "Error al crear la carpeta");
+    }
+  };
+
+  const handleSubirArchivoClick = () => {
+    if (!categorias.length) {
+      alert("No hay categorías disponibles. Pide al admin que cree alguna.");
+      return;
+    }
+    fileInputRef.current?.click();
+  };
+
+  const handleArchivoSeleccionado = async (e) => {
+    const archivo = e.target.files?.[0];
+    e.target.value = "";
+    if (!archivo) return;
+
+    const titulo = window.prompt("Título del documento:", archivo.name);
+    if (!titulo) return;
+
+    const id_tipo = categorias[0]?.id_tipo;
+    if (!id_tipo) {
+      alert("No hay categorías de documento disponibles.");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const res = await documentsService.uploadDocument({
+        archivo,
+        titulo_doc: titulo,
+        id_tipo,
+      });
+      if (res?.success) {
+        cargarDatos();
+      } else {
+        alert(res?.error || "No se pudo subir el archivo");
+      }
+    } catch (err) {
+      alert(err?.data?.error || "Error al subir el archivo");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   return (
     <div className={`archive_list_container ${isDark ? "dark" : ""}`}>
       {/* === SIDEBAR === */}
       <aside className="sidebar">
         <div className="sidebar_brand">Nombre de la Aplicación</div>
-        <h2 className="sidebar_link">Todos los Archivos</h2>
-        <h2 className="sidebar_link">Subir Archivos</h2>
-        <div><button onClick={toggleTheme}>
-          {isDark ? "☀️ Modo Claro" : "🌙 Modo Oscuro"}
-        </button></div>
-        <nav>
-      </nav>
+        <h2
+          className="sidebar_link"
+          style={{ cursor: "pointer" }}
+          onClick={cargarDatos}
+        >
+          Todos los Archivos
+        </h2>
+        <h2
+          className="sidebar_link"
+          style={{ cursor: uploading ? "wait" : "pointer" }}
+          onClick={handleSubirArchivoClick}
+        >
+          {uploading ? "Subiendo…" : "Subir Archivos"}
+        </h2>
+        <input
+          ref={fileInputRef}
+          type="file"
+          style={{ display: "none" }}
+          onChange={handleArchivoSeleccionado}
+        />
+        <div>
+          <button onClick={toggleTheme}>
+            {isDark ? "☀️ Modo Claro" : "🌙 Modo Oscuro"}
+          </button>
+        </div>
+        <nav></nav>
       </aside>
       
       {/* === MAIN === */}
@@ -144,24 +267,40 @@ export function ArchiveList() {
           
           {/* === FILE LIST === */}
           <div className="files_list">
+            {loading && <p>Cargando…</p>}
+            {errorMsg && <p style={{ color: "#ff6b6b" }}>{errorMsg}</p>}
+            {!loading && !errorMsg && files.length === 0 && (
+              <p>No hay archivos. Crea una carpeta o sube un documento.</p>
+            )}
             {files.map((file) => (
               <div key={file.id} className="file_row">
                 <span>{file.type === "folder" ? "📁" : "📄"}</span>
                 <span className="file_name">{file.name}</span>
                 <span className="file_date">{file.date}</span>
                 <div className="file_actions">
+                  {file.type !== "folder" && file.id_doc && (
+                    <a
+                      className="btn_upd"
+                      href={documentsService.downloadDocumentUrl(file.id_doc)}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Descargar
+                    </a>
+                  )}
                   <button className="btn_mov">Mover</button>
-                  <button className="btn_upd">Actualizar</button>
                   <button className="btn_del">Eliminar</button>
                 </div>
               </div>
             ))}
           </div>
         </div>
-        
+
         {/* === BOTTOM BAR === */}
         <div className="bottom_bar">
-          <button className="btn_new_folder">Nueva Carpeta</button> 
+          <button className="btn_new_folder" onClick={handleNuevaCarpeta}>
+            Nueva Carpeta
+          </button>
         </div>
       </div>
     </div>

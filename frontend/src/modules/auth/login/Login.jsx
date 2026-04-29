@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from "react";
-import "../../Styles/App.css";
+import { useNavigate, Link } from "react-router-dom";
+import { authService, saveSessionProfesor } from "../../../shared/api/authService";
+import "../Styles/App.css";
 
 const Login = () => {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
   //Estado del Tema con persistencia (Lee del localStorage al cargar)  AUN NECESITO REPARARLO
   const [isDark, setIsDark] = useState(() => {
     const savedTheme = localStorage.getItem("theme");
@@ -27,10 +32,23 @@ const Login = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Intentando iniciar sesión con:", formData);
-    // Aquí iría la lógica de conexión al backend
+    setErrorMsg("");
+    setLoading(true);
+    try {
+      const result = await authService.login(formData.email, formData.password);
+      if (result?.success) {
+        saveSessionProfesor(result.profesor);
+        navigate("/main");
+      } else {
+        setErrorMsg(result?.error || "Credenciales inválidas");
+      }
+    } catch (err) {
+      setErrorMsg(err?.data?.error || "Error de conexión con el servidor");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -114,18 +132,25 @@ const Login = () => {
             />
           </div>
 
-          <button type="submit" className="btn-login">
-            Entrar
+          {errorMsg && (
+            <p style={{ color: "#ff6b6b", textAlign: "center", marginTop: "0.5rem" }}>
+              {errorMsg}
+            </p>
+          )}
+
+          <button type="submit" className="btn-login" disabled={loading}>
+            {loading ? "Entrando…" : "Entrar"}
           </button>
         </form>
 
         <div className="footer-links">
           ¿No tienes cuenta?{" "}
-          <a href="../create_account/Registro.html">Regístrate aquí</a>
+          <Link to="/register">Regístrate aquí</Link>
         </div>
       </div>
     </div>
   );
 };
 
+export { Login };
 export default Login;
