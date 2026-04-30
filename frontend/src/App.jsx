@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import { UserData } from "./modules/user-data/UserData";
 import { ArchiveList } from "./modules/archives_list/archive_list";
 import { MainPage } from './modules/main';
+import { SubirDoc } from './modules/upload-files/SubirDoc';
 import Login from "./modules/auth/login/Login";
 import Register from "./modules/auth/create_account/Register";
 
@@ -21,6 +22,9 @@ function App() {
         <Link to="/archive_list" style={{ color: "white", marginRight: "10px" }}>
           Gestión de Archivos
         </Link>
+        <Link to="/subir_doc" style={{ color: "white" }}>
+          Subir Archivos
+        </Link>
         <Link to="/login" style={{ color: "white", marginRight: "10px" }}>
           Iniciar Sesión
         </Link>
@@ -37,6 +41,7 @@ function App() {
         <Route path="/main" element={<MainPage />} />
         <Route path="/perfil" element={<UserData />} />
         <Route path="/archive_list" element={<ArchiveList />} />
+        <Route path="/subir_doc" element={<SubirDoc />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
       </Routes>
