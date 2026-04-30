@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import { UserData } from "./modules/user-data/UserData"; // Importar módulo de datos de usuario
 import { ArchiveList } from "./modules/archives_list/archive_list";
 import { MainPage } from './modules/main'; // Importar módulo de la página principal
-import { SubirDoc } from './modules/upload-files';
+import { SubirDoc } from './modules/upload-files/SubirDoc';
 
 function App() {
   return (

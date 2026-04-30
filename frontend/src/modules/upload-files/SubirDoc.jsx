@@ -1,6 +1,7 @@
-const { useState, useEffect, useRef } = React;
+import { useState, useEffect, useRef } from 'react';
+import "./SubirDoc.css";
 
-function SubirDocumento() {
+export function SubirDoc() {
     const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') !== 'light');
     const [file, setFile] = useState(null); 
     const [dragging, setDragging] = useState(false); 
@@ -272,4 +273,4 @@ function SubirDocumento() {
     );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<SubirDocumento />);
+// ReactDOM.createRoot(document.getElementById('root')).render(<SubirDocumento />);
