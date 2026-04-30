@@ -5,6 +5,10 @@ import LandingPage from "./modules/landing-page/pages/landing.jsx";
 import { MainPage } from "./modules/main";
 import { UserData } from "./modules/user-data/UserData";
 import { ArchiveList } from "./modules/archives_list/archive_list";
+import { MainPage } from './modules/main';
+import { SubirDoc } from './modules/upload-files/SubirDoc';
+import Login from "./modules/auth/login/Login";
+import Register from "./modules/auth/create_account/Register";
 
 function App() {
   return (
@@ -18,6 +22,7 @@ function App() {
         <Route path="/main" element={<MainPage />} />
         <Route path="/perfil" element={<UserData />} />
         <Route path="/archive_list" element={<ArchiveList />} />
+        <Route path="/subir_doc" element={<SubirDoc />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
       </Routes>
