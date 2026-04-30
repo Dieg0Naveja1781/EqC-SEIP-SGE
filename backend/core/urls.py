@@ -14,5 +14,7 @@ router.register(r'login-history', LoginHistoryViewSet, basename='login-history')
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
+    path('api/', include('modules.usuarios_backend.urls')),
+    path('api/', include('modules.gestion_expedientes_backend.urls')),
     path('api-auth/', include('rest_framework.urls')),
 ]
