@@ -70,32 +70,6 @@
   margin-top: 2rem;
 }
 
-import Footer from "../components/Footer";
-import "../styles/landing.css";
-
-function LandingPage() {
-  return (
-    <div className="lpage">
-      <header className="navbar">
-        <div className="navbar-brand">EQC Software</div>
-      </header>
-
-      <main className="main-content">
-        <h1>Texto de ejemplo Diego Armando Naveja López</h1>
-
-        <div className="auth-buttons">
-          <a href="/login" className="btn btn-outline">Iniciar Sesión</a>
-          <a href="/register" className="btn btn-primary">Crear Cuenta</a>
-        </div>
-      </main>
-
-      <Footer />
-    </div>
-  );
-}
-
-export default LandingPage;
-
 .auth-buttons {
   display: flex;
   flex-direction: column;  /* ← esto los apila verticalmente */
