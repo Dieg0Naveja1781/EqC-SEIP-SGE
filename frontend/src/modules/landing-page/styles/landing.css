@@ -1,10 +1,15 @@
-/* ── Agrega esto a tu landing.css ── */
+/* ── landing.css ── */
 
-/* Navbar */
+.lpage {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
 .navbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center; 
   padding: 1rem 2rem;
   background-color: #ffffff;
   border-bottom: 1px solid #e5e7eb;
@@ -14,98 +19,97 @@
 }
 
 .navbar-brand {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #111827;
-  letter-spacing: -0.02em;
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
 }
 
-.navbar-actions {
+.navbar-logo {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  border-radius: 0;        /* elimina cualquier redondeo */
+  background: transparent;
+  box-shadow: none;
+}
+
+.main-content {
+  position: relative;
+  flex: 1;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  justify-content: center;
+  overflow: hidden; 
+  background-color: #eef2f7;
+  min-height: 80vh;
+}
+.parallax-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  user-select: none;
+  will-change: transform;
 }
 
-/* Botones */
+.parallax-layer img {
+  position: absolute;
+  top: 50%;
+  left: 120%;          
+  transform: translate(-50%, -50%);
+  width: auto;
+  height: auto;
+  max-width: 110%;
+  max-height: 110%;
+  object-fit: none;
+}
+
+.main-content-inner {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 3rem 2rem;
+}
+
+.main-content-inner h1 {
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 1px 3px rgba(255,255,255,0.6);
+}
+
+.auth-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
 .btn {
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
   padding: 0.5rem 1.25rem;
   border-radius: 8px;
-  font-size: 0.9rem;
   font-weight: 600;
   text-decoration: none;
-  cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  transition: all 0.2s ease;
 }
 
-/* Iniciar Sesión — contorno */
-.btn-outline {
-  background-color: transparent;
-  color: #374151;
-  border: 1.5px solid #d1d5db;
-}
-
-.btn-outline:hover {
-  background-color: #f3f4f6;
-  border-color: #9ca3af;
-}
-
-/* Crear Cuenta — sólido */
 .btn-primary {
   background-color: #2563eb;
   color: #ffffff;
-  border: 1.5px solid transparent;
 }
 
-.btn-primary:hover {
-  background-color: #1d4ed8;
-}
-
-.auth-buttons {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  margin-top: 2rem;
-}
-
-.auth-buttons {
-  display: flex;
-  flex-direction: column;  /* ← esto los apila verticalmente */
-  align-items: center;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-.register-group {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.register-hint {
-  font-size: 0.85rem;
-  color: #6b7280;
-}
-
-.auth-buttons {
-  display: flex;
-  flex-direction: column;  /* ← esto los apila verticalmente */
-  align-items: center;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-.register-group {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.register-hint {
-  font-size: 0.85rem;
-  color: #6b7280;
+.btn-outline {
+  background-color: rgba(255,255,255,0.8);
+  color: #374151;
+  border: 1.5px solid #d1d5db;
 }
