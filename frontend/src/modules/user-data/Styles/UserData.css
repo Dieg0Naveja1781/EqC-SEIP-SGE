@@ -1,104 +1,119 @@
-img {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  background-color: #6fbeec;
-  margin-left: -900px;
+/* Todas las reglas se aíslan dentro de .user-container para no contaminar
+   DashboardLayout u otras páginas cuando este CSS se carga globalmente. */
+
+.user-container {
+  padding: 20px 40px;
 }
 
-.user-photo {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.user-container h2 {
+  margin-top: 0;
   margin-bottom: 20px;
 }
 
-.profile-text {
-  margin-top: -130px;
-  margin-left: -350px;
-  font-size: 40px;
-  font-weight: bold;
-}
-
-.profile-undertitle {
-  margin-top: 15px;
-  margin-left: -650px;
-  font-size: 20px;
-  font-weight: bold;
-}
-
-.datos-editables {
+.user-container .user-photo {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  margin-top: 60px;
-  margin-left: 80px;
-  margin-right: 80px;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 30px;
 }
 
-.campo-grupo {
+.user-container .user-photo img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background-color: #6fbeec;
+  object-fit: cover;
+}
+
+.user-container .profile-text {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--text-p);
+}
+
+.user-container .profile-undertitle {
+  font-size: 0.95rem;
+  color: var(--text-s);
+}
+
+.user-container .datos-editables {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.user-container .campo-grupo {
   width: 100%;
   display: flex;
   flex-direction: column;
-  margin-bottom: 15px;
   gap: 8px;
-  align-items: flex-start;
 }
 
-::placeholder {
-  color: #999;
-  margin-left: 10px;
+.user-container label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-s);
 }
 
-input {
+.user-container input,
+.user-container select {
   width: 100%;
   border-radius: 10px;
-  border: 2px solid #d9d9d9;
-  padding: 7px;
+  border: 1px solid var(--border);
+  background-color: var(--bg-body);
+  color: var(--text-p);
+  padding: 10px 12px;
+  font-size: 1rem;
+  font-family: inherit;
 }
 
-.campo-fila {
+.user-container input:read-only {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
+.user-container ::placeholder {
+  color: #999;
+}
+
+.user-container .campo-fila {
   width: 100%;
   display: flex;
   flex-direction: row;
   gap: 10px;
+  align-items: center;
 }
 
-.select-id {
-  width: 100%;
-  border-radius: 10px;
-  border: 2px solid #d9d9d9;
-  padding: 7px;
+.user-container .campo-fila-between {
+  justify-content: space-between;
+  flex-wrap: wrap;
 }
 
-button {
-  background-color: #1984C2;
+.user-container button {
+  background-color: var(--color-main, #1984c2);
   color: white;
   border: none;
-  border-radius: 50px;
+  border-radius: 10px;
+  padding: 10px 20px;
   cursor: pointer;
-    white-space: nowrap;
+  white-space: nowrap;
+  font-weight: 600;
 }
 
-.btn-agregar-id {
-  padding: 0 25px;
+.user-container button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-.select-puesto {
-  width: 200px;
-  border-radius: 10px;
-  border: 2px solid #d9d9d9;
-  padding: 7px;
+.user-container .btn-gestionar {
+  background-color: var(--bg-card);
+  color: var(--text-p);
+  border: 1px solid var(--border);
 }
 
-.btn-gestionar {
-  padding: 0 20px;
-  border-radius: 10px;
-  background-color: white;
-  color: #1e1e1e;
-  border: 2px solid #d9d9d9;
-}
-
-.btn-guardar {
-  padding: 10px 30px;;
+.user-container .btn-guardar {
+  background-color: var(--color-main, #1984c2);
 }

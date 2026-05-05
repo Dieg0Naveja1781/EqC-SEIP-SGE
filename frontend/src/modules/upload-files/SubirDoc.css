@@ -18,18 +18,11 @@
   --shadow: rgba(0, 0, 0, 0.4);
 }
 
-* {
+/* Reglas locales: sólo dentro de .upload-section para no romper DashboardLayout
+   ni otras páginas cuando este CSS se carga globalmente. */
+.upload-section,
+.upload-section * {
   box-sizing: border-box;
-  transition:
-    background-color 0.3s,
-    color 0.3s;
-}
-body,
-html {
-  margin: 0;
-  padding: 0;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  height: 100vh;
 }
 
 .upload-section {
@@ -78,29 +71,32 @@ html {
   gap: 8px;
 }
 
-label {
+.upload-section label {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--text-s);
 }
 
-input,
-select,
-textarea {
+.upload-section input,
+.upload-section select,
+.upload-section textarea {
   padding: 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background-color: var(--bg-body);
   color: var(--text-p);
   font-size: 1rem;
+  font-family: inherit;
 }
 
-input:focus {
+.upload-section input:focus,
+.upload-section select:focus,
+.upload-section textarea:focus {
   outline: 2px solid var(--color-main);
   border-color: transparent;
 }
 
-.btn-submit {
+.upload-section .btn-submit {
   background-color: var(--color-main);
   color: white;
   border: none;
@@ -113,7 +109,13 @@ input:focus {
   margin-top: 10px;
 }
 
-.btn-submit:hover {
+.upload-section .btn-submit:hover {
   background-color: var(--color-hover);
   transform: translateY(-2px);
+}
+
+.upload-section .btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }

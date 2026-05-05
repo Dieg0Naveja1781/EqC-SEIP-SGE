@@ -1,5 +1,7 @@
+import json
+import os
 from rest_framework import serializers
-from api.models import (
+from .models import (
     CategoriasDoc, InfCarpeta, DocDocumento, DocExpediente,
     ExpedienteContenido, VersionDoc,
 )
@@ -40,10 +42,13 @@ class DocDocumentoSerializer(serializers.ModelSerializer):
         fields = [
             'id_doc', 'id_profesor', 'id_tipo', 'id_folder',
             'titulo_doc', 'fecha_creacion', 'fecha_expedicion',
-            'ruta_archivo',
+            'ruta_archivo', 'tamano_bytes', 'extension_archivo', 'metadatos',
             'nombre_categoria', 'nombre_carpeta',
         ]
-        read_only_fields = ['id_doc', 'fecha_creacion', 'ruta_archivo']
+        read_only_fields = [
+            'id_doc', 'fecha_creacion', 'ruta_archivo',
+            'tamano_bytes', 'extension_archivo',
+        ]
 
 
 class VersionDocSerializer(serializers.ModelSerializer):
@@ -70,18 +75,65 @@ class DocExpedienteSerializer(serializers.ModelSerializer):
 
 
 class SubidaDocumentoSerializer(serializers.Serializer):
-    """Valida datos para subir un documento"""
+    """Valida los datos para subir un documento PDF."""
+    CATEGORIAS = ['Docencia', 'Gestion', 'Titulacion', 'Produccion', 'Tutoria']
+    MAX_SIZE = 50 * 1024 * 1024  # 50 MB
+
+    # Reglas numéricas por categoría: cada campo del JSON metadatos
+    # se valida contra estas reglas.
+    NUMERIC_RULES = {
+        'Docencia':   {'cargaHoraria':   {'min': 0, 'integer': True}},
+        'Titulacion': {'avance':         {'min': 0, 'max': 100}},
+        'Tutoria':    {'numeroAlumnos':  {'min': 0, 'integer': True}},
+    }
+
     titulo_doc = serializers.CharField(max_length=50)
     id_tipo = serializers.IntegerField()
     id_folder = serializers.IntegerField(required=False, allow_null=True)
     archivo = serializers.FileField()
     fecha_expedicion = serializers.DateTimeField(required=False, allow_null=True)
+    categoria = serializers.ChoiceField(choices=CATEGORIAS)
+    metadatos = serializers.JSONField(required=False, default=dict)
 
     def validate_archivo(self, archivo):
-        max_size = 50 * 1024 * 1024
-        if archivo.size > max_size:
+        ext = os.path.splitext(archivo.name)[1].lower()
+        if ext != '.pdf':
+            raise serializers.ValidationError('Solo se permiten archivos PDF (.pdf)')
+        ctype = (getattr(archivo, 'content_type', '') or '').lower()
+        if ctype and ctype != 'application/pdf':
+            raise serializers.ValidationError('El archivo no es un PDF válido')
+        if archivo.size > self.MAX_SIZE:
             raise serializers.ValidationError('El archivo no debe exceder 50MB')
         return archivo
+
+    def validate(self, data):
+        meta = data.get('metadatos') or {}
+        # Cuando viaja en multipart, llega como string JSON.
+        if isinstance(meta, str):
+            try:
+                meta = json.loads(meta)
+            except ValueError:
+                raise serializers.ValidationError({'metadatos': 'JSON inválido'})
+        if not isinstance(meta, dict):
+            raise serializers.ValidationError({'metadatos': 'Debe ser un objeto JSON'})
+
+        rules = self.NUMERIC_RULES.get(data['categoria'], {})
+        for field, rule in rules.items():
+            if field not in meta or meta[field] in ('', None):
+                continue
+            try:
+                val = float(meta[field])
+            except (TypeError, ValueError):
+                raise serializers.ValidationError({field: 'Debe ser numérico'})
+            if rule.get('integer') and not float(val).is_integer():
+                raise serializers.ValidationError({field: 'Debe ser un entero'})
+            if 'min' in rule and val < rule['min']:
+                raise serializers.ValidationError({field: f"Debe ser >= {rule['min']}"})
+            if 'max' in rule and val > rule['max']:
+                raise serializers.ValidationError({field: f"Debe ser <= {rule['max']}"})
+
+        data['metadatos'] = meta
+        return data
 
 
 class ExpedienteContenidoSerializer(serializers.ModelSerializer):

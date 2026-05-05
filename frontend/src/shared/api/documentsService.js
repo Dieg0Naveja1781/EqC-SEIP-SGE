@@ -16,13 +16,15 @@ export const documentsService = {
     return apiClient.get(`/documentos/${qs}`);
   },
 
-  uploadDocument: ({ archivo, titulo_doc, id_tipo, id_folder, fecha_expedicion }) => {
+  uploadDocument: ({ archivo, titulo_doc, id_tipo, id_folder, fecha_expedicion, categoria, metadatos }) => {
     const formData = new FormData();
     formData.append("archivo", archivo);
     formData.append("titulo_doc", titulo_doc);
     formData.append("id_tipo", id_tipo);
     if (id_folder) formData.append("id_folder", id_folder);
     if (fecha_expedicion) formData.append("fecha_expedicion", fecha_expedicion);
+    if (categoria) formData.append("categoria", categoria);
+    if (metadatos) formData.append("metadatos", JSON.stringify(metadatos));
     return apiClient.upload("/documentos/subir/", formData);
   },
 

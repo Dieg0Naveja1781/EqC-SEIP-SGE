@@ -24,7 +24,8 @@ __pycache__/
 *.sqlite3
 db.sqlite3-journal
 /static/
-/media/
+backend/media/*
+!backend/media/.gitkeep
 .pytest_cache/
 .coverage
 htmlcov/

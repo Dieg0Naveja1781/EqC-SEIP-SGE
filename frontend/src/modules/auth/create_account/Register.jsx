@@ -16,7 +16,6 @@ function Register() {
         email: '',
         password: '',
         confirmPassword: '',
-        rol_profe: 'INVESTIGADOR',
     });
 
     const [errors, setErrors] = useState({});
@@ -63,7 +62,6 @@ function Register() {
                 password: formData.password,
                 password2: formData.confirmPassword,
                 full_name: formData.name,
-                rol_profe: formData.rol_profe,
             });
 
             if (result?.success) {
