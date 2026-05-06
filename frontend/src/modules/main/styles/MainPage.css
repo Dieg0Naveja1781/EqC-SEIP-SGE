@@ -301,3 +301,92 @@
     justify-self: center;
   }
 }
+
+/* ============================================================
+   Overrides sobre los estilos base del Dashboard
+   ------------------------------------------------------------
+   .dashboard-layout button (0,1,1) ganaba a los selectores
+   propios (0,1,0). Prefijando con .main-page-wrap se eleva la
+   especificidad y se recupera el aspecto original.
+   ============================================================ */
+
+/* El wrap llena todo el espacio disponible del page-content. */
+.main-page-wrap {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.main-page-wrap .quick-action-square {
+  border: 1px solid var(--main-border-regular);
+  border-radius: 10px;
+  background: var(--main-surface-soft);
+  color: var(--main-text-secondary);
+  padding: 0.75rem;
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  white-space: normal;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.12s ease;
+}
+
+.main-page-wrap .quick-action-square:hover {
+  background: var(--color-100);
+  border-color: var(--main-accent-primary);
+}
+
+.main-page-wrap .quick-action-square:hover .quick-action-icon {
+  background: var(--color-600);
+}
+
+.main-page-wrap .quick-action-square:hover .quick-action-label {
+  color: var(--color-900);
+}
+
+.main-page-wrap .quick-action-square:active {
+  background: var(--color-200);
+  border-color: var(--color-700);
+  transform: scale(0.97);
+}
+
+.main-page-wrap .quick-action-square:active .quick-action-icon {
+  background: var(--color-800);
+}
+
+.main-page-wrap .quick-action-square:focus-visible {
+  outline: 3px solid var(--color-300);
+  outline-offset: 2px;
+}
+
+.main-page-wrap .sort-btn {
+  border: 1px solid var(--main-border-regular);
+  border-radius: 8px;
+  padding: 0.5rem 0.8rem;
+  background: var(--main-accent-primary-soft);
+  color: var(--main-text-main);
+  cursor: pointer;
+}
+
+.main-page-wrap .main-theme-toggle {
+  border: 1px solid var(--main-border-regular);
+  border-radius: 999px;
+  padding: 0.45rem 0.8rem;
+  min-height: 38px;
+  background: var(--main-surface-card);
+  color: var(--main-text-main);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.main-page-wrap .main-theme-toggle:hover {
+  background: var(--main-surface-soft);
+  border-color: var(--main-accent-primary);
+}
+
+.main-page-wrap .main-theme-toggle:focus-visible {
+  outline: 3px solid var(--color-300);
+  outline-offset: 2px;
+}
