@@ -7,6 +7,7 @@ import { UserData } from "./modules/user-data/UserData";
 import { ChangePassword } from "./modules/user-data/ChangePassword";
 import { ArchiveList } from "./modules/archives_list/archive_list";
 import { SubirDoc } from './modules/upload-files/SubirDoc';
+import { EditarDoc } from "./modules/Editar Archivo/EditarDoc";
 import Login from "./modules/auth/login/Login";
 import Register from "./modules/auth/create_account/Register";
 
@@ -24,6 +25,7 @@ function App() {
         <Route path="/perfil/cambiar-password" element={<ChangePassword />} />
         <Route path="/archive_list" element={<ArchiveList />} />
         <Route path="/subir_doc" element={<SubirDoc />} />
+        <Route path="/editar_doc" element={<EditarDoc />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
       </Routes>
