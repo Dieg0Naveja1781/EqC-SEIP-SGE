@@ -143,3 +143,49 @@
   font-size: 1rem;
   margin: 0;
 }
+
+/* ============================================================
+   Overrides sobre los estilos base del Dashboard
+   ------------------------------------------------------------
+   .dashboard-layout button (0,1,1) le gana a .btn-X (0,1,0).
+   Prefijando con .user-container subimos la especificidad a
+   (0,2,0) y recuperamos el aspecto original de cada elemento.
+   ============================================================ */
+.user-container .btn-gestionar {
+  padding: 0 20px;
+  border-radius: 10px;
+  background-color: white;
+  color: #1e1e1e;
+  border: 2px solid #d9d9d9;
+}
+
+.user-container .btn-guardar {
+  padding: 10px 30px;
+  background-color: #1984c2;
+  color: white;
+  border: none;
+  border-radius: 50px;
+}
+
+/* Selects dentro de UserData con estilo gris claro propio
+   (sobreescriben el padding/border del Dashboard input/select). */
+.user-container .select-id,
+.user-container .select-puesto {
+  width: 100%;
+  border-radius: 10px;
+  border: 2px solid #d9d9d9;
+  padding: 7px;
+  background-color: white;
+  color: #1e1e1e;
+}
+
+.user-container .select-puesto {
+  width: 200px;
+}
+
+/* El contenedor llena todo el ancho disponible del page-content
+   sin chocar con header/sidebar. */
+.user-container {
+  width: 100%;
+  box-sizing: border-box;
+}
