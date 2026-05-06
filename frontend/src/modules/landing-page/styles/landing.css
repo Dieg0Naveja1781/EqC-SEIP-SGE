@@ -14,54 +14,17 @@
   align-items: center;
   justify-content: flex-start;
   padding: 1rem 2rem;
-  background-color: #1d9ae2; /* color base; las capas dan profundidad encima */
+  background-color: #1d9ae2;
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  overflow: hidden; /* recorta las capas parallax para que no salgan del header */
   min-height: 70px;
 }
 
 .navbar-brand-text {
-  position: relative;
-  z-index: 2;
   color: #ffffff;
   font-size: 1.4rem;
   font-weight: 800;
   letter-spacing: 0.5px;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-/* Contenedor de las capas decorativas del header */
-.navbar-parallax {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  user-select: none;
-  z-index: 1;
-}
-
-.navbar-parallax-layer {
-  position: absolute;
-  inset: 0;
-  will-change: transform;
-}
-
-.navbar-parallax-layer img {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: auto;
-  height: 200%;
-  max-width: none;
-  object-fit: cover;
-}
-
-.navbar-parallax-layer.back img {
-  opacity: 0.18;
-}
-
-.navbar-parallax-layer.front img {
-  opacity: 0.32;
 }
 
 .main-content {
@@ -75,27 +38,33 @@
   min-height: 80vh;
 }
 
+/* Capas parallax que viven detrás del logo dentro del main-content.
+   Cada capa cubre todo el área y se desplaza hacia abajo con el scroll. */
 .parallax-layer {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   pointer-events: none;
   user-select: none;
   will-change: transform;
+  z-index: 1;
 }
 
 .parallax-layer img {
   position: absolute;
   top: 50%;
-  left: 120%;
+  left: 50%;
   transform: translate(-50%, -50%);
-  width: auto;
-  height: auto;
-  max-width: 110%;
-  max-height: 110%;
-  object-fit: none;
+  width: 100%;
+  height: 130%;
+  object-fit: cover;
+}
+
+.parallax-layer.back img {
+  opacity: 0.35;
+}
+
+.parallax-layer.front img {
+  opacity: 0.55;
 }
 
 .main-content-inner {
@@ -106,22 +75,14 @@
   align-items: center;
   text-align: center;
   padding: 3rem 2rem;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 .main-content-inner .main-logo {
-  height: 130px;
+  height: 180px;
   width: auto;
   object-fit: contain;
-  margin-bottom: 0.5rem;
-}
-
-.main-content-inner h1 {
-  font-size: clamp(1.8rem, 4vw, 3rem);
-  font-weight: 800;
-  color: #0f172a;
-  margin-bottom: 0.5rem;
-  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.6);
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.15));
 }
 
 .auth-buttons {
@@ -129,7 +90,7 @@
   flex-direction: column;
   align-items: center;
   gap: 1rem;
-  margin-top: 2rem;
+  margin-top: 1rem;
 }
 
 .btn {

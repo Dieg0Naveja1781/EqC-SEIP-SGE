@@ -1,7 +1,6 @@
 footer {
   text-align: center;
   padding: 5px;
-  margin-top: 20px;
   background-color: var(--bg-card);
   color: var(--text-primary);
 }
