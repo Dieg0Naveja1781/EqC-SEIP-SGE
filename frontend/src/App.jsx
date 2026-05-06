@@ -3,6 +3,7 @@ import { UserData } from "./modules/user-data/UserData";
 import { ArchiveList } from "./modules/archives_list/archive_list";
 import { MainPage } from './modules/main';
 import { SubirDoc } from './modules/upload-files/SubirDoc';
+import { EditarDoc } from "./modules/Editar Archivo/EditarDoc";
 import Login from "./modules/auth/login/Login";
 import Register from "./modules/auth/create_account/Register";
 
@@ -25,6 +26,9 @@ function App() {
         <Link to="/subir_doc" style={{ color: "white" }}>
           Subir Archivos
         </Link>
+        <Link to="/editar_doc" style={{ color: "white", marginRight: "10px" }}>
+          Editar Documento
+        </Link>
         <Link to="/login" style={{ color: "white", marginRight: "10px" }}>
           Iniciar Sesión
         </Link>
@@ -42,6 +46,7 @@ function App() {
         <Route path="/perfil" element={<UserData />} />
         <Route path="/archive_list" element={<ArchiveList />} />
         <Route path="/subir_doc" element={<SubirDoc />} />
+        <Route path="/editar_doc" element={<EditarDoc />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
       </Routes>
