@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { authService, saveSessionProfesor } from "../../../shared/api/authService";
+import logotipo from "../../../assets/logotipo.png";
 import "../Styles/App.css";
 
 const Login = () => {
@@ -70,28 +71,7 @@ const Login = () => {
 
       {/* Brand Section */}
       <div className="brand-section">
-        <div
-          className="logo-box"
-          style={{
-            width: "60px",
-            height: "60px",
-            background: "var(--color-500)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            borderRadius: "12px",
-            color: "white",
-            fontWeight: "bold",
-            marginBottom: "10px",
-          }}
-        >
-          LOGO
-        </div>
-        <h1
-          style={{ color: "var(--color-500)", margin: 0, fontSize: "1.5rem" }}
-        >
-          NOMBRE DEL SITIO
-        </h1>
+        <img src={logotipo} alt="Logotipo" className="brand-logo" />
       </div>
 
       {/* Tarjeta de Login */}

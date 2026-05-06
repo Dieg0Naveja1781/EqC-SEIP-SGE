@@ -24,17 +24,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'modules.usuarios_backend',
-    'modules.gestion_expedientes_backend',
 
-    
     # Aplicaciones terceras
     'rest_framework',
     'corsheaders',
-    
-    # Aplicaciones locales
 
-    'api',
+    # Aplicaciones locales (la BD vive aquí)
+    'modules.usuarios_backend.apps.UsuariosBackendConfig',
+    'modules.gestion_expedientes_backend.apps.GestionExpedientesBackendConfig',
 ]
 
 MIDDLEWARE = [
@@ -100,6 +97,10 @@ USE_TZ = True
 # Static files
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Media files (archivos subidos por los profesores)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

@@ -1,7 +1,11 @@
+import logging
+import os
 from django.conf import settings as django_settings
 from django.db import transaction
-from api.models import (
-    UserProfe, CategoriasDoc, InfCarpeta, DocDocumento, DocExpediente,
+
+from modules.usuarios_backend.models import UserProfe
+from .models import (
+    CategoriasDoc, InfCarpeta, DocDocumento, DocExpediente,
     ExpedienteContenido, VersionDoc,
 )
 from .serializers import (
@@ -9,8 +13,6 @@ from .serializers import (
     InfCarpetaSerializer, VersionDocSerializer,
     ExpedienteContenidoSerializer, CategoriaDocSerializer,
 )
-import logging
-import os
 
 logger = logging.getLogger(__name__)
 
@@ -23,13 +25,13 @@ def _media_root():
 
 
 class ServicioExpedientes:
-    """Lógica de negocio de expedientes, carpetas y documentos"""
+    """Lógica de negocio de expedientes, carpetas y documentos."""
 
     # ---------------- EXPEDIENTES ----------------
     @staticmethod
     def crear_expediente(id_profesor, nombre_convocatoria, descripcion='', fecha_expedicion=None):
         try:
-            profe = UserProfe.objects.get(id_profesor=id_profesor, activo=True)
+            profe = UserProfe.objects.get(id_profesor=id_profesor)
 
             if DocExpediente.objects.filter(
                 id_profesor=profe, nombre_convocatoria=nombre_convocatoria
@@ -95,10 +97,12 @@ class ServicioExpedientes:
 
     # ---------------- DOCUMENTOS ----------------
     @staticmethod
-    def subir_documento(id_profesor, archivo, titulo_doc, id_tipo, id_folder=None, fecha_expedicion=None):
+    def subir_documento(id_profesor, archivo, titulo_doc, id_tipo,
+                        categoria, metadatos=None,
+                        id_folder=None, fecha_expedicion=None):
         try:
-            profe = UserProfe.objects.get(id_profesor=id_profesor, activo=True)
-            categoria = CategoriasDoc.objects.get(id_tipo=id_tipo)
+            profe = UserProfe.objects.get(id_profesor=id_profesor)
+            categoria_obj = CategoriasDoc.objects.get(id_tipo=id_tipo)
 
             carpeta = None
             if id_folder:
@@ -115,14 +119,20 @@ class ServicioExpedientes:
                 for chunk in archivo.chunks():
                     destination.write(chunk)
 
+            meta = dict(metadatos or {})
+            meta['_categoria'] = categoria
+
             with transaction.atomic():
                 doc = DocDocumento.objects.create(
                     id_profesor=profe,
-                    id_tipo=categoria,
+                    id_tipo=categoria_obj,
                     id_folder=carpeta,
                     titulo_doc=titulo_doc,
                     ruta_archivo=ruta_archivo,
                     fecha_expedicion=fecha_expedicion,
+                    tamano_bytes=archivo.size,
+                    extension_archivo='pdf',
+                    metadatos=meta,
                 )
                 VersionDoc.objects.create(
                     id_doc=doc,
@@ -169,7 +179,7 @@ class ServicioExpedientes:
             return {'success': False, 'error': str(e)}
 
     @staticmethod
-    def nueva_version_documento(id_doc, id_profesor, archivo, comentario_cambio=''):
+    def nueva_version_documento(id_doc, id_profesor, archivo):
         try:
             doc = DocDocumento.objects.get(id_doc=id_doc, id_profesor=id_profesor)
 
@@ -209,7 +219,7 @@ class ServicioExpedientes:
     @staticmethod
     def crear_carpeta(id_profesor, nombre_carpeta, id_padre=None):
         try:
-            profe = UserProfe.objects.get(id_profesor=id_profesor, activo=True)
+            profe = UserProfe.objects.get(id_profesor=id_profesor)
 
             padre = None
             if id_padre:

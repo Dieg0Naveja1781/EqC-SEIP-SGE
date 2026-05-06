@@ -139,11 +139,20 @@ export function ArchiveList() {
     e.target.value = "";
     if (!archivo) return;
 
-    const titulo = window.prompt("Título del documento:", archivo.name);
+    const ext = archivo.name.split(".").pop()?.toLowerCase();
+    if (ext !== "pdf" || (archivo.type && archivo.type !== "application/pdf")) {
+      alert("Solo se permiten archivos PDF (.pdf)");
+      return;
+    }
+
+    const titulo = window.prompt(
+      "Título del documento:",
+      archivo.name.replace(/\.pdf$/i, ""),
+    );
     if (!titulo) return;
 
-    const id_tipo = categorias[0]?.id_tipo;
-    if (!id_tipo) {
+    const cat = categorias[0];
+    if (!cat?.id_tipo) {
       alert("No hay categorías de documento disponibles.");
       return;
     }
@@ -153,7 +162,9 @@ export function ArchiveList() {
       const res = await documentsService.uploadDocument({
         archivo,
         titulo_doc: titulo,
-        id_tipo,
+        id_tipo: cat.id_tipo,
+        categoria: cat.nombre_categoria,
+        metadatos: {},
       });
       if (res?.success) {
         cargarDatos();
@@ -173,6 +184,7 @@ export function ArchiveList() {
         <input
           ref={fileInputRef}
           type="file"
+          accept="application/pdf,.pdf"
           style={{ display: "none" }}
           onChange={handleArchivoSeleccionado}
         />

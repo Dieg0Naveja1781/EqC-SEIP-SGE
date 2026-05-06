@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Styles/UserData.css";
 import { useTheme } from "../../shared/context/ThemeContext";
 import { userService } from "../../shared/api/userService";
@@ -6,12 +7,12 @@ import { DashboardLayout } from "../../shared/components/DashboardLayout";
 
 export function UserData() {
   const { isDark, toggleTheme } = useTheme();
+  const navigate = useNavigate();
 
   const [profile, setProfile] = useState(null);
   const [form, setForm] = useState({
     full_name: "",
     correo_profe: "",
-    rol_profe: "INVESTIGADOR",
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -29,7 +30,6 @@ export function UserData() {
           setForm({
             full_name: p.full_name || "",
             correo_profe: p.correo_profe || "",
-            rol_profe: p.rol_profe || "INVESTIGADOR",
           });
         } else {
           setMessage(data?.error || "No se pudo cargar el perfil");
@@ -60,7 +60,6 @@ export function UserData() {
     try {
       const data = await userService.updateProfile({
         full_name: form.full_name,
-        rol_profe: form.rol_profe,
       });
       if (data?.success) {
         setMessage("Cambios guardados");
@@ -80,14 +79,18 @@ export function UserData() {
       <div className="user-container">
         <h2>Información del Usuario</h2>
 
-        <div className="user-photo">
-          <img src="" alt="Foto del Usuario" />
-          <span className="profile-text">
-            {loading ? "Cargando…" : profile?.full_name || "Sin nombre"}
-          </span>
-          <span className="profile-undertitle">
-            {profile?.rol_profe || "Docente"}
-          </span>
+        <div className="user-card">
+          <div className="user-card-photo" aria-hidden="true">
+            {(profile?.full_name || "?").trim().charAt(0).toUpperCase()}
+          </div>
+          <div className="user-card-info">
+            <span className="profile-text">
+              {loading ? "Cargando…" : profile?.full_name || "Sin nombre"}
+            </span>
+            <span className="profile-undertitle">
+              {profile?.correo_profe || ""}
+            </span>
+          </div>
         </div>
 
         <div className="datos-editables">
@@ -113,25 +116,15 @@ export function UserData() {
           </div>
 
           <div className="campo-grupo">
-            <label>Puesto</label>
+            <label>Acciones</label>
             <div className="campo-fila campo-fila-between">
-              <div className="campo-fila">
-                <select
-                  className="select-puesto"
-                  name="rol_profe"
-                  value={form.rol_profe}
-                  onChange={handleChange}
-                >
-                  <option value="INVESTIGADOR">Investigador</option>
-                  <option value="MEDIO_TIEMPO">Profesor Medio Tiempo</option>
-                  <option value="TIEMPO_COMPLETO">
-                    Profesor Tiempo Completo
-                  </option>
-                </select>
-                <button type="button" className="btn-gestionar">
-                  🔒 Gestionar Contraseña
-                </button>
-              </div>
+              <button
+                type="button"
+                className="btn-gestionar"
+                onClick={() => navigate("/perfil/cambiar-password")}
+              >
+                🔒 Gestionar Contraseña
+              </button>
               <button
                 type="button"
                 className="btn-guardar"

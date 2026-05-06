@@ -1,6 +1,6 @@
 from django.contrib.auth.hashers import make_password, check_password
 from django.db import transaction
-from api.models import UserProfe, InfCurp
+from .models import UserProfe
 from .serializers import RegistroProfesorSerializer, UserProfeSerializer
 import logging
 
@@ -8,11 +8,10 @@ logger = logging.getLogger(__name__)
 
 
 class ServicioUsuarios:
-    """Servicio centralizado con la lógica de negocio de usuarios/profesores"""
+    """Lógica de negocio de usuarios/profesores."""
 
     @staticmethod
     def registrar_profesor(data):
-        """Registra un profesor + su info CURP en una sola transacción"""
         serializer = RegistroProfesorSerializer(data=data)
         if not serializer.is_valid():
             return {'success': False, 'errors': serializer.errors}
@@ -24,18 +23,8 @@ class ServicioUsuarios:
                     correo_profe=validated['correo_profe'],
                     password_profe=make_password(validated['password']),
                     numero_profe=validated.get('numero_profe'),
-                    genero_profe=validated.get('genero_profe'),
-                    rol_profe=validated['rol_profe'],
-                    activo=True,
+                    full_name=validated.get('full_name', ''),
                 )
-
-                if validated.get('full_name'):
-                    InfCurp.objects.create(
-                        id_profesor=profe,
-                        full_name=validated['full_name'],
-                        fecha_nacimiento=validated.get('fecha_nacimiento'),
-                    )
-
             logger.info(f"Profesor registrado: {profe.correo_profe}")
             return {
                 'success': True,
@@ -48,11 +37,8 @@ class ServicioUsuarios:
 
     @staticmethod
     def autenticar_profesor(correo, password):
-        """Valida credenciales y retorna datos del profesor si son correctas"""
         try:
             profe = UserProfe.objects.get(correo_profe=correo)
-            if not profe.activo:
-                return {'success': False, 'error': 'Profesor inactivo'}
             if not check_password(password, profe.password_profe):
                 return {'success': False, 'error': 'Credenciales inválidas'}
 
@@ -81,26 +67,10 @@ class ServicioUsuarios:
     def actualizar_perfil(id_profesor, data):
         try:
             profe = UserProfe.objects.get(id_profesor=id_profesor)
-
-            for campo in ('numero_profe', 'genero_profe', 'rol_profe'):
+            for campo in ('numero_profe', 'full_name'):
                 if campo in data:
                     setattr(profe, campo, data[campo])
             profe.save()
-
-            try:
-                curp = InfCurp.objects.get(id_profesor=profe)
-                for campo in ('full_name', 'fecha_nacimiento'):
-                    if campo in data:
-                        setattr(curp, campo, data[campo])
-                curp.save()
-            except InfCurp.DoesNotExist:
-                if 'full_name' in data:
-                    InfCurp.objects.create(
-                        id_profesor=profe,
-                        full_name=data['full_name'],
-                        fecha_nacimiento=data.get('fecha_nacimiento'),
-                    )
-
             return {'success': True, 'profile': UserProfeSerializer(profe).data}
         except UserProfe.DoesNotExist:
             return {'success': False, 'error': 'Profesor no encontrado'}
