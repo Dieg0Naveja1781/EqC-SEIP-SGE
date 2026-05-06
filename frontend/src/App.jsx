@@ -5,6 +5,7 @@ import { MainPage } from './modules/main';
 import { SubirDoc } from './modules/upload-files/SubirDoc';
 import Login from "./modules/auth/login/Login";
 import Register from "./modules/auth/create_account/Register";
+import { ArchiveView } from "./shared/components/ArchiveView";
 
 function App() {
   return (
@@ -31,6 +32,9 @@ function App() {
         <Link to="/register" style={{ color: "white" }}>
           Registro
         </Link>
+        <Link to="/archive_view" style={{ color: "white", marginRight: "10px" }}>
+          Ver Archivo
+        </Link>
       </nav>
 
       <Routes>
@@ -44,6 +48,7 @@ function App() {
         <Route path="/subir_doc" element={<SubirDoc />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/archive_view" element={<ArchiveView />} />
       </Routes>
     </BrowserRouter>
   );
