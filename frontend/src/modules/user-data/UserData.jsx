@@ -116,6 +116,7 @@ export function UserData() {
           </div>
 
           <div className="campo-grupo">
+            <label>Acciones</label>
             <div className="campo-fila campo-fila-between">
               <button
                 type="button"

@@ -1,29 +1,113 @@
-/* Todas las reglas se aíslan dentro de .user-container para no contaminar
-   DashboardLayout u otras páginas cuando este CSS se carga globalmente. */
-
-.user-container {
-  padding: 20px 40px;
-}
-
-.user-container h2 {
-  margin-top: 0;
+.user-photo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   margin-bottom: 20px;
 }
 
-.user-container .user-card {
+/* Foto del usuario dentro del bloque .user-photo
+   (scoped para no afectar img de Login, Landing u otras páginas). */
+.user-photo img {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background-color: #6fbeec;
+  margin-left: -900px;
+}
+
+.profile-text {
+  margin-top: -130px;
+  margin-left: -350px;
+  font-size: 40px;
+  font-weight: bold;
+}
+
+.profile-undertitle {
+  margin-top: 15px;
+  margin-left: -650px;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.datos-editables {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-top: 60px;
+  margin-left: 80px;
+  margin-right: 80px;
+}
+
+.campo-grupo {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+/* Inputs específicos de los campos editables de UserData
+   (sobrescribe el padding/border base del Dashboard sin filtrarse). */
+.campo-grupo input {
+  width: 100%;
+  border-radius: 10px;
+  border: 2px solid #d9d9d9;
+  padding: 7px;
+}
+
+.campo-fila {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+}
+
+.select-id {
+  width: 100%;
+  border-radius: 10px;
+  border: 2px solid #d9d9d9;
+  padding: 7px;
+}
+
+.btn-agregar-id {
+  padding: 0 25px;
+}
+
+.select-puesto {
+  width: 200px;
+  border-radius: 10px;
+  border: 2px solid #d9d9d9;
+  padding: 7px;
+}
+
+.btn-gestionar {
+  padding: 0 20px;
+  border-radius: 10px;
+  background-color: white;
+  color: #1e1e1e;
+  border: 2px solid #d9d9d9;
+}
+
+.btn-guardar {
+  padding: 10px 30px;;
+}
+
+/* === Tarjeta azul que reemplaza .user-photo (datos del usuario logueado) === */
+.user-card {
   display: flex;
   align-items: center;
   gap: 20px;
   padding: 24px 28px;
-  margin: 0 auto 30px;
+  margin: 0 auto 20px;
   max-width: 720px;
-  background: linear-gradient(135deg, var(--color-main, #1d9ae2) 0%, var(--color-700, #136290) 100%);
+  background: linear-gradient(135deg, #1d9ae2 0%, #136290 100%);
   border-radius: 16px;
   box-shadow: 0 10px 25px rgba(13, 71, 104, 0.18);
   color: #ffffff;
 }
 
-.user-container .user-card-photo {
+.user-card-photo {
   width: 90px;
   height: 90px;
   border-radius: 50%;
@@ -37,108 +121,25 @@
   color: #ffffff;
   flex-shrink: 0;
   text-transform: uppercase;
+  margin-left: 0; /* anula el margin-left:-900px del selector global img */
 }
 
-.user-container .user-card-info {
+.user-card-info {
   display: flex;
   flex-direction: column;
   gap: 6px;
   min-width: 0;
-}
-
-.user-container .profile-text {
-  font-size: 1.6rem;
-  font-weight: 700;
   color: #ffffff;
-  line-height: 1.1;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.user-container .profile-undertitle {
-  font-size: 1rem;
+.user-card .profile-text {
+  color: #ffffff;
+  font-size: 1.6rem;
+  margin: 0;
+}
+
+.user-card .profile-undertitle {
   color: rgba(255, 255, 255, 0.85);
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.user-container .datos-editables {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  max-width: 720px;
-  margin: 0 auto;
-}
-
-.user-container .campo-grupo {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.user-container label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-s);
-}
-
-.user-container input,
-.user-container select {
-  width: 100%;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background-color: var(--bg-body);
-  color: var(--text-p);
-  padding: 10px 12px;
   font-size: 1rem;
-  font-family: inherit;
-}
-
-.user-container input:read-only {
-  opacity: 0.75;
-  cursor: not-allowed;
-}
-
-.user-container ::placeholder {
-  color: #999;
-}
-
-.user-container .campo-fila {
-  width: 100%;
-  display: flex;
-  flex-direction: row;
-  gap: 10px;
-  align-items: center;
-}
-
-.user-container .campo-fila-between {
-  justify-content: space-between;
-  flex-wrap: wrap;
-}
-
-.user-container button {
-  background-color: var(--color-main, #1984c2);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  padding: 10px 20px;
-  cursor: pointer;
-  white-space: nowrap;
-  font-weight: 600;
-}
-
-.user-container button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.user-container .btn-gestionar {
-  background-color: var(--bg-card);
-  color: var(--text-p);
-  border: 1px solid var(--border);
-}
-
-.user-container .btn-guardar {
-  background-color: var(--color-main, #1984c2);
+  margin: 0;
 }

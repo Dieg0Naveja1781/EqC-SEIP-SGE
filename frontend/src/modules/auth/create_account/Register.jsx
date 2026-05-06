@@ -158,7 +158,6 @@ function Register() {
                         {errors.confirmPassword && <span className="error-text">{errors.confirmPassword}</span>}
                     </div>
 
-
                     {serverMsg && (
                         <p style={{ color: '#ff6b6b', textAlign: 'center', marginTop: '0.5rem' }}>
                             {serverMsg}

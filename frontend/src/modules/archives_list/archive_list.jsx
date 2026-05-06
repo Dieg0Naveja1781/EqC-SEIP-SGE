@@ -118,7 +118,10 @@ export function ArchiveList() {
       return;
     }
 
-    const titulo = window.prompt("Título del documento:", archivo.name.replace(/\.pdf$/i, ""));
+    const titulo = window.prompt(
+      "Título del documento:",
+      archivo.name.replace(/\.pdf$/i, ""),
+    );
     if (!titulo) return;
 
     const cat = categorias[0];

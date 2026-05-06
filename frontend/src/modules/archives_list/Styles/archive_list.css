@@ -1,7 +1,10 @@
-* {
+/* Reset encapsulado al contenedor de la página
+   (antes era `*` global y se filtraba al resto de la app). */
+.archive_list_container_inner,
+.archive_list_container_inner *,
+.archive_list_container_inner *::before,
+.archive_list_container_inner *::after {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
 }
 
 .archive_list_container {
