@@ -1,5 +1,5 @@
 from django.contrib import admin
-<<<<<<< Updated upstream
+
 from .models import (
     UserProfe, InfCurp, CategoriasDoc, 
     InfCarpeta, DocDocumento, VersionDoc, 
@@ -22,7 +22,7 @@ admin.site.register(InfCarpeta)
 admin.site.register(VersionDoc)
 admin.site.register(DocExpediente)
 admin.site.register(ExpedienteContenido)
-=======
+
 from .models import Login, UserProfile
 
 
@@ -66,4 +66,4 @@ class UserProfileAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
->>>>>>> Stashed changes
+
