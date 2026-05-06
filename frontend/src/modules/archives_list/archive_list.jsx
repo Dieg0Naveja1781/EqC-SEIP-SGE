@@ -4,6 +4,15 @@ import { useTheme } from "../../shared/context/ThemeContext";
 import { documentsService } from "../../shared/api/documentsService";
 import { DashboardLayout } from "../../shared/components/DashboardLayout";
 
+// Lista de categorias de documentos
+const CATEGORIAS_FILTRO = [
+  "Docencia",
+  "Gestión Académica",
+  "Gestión Académica (Titulación)",
+  "Producción",
+  "Tutoría",
+];
+
 const MONTHS = [
   "Enero",
   "Febrero",
@@ -41,6 +50,23 @@ export function ArchiveList() {
   const [errorMsg, setErrorMsg] = useState("");
   const fileInputRef = useRef(null);
   const { isDark, toggleTheme } = useTheme();
+  const [tiposSeleccionados, setTiposSeleccionados] = useState([]);
+
+  // Filtra por tipo de documento, si no hay ninguno seleccionado muestra todo
+  const showFiles = tiposSeleccionados.length === 0
+    ? files
+    : files.filter((f) =>
+      f.type === "folder" ||
+      tiposSeleccionados.includes(f.categoria)
+    );
+
+  const handleTipoChange = (categoria) => {
+    setTiposSeleccionados((prev) =>
+      prev.includes(categoria)
+        ? prev.filter((t) => t !== categoria)
+        : [...prev, categoria]
+    );
+  };
 
   const cargarDatos = async () => {
     setLoading(true);
@@ -65,6 +91,7 @@ export function ArchiveList() {
         type: "pdf",
         name: d.titulo_doc,
         date: formatFecha(d.fecha_creacion),
+        categoria: d.categoria || null,
       }));
 
       setFiles([...carpetas, ...docs]);
@@ -281,10 +308,15 @@ export function ArchiveList() {
                 {/* === CHECKBOXES === */}
                 <div className="checkbox_label">Tipo de Documento</div>
                 <div className="checkbox_row">
-                  {["PDF", "Word", "Excel", "Imagen"].map((type) => (
-                    <label key={type} className="checkbox_item">
-                      <input type="checkbox" value={type} />
-                      {type}
+                  {CATEGORIAS_FILTRO.map((cat) => (
+                    <label key={cat} className="checkbox_item">
+                      <input
+                        type="checkbox"
+                        value={cat}
+                        checked={tiposSeleccionados.includes(cat)}
+                        onChange={() => handleTipoChange(cat)}
+                      />
+                      {cat}
                     </label>
                   ))}
                 </div>
@@ -299,7 +331,7 @@ export function ArchiveList() {
             {!loading && !errorMsg && files.length === 0 && (
               <p>No hay archivos. Crea una carpeta o sube un documento.</p>
             )}
-            {files.map((file) => (
+            {showFiles.map((file) => (
               <div key={file.id} className="file_row">
                 <span>{file.type === "folder" ? "📁" : "📄"}</span>
                 <span className="file_name">{file.name}</span>
