@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Styles/UserData.css";
 import { useTheme } from "../../shared/context/ThemeContext";
 import { userService } from "../../shared/api/userService";
@@ -6,6 +7,7 @@ import { DashboardLayout } from "../../shared/components/DashboardLayout";
 
 export function UserData() {
   const { isDark, toggleTheme } = useTheme();
+  const navigate = useNavigate();
 
   const [profile, setProfile] = useState(null);
   const [form, setForm] = useState({
@@ -77,14 +79,18 @@ export function UserData() {
       <div className="user-container">
         <h2>Información del Usuario</h2>
 
-        <div className="user-photo">
-          <img src="" alt="Foto del Usuario" />
-          <span className="profile-text">
-            {loading ? "Cargando…" : profile?.full_name || "Sin nombre"}
-          </span>
-          <span className="profile-undertitle">
-            {profile?.correo_profe || ""}
-          </span>
+        <div className="user-card">
+          <div className="user-card-photo" aria-hidden="true">
+            {(profile?.full_name || "?").trim().charAt(0).toUpperCase()}
+          </div>
+          <div className="user-card-info">
+            <span className="profile-text">
+              {loading ? "Cargando…" : profile?.full_name || "Sin nombre"}
+            </span>
+            <span className="profile-undertitle">
+              {profile?.correo_profe || ""}
+            </span>
+          </div>
         </div>
 
         <div className="datos-editables">
@@ -111,7 +117,11 @@ export function UserData() {
 
           <div className="campo-grupo">
             <div className="campo-fila campo-fila-between">
-              <button type="button" className="btn-gestionar">
+              <button
+                type="button"
+                className="btn-gestionar"
+                onClick={() => navigate("/perfil/cambiar-password")}
+              >
                 🔒 Gestionar Contraseña
               </button>
               <button

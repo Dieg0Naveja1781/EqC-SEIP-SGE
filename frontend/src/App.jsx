@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LandingPage from "./modules/landing-page/pages/landing.jsx";
 import { MainPage } from "./modules/main";
 import { UserData } from "./modules/user-data/UserData";
+import { ChangePassword } from "./modules/user-data/ChangePassword";
 import { ArchiveList } from "./modules/archives_list/archive_list";
 import { SubirDoc } from './modules/upload-files/SubirDoc';
 import Login from "./modules/auth/login/Login";
@@ -20,6 +21,7 @@ function App() {
         {/* Aquí deben agregar las rutas para cada uno de los módulos */}
         <Route path="/main" element={<MainPage />} />
         <Route path="/perfil" element={<UserData />} />
+        <Route path="/perfil/cambiar-password" element={<ChangePassword />} />
         <Route path="/archive_list" element={<ArchiveList />} />
         <Route path="/subir_doc" element={<SubirDoc />} />
         <Route path="/login" element={<Login />} />

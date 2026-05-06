@@ -7,32 +7,61 @@
 }
 
 .navbar {
-  display: flex;
-  align-items: center;
-  justify-content: center; 
-  padding: 1rem 2rem;
-  background-color: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
   position: sticky;
   top: 0;
   z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 1rem 2rem;
+  background-color: #1d9ae2; /* color base; las capas dan profundidad encima */
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  overflow: hidden; /* recorta las capas parallax para que no salgan del header */
+  min-height: 70px;
 }
 
-.navbar-brand {
-  background: none;
-  border: none;
-  border-radius: 0;
-  padding: 0;
-  box-shadow: none;
+.navbar-brand-text {
+  position: relative;
+  z-index: 2;
+  color: #ffffff;
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-.navbar-logo {
-  height: 40px;
+/* Contenedor de las capas decorativas del header */
+.navbar-parallax {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+}
+
+.navbar-parallax-layer {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+.navbar-parallax-layer img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   width: auto;
-  object-fit: contain;
-  border-radius: 0;        /* elimina cualquier redondeo */
-  background: transparent;
-  box-shadow: none;
+  height: 200%;
+  max-width: none;
+  object-fit: cover;
+}
+
+.navbar-parallax-layer.back img {
+  opacity: 0.18;
+}
+
+.navbar-parallax-layer.front img {
+  opacity: 0.32;
 }
 
 .main-content {
@@ -41,10 +70,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden; 
+  overflow: hidden;
   background-color: #eef2f7;
   min-height: 80vh;
 }
+
 .parallax-layer {
   position: absolute;
   top: 0;
@@ -59,7 +89,7 @@
 .parallax-layer img {
   position: absolute;
   top: 50%;
-  left: 120%;          
+  left: 120%;
   transform: translate(-50%, -50%);
   width: auto;
   height: auto;
@@ -76,6 +106,14 @@
   align-items: center;
   text-align: center;
   padding: 3rem 2rem;
+  gap: 1rem;
+}
+
+.main-content-inner .main-logo {
+  height: 130px;
+  width: auto;
+  object-fit: contain;
+  margin-bottom: 0.5rem;
 }
 
 .main-content-inner h1 {
@@ -83,7 +121,7 @@
   font-weight: 800;
   color: #0f172a;
   margin-bottom: 0.5rem;
-  text-shadow: 0 1px 3px rgba(255,255,255,0.6);
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.6);
 }
 
 .auth-buttons {
@@ -109,7 +147,7 @@
 }
 
 .btn-outline {
-  background-color: rgba(255,255,255,0.8);
+  background-color: rgba(255, 255, 255, 0.8);
   color: #374151;
   border: 1.5px solid #d1d5db;
 }
