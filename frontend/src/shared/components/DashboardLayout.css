@@ -1,6 +1,5 @@
 .dashboard-layout {
   display: flex;
-
   background-color: var(--bg-body);
   color: var(--text-primary);
   transition: all 0.3s ease;
@@ -195,7 +194,7 @@ input:checked + .theme-slider:before {
 }
 
 .dashboard-layout button {
-  background-color: #1984c2;
+  
   color: white;
   border: none;
   border-radius: 50px;
