@@ -1,11 +1,14 @@
 import { useEffect, useRef } from "react";
+import { useTheme } from "../../../shared/context/ThemeContext";
 import Footer from "../components/Footer";
 import "../styles/landing.css";
 import logo from "../../../assets/logotipo.png";
+import logoOscuro from "../../../assets/Logotipo_o.png";
 import bgStripes from "../../../assets/bg-stripes.png";
 import bgIcons from "../../../assets/bg-icons.png";
 
 function LandingPage() {
+  const { isDark, toggleTheme } = useTheme();
   // Capas parallax del fondo del logo (se desplazan hacia abajo con el scroll)
   const layer1Ref = useRef(null);
   const layer2Ref = useRef(null);
@@ -41,6 +44,19 @@ function LandingPage() {
     <div className="lpage">
       <header className="navbar">
         <div className="navbar-brand-text">EQC Software</div>
+        <div className="theme-switcher-container">
+          <label className="theme-toggle-switch">
+            <input
+              type="checkbox"
+              checked={isDark}
+              onChange={toggleTheme}
+            />
+            <span className="theme-slider">
+              <span className="theme-icon">☀️</span>
+              <span className="theme-icon">🌙</span>
+            </span>
+          </label>
+        </div>
       </header>
 
       <main className="main-content">
@@ -54,7 +70,7 @@ function LandingPage() {
         </div>
 
         <div className="main-content-inner">
-          <img src={logo} alt="Logotipo" className="main-logo" />
+          <img src={isDark ? logoOscuro : logo} alt="Logotipo" className="main-logo" />
 
           <div className="auth-buttons">
             <a href="/login" className="btn btn-primary">Iniciar Sesión</a>
