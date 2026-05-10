@@ -4,6 +4,15 @@ import { useTheme } from "../../shared/context/ThemeContext";
 import { documentsService } from "../../shared/api/documentsService";
 import { DashboardLayout } from "../../shared/components/DashboardLayout";
 
+// Lista de categorias de documentos
+const CATEGORIAS_FILTRO = [
+  "Docencia",
+  "Gestión Académica",
+  "Gestión Académica (Titulación)",
+  "Producción",
+  "Tutoría",
+];
+
 const MONTHS = [
   "Enero",
   "Febrero",
@@ -41,6 +50,23 @@ export function ArchiveList() {
   const [errorMsg, setErrorMsg] = useState("");
   const fileInputRef = useRef(null);
   const { isDark, toggleTheme } = useTheme();
+  const [tiposSeleccionados, setTiposSeleccionados] = useState([]);
+
+  // Filtra por tipo de documento, si no hay ninguno seleccionado muestra todo
+  const showFiles = tiposSeleccionados.length === 0
+    ? files
+    : files.filter((f) =>
+      f.type === "folder" ||
+      tiposSeleccionados.includes(f.categoria)
+    );
+
+  const handleTipoChange = (categoria) => {
+    setTiposSeleccionados((prev) =>
+      prev.includes(categoria)
+        ? prev.filter((t) => t !== categoria)
+        : [...prev, categoria]
+    );
+  };
 
   const cargarDatos = async () => {
     setLoading(true);
@@ -65,6 +91,7 @@ export function ArchiveList() {
         type: "pdf",
         name: d.titulo_doc,
         date: formatFecha(d.fecha_creacion),
+        categoria: d.categoria || null,
       }));
 
       setFiles([...carpetas, ...docs]);
@@ -112,11 +139,20 @@ export function ArchiveList() {
     e.target.value = "";
     if (!archivo) return;
 
-    const titulo = window.prompt("Título del documento:", archivo.name);
+    const ext = archivo.name.split(".").pop()?.toLowerCase();
+    if (ext !== "pdf" || (archivo.type && archivo.type !== "application/pdf")) {
+      alert("Solo se permiten archivos PDF (.pdf)");
+      return;
+    }
+
+    const titulo = window.prompt(
+      "Título del documento:",
+      archivo.name.replace(/\.pdf$/i, ""),
+    );
     if (!titulo) return;
 
-    const id_tipo = categorias[0]?.id_tipo;
-    if (!id_tipo) {
+    const cat = categorias[0];
+    if (!cat?.id_tipo) {
       alert("No hay categorías de documento disponibles.");
       return;
     }
@@ -126,7 +162,9 @@ export function ArchiveList() {
       const res = await documentsService.uploadDocument({
         archivo,
         titulo_doc: titulo,
-        id_tipo,
+        id_tipo: cat.id_tipo,
+        categoria: cat.nombre_categoria,
+        metadatos: {},
       });
       if (res?.success) {
         cargarDatos();
@@ -146,6 +184,7 @@ export function ArchiveList() {
         <input
           ref={fileInputRef}
           type="file"
+          accept="application/pdf,.pdf"
           style={{ display: "none" }}
           onChange={handleArchivoSeleccionado}
         />
@@ -281,10 +320,15 @@ export function ArchiveList() {
                 {/* === CHECKBOXES === */}
                 <div className="checkbox_label">Tipo de Documento</div>
                 <div className="checkbox_row">
-                  {["PDF", "Word", "Excel", "Imagen"].map((type) => (
-                    <label key={type} className="checkbox_item">
-                      <input type="checkbox" value={type} />
-                      {type}
+                  {CATEGORIAS_FILTRO.map((cat) => (
+                    <label key={cat} className="checkbox_item">
+                      <input
+                        type="checkbox"
+                        value={cat}
+                        checked={tiposSeleccionados.includes(cat)}
+                        onChange={() => handleTipoChange(cat)}
+                      />
+                      {cat}
                     </label>
                   ))}
                 </div>
@@ -299,7 +343,7 @@ export function ArchiveList() {
             {!loading && !errorMsg && files.length === 0 && (
               <p>No hay archivos. Crea una carpeta o sube un documento.</p>
             )}
-            {files.map((file) => (
+            {showFiles.map((file) => (
               <div key={file.id} className="file_row">
                 <span>{file.type === "folder" ? "📁" : "📄"}</span>
                 <span className="file_name">{file.name}</span>

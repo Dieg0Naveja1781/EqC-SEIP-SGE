@@ -8,6 +8,20 @@ function getCookie(name) {
   return match ? decodeURIComponent(match[2]) : null;
 }
 
+// Devuelve el id_profesor guardado en localStorage por authService.
+// Se manda como header X-Profesor-Id al backend para evitar depender
+// de la cookie de sesión en desarrollo (sólo se usa si DEBUG=True
+// del lado del backend).
+function getProfesorId() {
+  try {
+    const raw = localStorage.getItem("profesor");
+    const profe = raw ? JSON.parse(raw) : null;
+    return profe?.id_profesor ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function parseResponse(response) {
   const contentType = response.headers.get("content-type") || "";
   if (contentType.includes("application/json")) {
@@ -19,6 +33,7 @@ async function parseResponse(response) {
 async function request(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
   const csrfToken = getCookie("csrftoken");
+  const profesorId = getProfesorId();
 
   const headers = {
     Accept: "application/json",
@@ -26,6 +41,7 @@ async function request(endpoint, options = {}) {
       ? { "Content-Type": "application/json" }
       : {}),
     ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
+    ...(profesorId ? { "X-Profesor-Id": String(profesorId) } : {}),
     ...(options.headers || {}),
   };
 

@@ -1,25 +1,10 @@
-import { useState, useRef, useEffect } from "react";
-import "./SubirDoc.css";
+import { useState, useRef } from "react";
+import "./EditarDoc.css";
 import { DashboardLayout } from "../../shared/components/DashboardLayout";
-import { documentsService } from "../../shared/api/documentsService";
 
-// Reglas numéricas por categoría: el frontend valida antes de enviar y el
-// backend revalida en SubidaDocumentoSerializer.NUMERIC_RULES.
-const REGLAS_NUMERICAS = {
-  Docencia: { cargaHoraria: { min: 0, integer: true, label: "Carga Horaria" } },
-  Titulacion: { avance: { min: 0, max: 100, label: "Avance Actual" } },
-  Tutoria: { numeroAlumnos: { min: 0, integer: true, label: "Número de Alumnos" } },
-};
-
-export function SubirDoc() {
-  const [file, setFile] = useState(null);
-  const [dragging, setDragging] = useState(false);
-  const fileInputRef = useRef(null);
-
+export function EditarDoc() {
   const [categoria, setCategoria] = useState("Docencia");
   const [formData, setFormData] = useState({});
-  const [categorias, setCategorias] = useState([]);
-  const [subiendo, setSubiendo] = useState(false);
 
   const [alertMsg, setAlertMsg] = useState({
     visible: false,
@@ -27,20 +12,6 @@ export function SubirDoc() {
     type: "",
   });
   const timerRef = useRef(null);
-
-  // Carga las 5 categorías reales del backend al montar.
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await documentsService.listCategories();
-        if (!cancelled) setCategorias(res?.categorias || []);
-      } catch {
-        /* alerta diferida si falla la carga de categorías */
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
 
   //función para mostrar las alertas
   const mostrarAlerta = (text, type = "error") => {
@@ -53,49 +24,6 @@ export function SubirDoc() {
     timerRef.current = setTimeout(() => {
       setAlertMsg({ visible: false, text: "", type: "" });
     }, 3500);
-  };
-
-  //Lógica para los archivos
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setDragging(true);
-  };
-  const handleDragLeave = () => {
-    setDragging(false);
-  };
-
-  // Solo aceptamos PDF. El backend revalida.
-  const esPdfValido = (f) => {
-    const ext = f.name.split(".").pop()?.toLowerCase();
-    return ext === "pdf" && (!f.type || f.type === "application/pdf");
-  };
-
-  const aceptarArchivo = (f) => {
-    if (!esPdfValido(f)) {
-      mostrarAlerta("⚠️ Solo se permiten archivos PDF (.pdf)", "error");
-      return;
-    }
-    setFile(f);
-    setFormData((prev) => ({
-      ...prev,
-      nombreNube: f.name.replace(/\.pdf$/i, ""),
-    }));
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setDragging(false);
-    const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile) aceptarArchivo(droppedFile);
-  };
-
-  const handleFileSelect = (e) => {
-    const selectedFile = e.target.files[0];
-    if (selectedFile) aceptarArchivo(selectedFile);
-  };
-
-  const triggerFileSelect = () => {
-    fileInputRef.current.click();
   };
 
   //lógica del formulario
@@ -111,43 +39,8 @@ export function SubirDoc() {
     setFormData({ nombreNube: nombrePreservado });
   };
 
-  const validarNumericos = () => {
-    const reglas = REGLAS_NUMERICAS[categoria] || {};
-    for (const [campo, regla] of Object.entries(reglas)) {
-      const raw = formData[campo];
-      if (raw === undefined || raw === "") continue;
-      const num = Number(raw);
-      if (Number.isNaN(num)) {
-        mostrarAlerta(`❌ "${regla.label}" debe ser numérico`, "error");
-        return false;
-      }
-      if (regla.integer && !Number.isInteger(num)) {
-        mostrarAlerta(`❌ "${regla.label}" debe ser un entero`, "error");
-        return false;
-      }
-      if (regla.min !== undefined && num < regla.min) {
-        mostrarAlerta(`❌ "${regla.label}" debe ser >= ${regla.min}`, "error");
-        return false;
-      }
-      if (regla.max !== undefined && num > regla.max) {
-        mostrarAlerta(`❌ "${regla.label}" debe ser <= ${regla.max}`, "error");
-        return false;
-      }
-    }
-    return true;
-  };
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-
-    if (!file) {
-      mostrarAlerta("⚠️ Por favor, selecciona un archivo primero.", "warning");
-      return;
-    }
-    if (!esPdfValido(file)) {
-      mostrarAlerta("⚠️ Solo se permiten archivos PDF (.pdf)", "error");
-      return;
-    }
 
     const camposObligatorios = {
       Docencia: [
@@ -211,48 +104,15 @@ export function SubirDoc() {
       return;
     }
 
-    if (!validarNumericos()) return;
+    console.log("Datos enviados:", {
+      categoria,
+      ...formData,
+    });
+    mostrarAlerta("✅ Cambios aplicados con éxito.", "success");
 
-    const id_tipo = categorias.find((c) => c.nombre_categoria === categoria)?.id_tipo;
-    if (!id_tipo) {
-      mostrarAlerta("❌ Categoría no disponible en el servidor.", "error");
-      return;
-    }
-
-    // metadatos = todo el form excepto el título
-    const metadatos = { ...formData };
-    delete metadatos.nombreNube;
-
-    setSubiendo(true);
-    try {
-      const res = await documentsService.uploadDocument({
-        archivo: file,
-        titulo_doc: formData.nombreNube,
-        id_tipo,
-        categoria,
-        metadatos,
-      });
-      if (res?.success) {
-        mostrarAlerta(`✅ ¡Archivo "${file.name}" subido con éxito!`, "success");
-        setFile(null);
-        setFormData({});
-        setCategoria("Docencia");
-        if (fileInputRef.current) fileInputRef.current.value = "";
-      } else {
-        mostrarAlerta(res?.error || "❌ No se pudo subir el archivo", "error");
-      }
-    } catch (err) {
-      const data = err?.data || {};
-      const msg =
-        data.error ||
-        Object.entries(data)
-          .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`)
-          .join(" | ") ||
-        "❌ Error al subir el archivo";
-      mostrarAlerta(msg, "error");
-    } finally {
-      setSubiendo(false);
-    }
+    // LIMPIEZA
+    setFormData({});
+    setCategoria("Docencia");
   };
 
   const inputProps = (name, placeholder) => ({
@@ -518,7 +378,7 @@ export function SubirDoc() {
   };
 
   return (
-    <DashboardLayout title="Subir Documento">
+    <DashboardLayout title="Editar Documento">
       {/* NOTIFICACIÓN FLOTANTE (TOAST) */}
       {alertMsg.visible && (
         <div
@@ -551,41 +411,10 @@ export function SubirDoc() {
 
       <div className="upload-section">
         <div className="upload-card">
-          <h2 style={{ marginTop: 0 }}>Nuevo Registro</h2>
+          <h2 style={{ marginTop: 0 }}>Editar Registro</h2>
           <p style={{ color: "var(--text-s)", marginBottom: "30px" }}>
             Los campos con * son obligatorios.
           </p>
-
-          <input
-            type="file"
-            ref={fileInputRef}
-            accept="application/pdf,.pdf"
-            style={{ display: "none" }}
-            onChange={handleFileSelect}
-          />
-
-          <div
-            className={`drop-zone ${dragging ? "dragging" : ""}`}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            onClick={triggerFileSelect}
-            style={{
-              border: dragging
-                ? "2px solid var(--text-p)"
-                : "2px dashed var(--color-500)",
-              backgroundColor: dragging
-                ? "rgba(29, 154, 226, 0.2)"
-                : "rgba(29, 154, 226, 0.05)",
-            }}
-          >
-            <span style={{ fontSize: "2.5rem" }}>{file ? "📄" : "📁"}</span>
-            <p>
-              {file
-                ? `Archivo: ${file.name}`
-                : "Selecciona o arrastra un archivo *"}
-            </p>
-          </div>
 
           <form className="form-grid" onSubmit={handleSubmit}>
             <div className="field-group">
@@ -630,12 +459,8 @@ export function SubirDoc() {
               ></textarea>
             </div>
 
-            <button
-              className="btn-submit full-width"
-              type="submit"
-              disabled={subiendo}
-            >
-              {subiendo ? "Subiendo…" : "Subir a mi Unidad"}
+            <button className="btn-submit full-width" type="submit">
+              Editar
             </button>
           </form>
         </div>

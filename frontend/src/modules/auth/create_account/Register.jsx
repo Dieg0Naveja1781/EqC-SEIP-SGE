@@ -16,7 +16,6 @@ function Register() {
         email: '',
         password: '',
         confirmPassword: '',
-        rol_profe: 'INVESTIGADOR',
     });
 
     const [errors, setErrors] = useState({});
@@ -63,7 +62,6 @@ function Register() {
                 password: formData.password,
                 password2: formData.confirmPassword,
                 full_name: formData.name,
-                rol_profe: formData.rol_profe,
             });
 
             if (result?.success) {
@@ -158,19 +156,6 @@ function Register() {
                             onChange={handleChange}
                         />
                         {errors.confirmPassword && <span className="error-text">{errors.confirmPassword}</span>}
-                    </div>
-
-                    <div className="form-group">
-                        <label htmlFor="rol_profe">Rol</label>
-                        <select
-                            id="rol_profe"
-                            value={formData.rol_profe}
-                            onChange={handleChange}
-                        >
-                            <option value="INVESTIGADOR">Investigador</option>
-                            <option value="MEDIO_TIEMPO">Profesor Medio Tiempo</option>
-                            <option value="TIEMPO_COMPLETO">Profesor Tiempo Completo</option>
-                        </select>
                     </div>
 
                     {serverMsg && (

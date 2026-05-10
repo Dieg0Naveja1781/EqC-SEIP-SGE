@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework.parsers import MultiPartParser, FormParser
+from django.conf import settings
 from django.http import FileResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -14,7 +15,17 @@ import os
 
 
 def _get_id_profesor(request):
-    return request.session.get('id_profesor')
+    """Obtiene id_profesor de la sesión, con fallback al header
+    X-Profesor-Id sólo en DEBUG (sirve cuando el navegador no
+    manda la cookie de sesión)."""
+    sid = request.session.get('id_profesor')
+    if sid:
+        return sid
+    if getattr(settings, 'DEBUG', False):
+        header = request.headers.get('X-Profesor-Id')
+        if header and header.isdigit():
+            return int(header)
+    return None
 
 
 def _no_auth():
@@ -138,6 +149,8 @@ class DocumentoViewSet(viewsets.ViewSet):
             archivo=serializer.validated_data['archivo'],
             titulo_doc=serializer.validated_data['titulo_doc'],
             id_tipo=serializer.validated_data['id_tipo'],
+            categoria=serializer.validated_data['categoria'],
+            metadatos=serializer.validated_data.get('metadatos') or {},
             id_folder=serializer.validated_data.get('id_folder'),
             fecha_expedicion=serializer.validated_data.get('fecha_expedicion'),
         )
@@ -185,7 +198,6 @@ class DocumentoViewSet(viewsets.ViewSet):
             id_doc=pk,
             id_profesor=id_profesor,
             archivo=archivo,
-            comentario_cambio=request.data.get('comentario_cambio', ''),
         )
         return Response(
             resultado,
