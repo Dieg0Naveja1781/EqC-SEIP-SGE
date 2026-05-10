@@ -10,6 +10,7 @@ import { SubirDoc } from './modules/upload-files/SubirDoc';
 import { EditarDoc } from "./modules/Editar Archivo/EditarDoc";
 import Login from "./modules/auth/login/Login";
 import Register from "./modules/auth/create_account/Register";
+import { ArchiveView } from "./shared/components/ArchiveView";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
         <Route path="/editar_doc" element={<EditarDoc />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/archive_view" element={<ArchiveView />} />
       </Routes>
     </BrowserRouter>
   );
