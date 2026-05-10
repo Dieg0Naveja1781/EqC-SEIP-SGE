@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { authService, saveSessionProfesor } from "../../../shared/api/authService";
 import logotipo from "../../../assets/logotipo.png";
+import logotipoOscuro from "../../../assets/Logotipo_o.png";
 import "../Styles/App.css";
 
 const Login = () => {
@@ -71,7 +72,7 @@ const Login = () => {
 
       {/* Brand Section */}
       <div className="brand-section">
-        <img src={logotipo} alt="Logotipo" className="brand-logo" />
+        <img src={isDark ? logotipoOscuro : logotipo} alt="Logotipo" className="brand-logo" />
       </div>
 
       {/* Tarjeta de Login */}
