@@ -2,6 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
+from django.conf import settings
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from .serializers import LoginSerializer
@@ -9,8 +10,22 @@ from .services import ServicioUsuarios
 
 
 def _get_id_profesor(request):
-    """Obtiene el id_profesor almacenado en la sesión tras login"""
-    return request.session.get('id_profesor')
+    """Obtiene el id_profesor de la sesión.
+
+    En modo DEBUG (desarrollo) acepta también un header
+    `X-Profesor-Id` como fallback cuando la cookie de sesión no
+    está disponible (por ejemplo cuando el front corre en
+    localhost y el back en 127.0.0.1, o si el navegador bloquea
+    cookies de terceros). NO usar en producción.
+    """
+    sid = request.session.get('id_profesor')
+    if sid:
+        return sid
+    if getattr(settings, 'DEBUG', False):
+        header = request.headers.get('X-Profesor-Id')
+        if header and header.isdigit():
+            return int(header)
+    return None
 
 
 def _no_auth():

@@ -134,6 +134,11 @@ CORS_ALLOWED_ORIGINS = [
 
 CORS_ALLOW_CREDENTIALS = True
 
+# Permitir el header personalizado X-Profesor-Id usado como fallback
+# de autenticación cuando la cookie de sesión no llega (sólo en DEBUG).
+from corsheaders.defaults import default_headers
+CORS_ALLOW_HEADERS = list(default_headers) + ['x-profesor-id']
+
 # ==================== CONFIGURACIÓN DE SEGURIDAD ====================
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:5173',
