@@ -139,3 +139,26 @@ class VersionDoc(models.Model):
 
     def __str__(self):
         return f"v{self.num_version}"
+
+
+class CategoriaCustom(models.Model):
+    """Categoría de documento personalizada creada por un profesor."""
+    id_cat_custom = models.AutoField(primary_key=True)
+    id_profesor = models.ForeignKey(
+        UserProfe, on_delete=models.CASCADE,
+        db_column='id_profesor', related_name='categorias_custom',
+    )
+    nombre = models.CharField(max_length=100)
+    # Lista de claves de campos, e.g. ["cicloEscolar", "grupo", "sede"]
+    campos = models.JSONField(default=list)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'categoria_custom'
+        verbose_name = 'Categoría Personalizada'
+        verbose_name_plural = 'Categorías Personalizadas'
+        unique_together = (('id_profesor', 'nombre'),)
+        ordering = ['nombre']
+
+    def __str__(self):
+        return f"{self.nombre} (prof. {self.id_profesor_id})"

@@ -6,12 +6,13 @@ from django.db import transaction
 from modules.usuarios_backend.models import UserProfe
 from .models import (
     CategoriasDoc, InfCarpeta, DocDocumento, DocExpediente,
-    ExpedienteContenido, VersionDoc,
+    ExpedienteContenido, VersionDoc, CategoriaCustom,
 )
 from .serializers import (
     DocExpedienteSerializer, DocDocumentoSerializer,
     InfCarpetaSerializer, VersionDocSerializer,
     ExpedienteContenidoSerializer, CategoriaDocSerializer,
+    CategoriaCustomSerializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -102,7 +103,19 @@ class ServicioExpedientes:
                         id_folder=None, fecha_expedicion=None):
         try:
             profe = UserProfe.objects.get(id_profesor=id_profesor)
-            categoria_obj = CategoriasDoc.objects.get(id_tipo=id_tipo)
+
+            # Si id_tipo no viene o la categoria es custom, resolver id_tipo
+            # usando la categoria "Gestion" como comodin generico del backend.
+            CATEGORIAS_FIJAS = ['Docencia', 'Gestion', 'Titulacion', 'Produccion', 'Tutoria']
+            if id_tipo is None or categoria not in CATEGORIAS_FIJAS:
+                try:
+                    categoria_obj = CategoriasDoc.objects.get(nombre_categoria='Gestion')
+                except CategoriasDoc.DoesNotExist:
+                    categoria_obj = CategoriasDoc.objects.first()
+                    if not categoria_obj:
+                        return {'success': False, 'error': 'No hay categorias disponibles en el servidor'}
+            else:
+                categoria_obj = CategoriasDoc.objects.get(id_tipo=id_tipo)
 
             carpeta = None
             if id_folder:
@@ -258,3 +271,54 @@ class ServicioExpedientes:
     def listar_categorias():
         cats = CategoriasDoc.objects.all()
         return {'success': True, 'categorias': CategoriaDocSerializer(cats, many=True).data}
+
+    # ---------------- CATEGORÍAS CUSTOM ----------------
+    @staticmethod
+    def listar_categorias_custom(id_profesor):
+        try:
+            cats = CategoriaCustom.objects.filter(id_profesor=id_profesor)
+            return {
+                'success': True,
+                'categorias_custom': CategoriaCustomSerializer(cats, many=True).data,
+            }
+        except Exception as e:
+            logger.error(f"Error al listar categorias custom: {str(e)}")
+            return {'success': False, 'error': str(e)}
+
+    @staticmethod
+    def crear_categoria_custom(id_profesor, nombre, campos):
+        try:
+            profe = UserProfe.objects.get(id_profesor=id_profesor)
+
+            if CategoriaCustom.objects.filter(id_profesor=profe, nombre=nombre).exists():
+                return {'success': False, 'error': f"Ya existe una categoría llamada '{nombre}'"}
+
+            cat = CategoriaCustom.objects.create(
+                id_profesor=profe,
+                nombre=nombre,
+                campos=campos,
+            )
+            logger.info(f"Categoria custom creada: '{nombre}' (profesor {id_profesor})")
+            return {'success': True, 'categoria': CategoriaCustomSerializer(cat).data}
+        except UserProfe.DoesNotExist:
+            return {'success': False, 'error': 'Profesor no encontrado'}
+        except Exception as e:
+            logger.error(f"Error al crear categoria custom: {str(e)}")
+            return {'success': False, 'error': str(e)}
+
+    @staticmethod
+    def eliminar_categoria_custom(id_cat_custom, id_profesor):
+        try:
+            cat = CategoriaCustom.objects.get(
+                id_cat_custom=id_cat_custom,
+                id_profesor=id_profesor,
+            )
+            nombre = cat.nombre
+            cat.delete()
+            logger.info(f"Categoria custom eliminada: '{nombre}' (profesor {id_profesor})")
+            return {'success': True, 'mensaje': f"Categoría '{nombre}' eliminada"}
+        except CategoriaCustom.DoesNotExist:
+            return {'success': False, 'error': 'Categoría no encontrada'}
+        except Exception as e:
+            logger.error(f"Error al eliminar categoria custom: {str(e)}")
+            return {'success': False, 'error': str(e)}
