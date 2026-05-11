@@ -1,16 +1,18 @@
-img {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  background-color: #6fbeec;
-  margin-left: -900px;
-}
-
 .user-photo {
   display: flex;
   flex-direction: column;
   align-items: center;
   margin-bottom: 20px;
+}
+
+/* Foto del usuario dentro del bloque .user-photo
+   (scoped para no afectar img de Login, Landing u otras páginas). */
+.user-photo img {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background-color: #6fbeec;
+  margin-left: -900px;
 }
 
 .profile-text {
@@ -45,12 +47,9 @@ img {
   align-items: flex-start;
 }
 
-::placeholder {
-  color: #999;
-  margin-left: 10px;
-}
-
-input {
+/* Inputs específicos de los campos editables de UserData
+   (sobrescribe el padding/border base del Dashboard sin filtrarse). */
+.campo-grupo input {
   width: 100%;
   border-radius: 10px;
   border: 2px solid #d9d9d9;
@@ -69,15 +68,6 @@ input {
   border-radius: 10px;
   border: 2px solid #d9d9d9;
   padding: 7px;
-}
-
-button {
-  background-color: #1984C2;
-  color: white;
-  border: none;
-  border-radius: 50px;
-  cursor: pointer;
-    white-space: nowrap;
 }
 
 .btn-agregar-id {
@@ -101,4 +91,101 @@ button {
 
 .btn-guardar {
   padding: 10px 30px;;
+}
+
+/* === Tarjeta azul que reemplaza .user-photo (datos del usuario logueado) === */
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px 28px;
+  margin: 0 auto 20px;
+  max-width: 720px;
+  background: linear-gradient(135deg, #1d9ae2 0%, #136290 100%);
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(13, 71, 104, 0.18);
+  color: #ffffff;
+}
+
+.user-card-photo {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.18);
+  border: 3px solid rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: #ffffff;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  margin-left: 0; /* anula el margin-left:-900px del selector global img */
+}
+
+.user-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  color: #ffffff;
+}
+
+.user-card .profile-text {
+  color: #ffffff;
+  font-size: 1.6rem;
+  margin: 0;
+}
+
+.user-card .profile-undertitle {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* ============================================================
+   Overrides sobre los estilos base del Dashboard
+   ------------------------------------------------------------
+   .dashboard-layout button (0,1,1) le gana a .btn-X (0,1,0).
+   Prefijando con .user-container subimos la especificidad a
+   (0,2,0) y recuperamos el aspecto original de cada elemento.
+   ============================================================ */
+.user-container .btn-gestionar {
+  padding: 0 20px;
+  border-radius: 10px;
+  background-color: white;
+  color: #1e1e1e;
+  border: 2px solid #d9d9d9;
+}
+
+.user-container .btn-guardar {
+  padding: 10px 30px;
+  background-color: #1984c2;
+  color: white;
+  border: none;
+  border-radius: 50px;
+}
+
+/* Selects dentro de UserData con estilo gris claro propio
+   (sobreescriben el padding/border del Dashboard input/select). */
+.user-container .select-id,
+.user-container .select-puesto {
+  width: 100%;
+  border-radius: 10px;
+  border: 2px solid #d9d9d9;
+  padding: 7px;
+  background-color: white;
+  color: #1e1e1e;
+}
+
+.user-container .select-puesto {
+  width: 200px;
+}
+
+/* El contenedor llena todo el ancho disponible del page-content
+   sin chocar con header/sidebar. */
+.user-container {
+  width: 100%;
+  box-sizing: border-box;
 }

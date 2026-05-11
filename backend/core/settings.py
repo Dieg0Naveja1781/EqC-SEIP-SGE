@@ -24,17 +24,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'modules.usuarios_backend',
-    'modules.gestion_expedientes_backend',
 
-    
     # Aplicaciones terceras
     'rest_framework',
     'corsheaders',
-    
-    # Aplicaciones locales
 
-    'api',
+    # Aplicaciones locales (la BD vive aquí)
+    'modules.usuarios_backend.apps.UsuariosBackendConfig',
+    'modules.gestion_expedientes_backend.apps.GestionExpedientesBackendConfig',
 ]
 
 MIDDLEWARE = [
@@ -101,6 +98,10 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Media files (archivos subidos por los profesores)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -124,18 +125,27 @@ REST_FRAMEWORK = {
 # Permitir solicitudes desde el frontend (localhost:5173 durante desarrollo)
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
+    'http://localhost:5174',
     'http://localhost:3000',
     'http://127.0.0.1:5173',
+    'http://127.0.0.1:5174',
     'http://127.0.0.1:3000',
 ]
 
 CORS_ALLOW_CREDENTIALS = True
 
+# Permitir el header personalizado X-Profesor-Id usado como fallback
+# de autenticación cuando la cookie de sesión no llega (sólo en DEBUG).
+from corsheaders.defaults import default_headers
+CORS_ALLOW_HEADERS = list(default_headers) + ['x-profesor-id']
+
 # ==================== CONFIGURACIÓN DE SEGURIDAD ====================
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:5173',
+    'http://localhost:5174',
     'http://localhost:3000',
     'http://127.0.0.1:5173',
+    'http://127.0.0.1:5174',
     'http://127.0.0.1:3000',
 ]
 

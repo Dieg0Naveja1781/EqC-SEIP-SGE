@@ -24,7 +24,8 @@ __pycache__/
 *.sqlite3
 db.sqlite3-journal
 /static/
-/media/
+backend/media/*
+!backend/media/.gitkeep
 .pytest_cache/
 .coverage
 htmlcov/
@@ -61,6 +62,8 @@ desktop.ini
 *.log
 *.tmp
 *.temp
+iniciar.bat
+detener.bat
 
 # User-specific files
 *.rsuser

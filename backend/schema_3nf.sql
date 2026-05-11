@@ -2,51 +2,24 @@
 -- SISTEMA GESTOR DE EXPEDIENTES - SCHEMA NORMALIZADO A 3NF
 -- ============================================================================
 -- Base de datos normalizada a tercera forma normal (3NF)
--- Fecha: Marzo 2026
 -- ============================================================================
 
 -- ============================================================================
--- TABLA 1: user_profe - Usuarios del Sistema
+-- TABLA 1: user_profe - Usuarios del Sistema (Profesores/Investigadores)
 -- ============================================================================
 CREATE TABLE user_profe (
     id_profesor SERIAL PRIMARY KEY,
     correo_profe VARCHAR(254) UNIQUE NOT NULL,
     password_profe VARCHAR(60) NOT NULL,
     numero_profe INTEGER,
-    genero_profe VARCHAR(2) CHECK (genero_profe IN ('M', 'F', 'O', 'ND')),
-    rol_profe VARCHAR(20) NOT NULL CHECK (rol_profe IN ('INVESTIGADOR', 'MEDIO_TIEMPO', 'TIEMPO_COMPLETO')),
-    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    activo BOOLEAN DEFAULT TRUE,
-    
-    CONSTRAINT fk_valid_rol CHECK (rol_profe IS NOT NULL)
+    full_name VARCHAR(150) NOT NULL DEFAULT '',
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_user_profe_correo ON user_profe(correo_profe);
-CREATE INDEX idx_user_profe_activo ON user_profe(activo);
 
 -- ============================================================================
--- TABLA 2: inf_curp - Información CURP (1:1 con user_profe)
--- ============================================================================
--- 3NF: Separada para evitar dependencia parcial en 2NF
-CREATE TABLE inf_curp (
-    id_curp SERIAL PRIMARY KEY,
-    id_profesor INTEGER UNIQUE NOT NULL,
-    curp_profe VARCHAR(18) UNIQUE NOT NULL,
-    full_name VARCHAR(150) NOT NULL,
-    fecha_nacimiento TIMESTAMP,
-    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    -- formato legal para la curp
-    CONSTRAINT check_curp_format
-        CHECK (curp_profe ~ '^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[A-Z0-9]{2}$'),
-
-    CONSTRAINT fk_inf_curp_profesor FOREIGN KEY (id_profesor) 
-        REFERENCES user_profe(id_profesor) ON DELETE CASCADE
-);
-
-CREATE INDEX idx_inf_curp_profesor ON inf_curp(id_profesor);
-CREATE INDEX idx_inf_curp_string ON inf_curp(curp_profe);
--- ============================================================================
--- TABLA 3: categorias_doc - Tipos de Documentos
+-- TABLA 2: categorias_doc - Tipos de Documentos
 -- ============================================================================
 -- 3NF: Tabla de referencia independiente para evitar dependencias transitivas
 CREATE TABLE categorias_doc (
@@ -58,7 +31,7 @@ CREATE TABLE categorias_doc (
 CREATE INDEX idx_categorias_nombre ON categorias_doc(nombre_categoria);
 
 -- ============================================================================
--- TABLA 4: inf_carpeta - Carpetas Jerárquicas
+-- TABLA 3: inf_carpeta - Carpetas Jerárquicas
 -- ============================================================================
 -- 3NF: Estructura recursiva con id_padre NULL para raíz
 CREATE TABLE inf_carpeta (
@@ -67,10 +40,10 @@ CREATE TABLE inf_carpeta (
     id_profesor INTEGER NOT NULL,
     id_padre INTEGER,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    CONSTRAINT fk_inf_carpeta_profesor FOREIGN KEY (id_profesor) 
+
+    CONSTRAINT fk_inf_carpeta_profesor FOREIGN KEY (id_profesor)
         REFERENCES user_profe(id_profesor) ON DELETE CASCADE,
-    CONSTRAINT fk_inf_carpeta_padre FOREIGN KEY (id_padre) 
+    CONSTRAINT fk_inf_carpeta_padre FOREIGN KEY (id_padre)
         REFERENCES inf_carpeta(id_folder) ON DELETE CASCADE,
     CONSTRAINT unique_carpeta_por_profesor_padre UNIQUE(id_profesor, nombre_carpeta, id_padre)
 );
@@ -79,13 +52,15 @@ CREATE INDEX idx_inf_carpeta_profesor ON inf_carpeta(id_profesor);
 CREATE INDEX idx_inf_carpeta_padre ON inf_carpeta(id_padre);
 
 -- ============================================================================
--- TABLA 5: doc_documento - Documentos Cargados
+-- TABLA 4: doc_documento - Documentos Cargados
 -- ============================================================================
--- 3NF: 
+-- 3NF:
 -- - FK a user_profe (propietario)
 -- - FK a inf_carpeta (ubicación)
 -- - FK a categorias_doc (tipo/categoría)
 -- - Versiones en tabla separada (version_doc)
+-- - metadatos: JSONB con los campos dinámicos según la categoría
+--   (sin necesidad de tablas adicionales por tipo de documento)
 CREATE TABLE doc_documento (
     id_doc SERIAL PRIMARY KEY,
     id_profesor INTEGER NOT NULL,
@@ -97,11 +72,12 @@ CREATE TABLE doc_documento (
     id_tipo INTEGER NOT NULL,
     tamano_bytes BIGINT,
     extension_archivo VARCHAR(10),
-    CONSTRAINT fk_doc_documento_profesor FOREIGN KEY (id_profesor) 
+    metadatos JSONB NOT NULL DEFAULT '{}'::jsonb,
+    CONSTRAINT fk_doc_documento_profesor FOREIGN KEY (id_profesor)
         REFERENCES user_profe(id_profesor) ON DELETE CASCADE,
-    CONSTRAINT fk_doc_documento_carpeta FOREIGN KEY (id_folder) 
+    CONSTRAINT fk_doc_documento_carpeta FOREIGN KEY (id_folder)
         REFERENCES inf_carpeta(id_folder) ON DELETE SET NULL,
-    CONSTRAINT fk_doc_documento_tipo FOREIGN KEY (id_tipo) 
+    CONSTRAINT fk_doc_documento_tipo FOREIGN KEY (id_tipo)
         REFERENCES categorias_doc(id_tipo) ON DELETE RESTRICT,
     CONSTRAINT unique_doc_por_profesor UNIQUE(id_profesor, titulo_doc)
 );
@@ -110,19 +86,20 @@ CREATE INDEX idx_doc_documento_profesor ON doc_documento(id_profesor);
 CREATE INDEX idx_doc_documento_carpeta ON doc_documento(id_folder);
 CREATE INDEX idx_doc_documento_tipo ON doc_documento(id_tipo);
 CREATE INDEX idx_doc_titulo_fts ON doc_documento USING gin(to_tsvector('spanish', titulo_doc));
+CREATE INDEX idx_doc_metadatos ON doc_documento USING gin(metadatos);
+
 -- ============================================================================
--- TABLA 6: version_doc - Historial de Versiones
+-- TABLA 5: version_doc - Historial de Versiones
 -- ============================================================================
 -- 3NF: Tabla separada para mantener 1NF (evita atributos multivaluados)
 CREATE TABLE version_doc (
     id_version SERIAL PRIMARY KEY,
     id_doc INTEGER NOT NULL,
     ruta_archivo VARCHAR(255) NOT NULL,
-    comentario_cambio TEXT,
     num_version INTEGER NOT NULL,
     fecha_subida TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    CONSTRAINT fk_version_doc_documento FOREIGN KEY (id_doc) 
+
+    CONSTRAINT fk_version_doc_documento FOREIGN KEY (id_doc)
         REFERENCES doc_documento(id_doc) ON DELETE CASCADE,
     CONSTRAINT unique_version_por_doc UNIQUE(id_doc, num_version)
 );
@@ -130,7 +107,7 @@ CREATE TABLE version_doc (
 CREATE INDEX idx_version_doc_documento ON version_doc(id_doc);
 
 -- ============================================================================
--- TABLA 7: doc_expediente - Expedientes
+-- TABLA 6: doc_expediente - Expedientes
 -- ============================================================================
 -- 3NF: FK a user_profe (propietario), relación M:N con documentos
 CREATE TABLE doc_expediente (
@@ -140,8 +117,8 @@ CREATE TABLE doc_expediente (
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     fecha_expedicion TIMESTAMP,
     descripcion TEXT,
-    
-    CONSTRAINT fk_doc_expediente_profesor FOREIGN KEY (id_profesor) 
+
+    CONSTRAINT fk_doc_expediente_profesor FOREIGN KEY (id_profesor)
         REFERENCES user_profe(id_profesor) ON DELETE CASCADE,
     CONSTRAINT unique_expediente_por_profesor UNIQUE(id_profesor, nombre_convocatoria)
 );
@@ -149,7 +126,7 @@ CREATE TABLE doc_expediente (
 CREATE INDEX idx_doc_expediente_profesor ON doc_expediente(id_profesor);
 
 -- ============================================================================
--- TABLA 8: expediente_contenido - Relación M:N (Expediente ↔ Documentos)
+-- TABLA 7: expediente_contenido - Relación M:N (Expediente ↔ Documentos)
 -- ============================================================================
 -- 3NF: Tabla de unión con clave primaria compuesta (id_exp, id_doc)
 CREATE TABLE expediente_contenido (
@@ -157,11 +134,11 @@ CREATE TABLE expediente_contenido (
     id_doc INTEGER NOT NULL,
     orden INTEGER DEFAULT 0,
     fecha_agregado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
+
     PRIMARY KEY (id_exp, id_doc),
-    CONSTRAINT fk_expediente_contenido_exp FOREIGN KEY (id_exp) 
+    CONSTRAINT fk_expediente_contenido_exp FOREIGN KEY (id_exp)
         REFERENCES doc_expediente(id_exp) ON DELETE CASCADE,
-    CONSTRAINT fk_expediente_contenido_doc FOREIGN KEY (id_doc) 
+    CONSTRAINT fk_expediente_contenido_doc FOREIGN KEY (id_doc)
         REFERENCES doc_documento(id_doc) ON DELETE CASCADE
 );
 
@@ -172,26 +149,20 @@ CREATE INDEX idx_expediente_contenido_doc ON expediente_contenido(id_doc);
 -- VISTAS ÚTILES PARA CONSULTAS COMUNES
 -- ============================================================================
 
--- Vista: Profesores con información CURP
+-- Vista: Profesores con su información básica
 CREATE VIEW v_profesores_completo AS
-SELECT 
+SELECT
     up.id_profesor,
     up.correo_profe,
-    ic.curp_profe,
     up.numero_profe,
-    up.genero_profe,
-    up.rol_profe,
-    up.fecha_registro,
-    up.activo,
-    ic.full_name,
-    ic.fecha_nacimiento
+    up.full_name,
+    up.fecha_registro
 FROM user_profe up
-LEFT JOIN inf_curp ic ON up.id_profesor = ic.id_profesor
 ORDER BY up.correo_profe;
 
--- Vista: Documentos con información de categoría
+-- Vista: Documentos con información de categoría y carpeta
 CREATE VIEW v_documentos_completo AS
-SELECT 
+SELECT
     dd.id_doc,
     dd.titulo_doc,
     up.correo_profe,
@@ -199,6 +170,9 @@ SELECT
     ic.nombre_carpeta,
     dd.fecha_creacion,
     dd.fecha_expedicion,
+    dd.tamano_bytes,
+    dd.extension_archivo,
+    dd.metadatos,
     (SELECT COUNT(*) FROM version_doc WHERE id_doc = dd.id_doc) as cantidad_versiones
 FROM doc_documento dd
 JOIN user_profe up ON dd.id_profesor = up.id_profesor
@@ -208,7 +182,7 @@ ORDER BY dd.fecha_creacion DESC;
 
 -- Vista: Expedientes con cantidad de documentos
 CREATE VIEW v_expedientes_resumen AS
-SELECT 
+SELECT
     de.id_exp,
     de.nombre_convocatoria,
     up.correo_profe,
@@ -235,84 +209,55 @@ DECLARE
     v_padre INTEGER;
 BEGIN
     LOOP
-        SELECT nombre_carpeta, id_padre 
+        SELECT nombre_carpeta, id_padre
         INTO v_nombre, v_padre
-        FROM inf_carpeta 
+        FROM inf_carpeta
         WHERE id_folder = v_current_id;
-        
+
         IF v_nombre IS NULL THEN
             EXIT;
         END IF;
-        
+
         v_path := v_nombre || '/' || v_path;
         v_current_id := v_padre;
-        
+
         EXIT WHEN v_padre IS NULL;
     END LOOP;
-    
+
     RETURN TRIM(LEADING '/' FROM v_path);
 END;
 $$ LANGUAGE plpgsql;
 
 -- ============================================================================
--- TRIGGERS PARA AUDITORÍA (OPCIONAL)
--- ============================================================================
-
--- Tabla de auditoría
-CREATE TABLE auditoria_cambios (
-    id_auditoria SERIAL PRIMARY KEY,
-    tabla VARCHAR(50),
-    operacion VARCHAR(10),
-    id_registro INTEGER,
-    usuario VARCHAR(254),
-    fecha_cambio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    valores_anteriores TEXT,
-    valores_nuevos TEXT
-);
-
--- ============================================================================
 -- INSERTAR CATEGORÍAS POR DEFECTO
 -- ============================================================================
+-- Las 5 categorías que maneja la interfaz SubirDoc.jsx
 INSERT INTO categorias_doc (nombre_categoria, descripcion) VALUES
-    ('Artículo Científico', 'Artículos publicados en revistas indexadas'),
-    ('Libro', 'Libros publicados'),
-    ('Capítulo de Libro', 'Capítulos de libros publicados'),
-    ('Congreso', 'Participación en congresos'),
-    ('Seminario', 'Participación en seminarios'),
-    ('Taller', 'Participación en talleres'),
-    ('Certificado', 'Certificados de capacitación'),
-    ('Constancia', 'Constancias académicas'),
-    ('Evaluación', 'Resultados de evaluaciones'),
-    ('Reconocimiento', 'Reconocimientos y distinciones'),
-    ('Otro', 'Otros documentos')
+    ('Docencia', 'Documentos de actividades docentes (materias, grupos, carga horaria)'),
+    ('Gestion', 'Documentos de gestión académica'),
+    ('Titulacion', 'Documentos de procesos de titulación'),
+    ('Produccion', 'Documentos de producción académica (artículos, libros, capítulos)'),
+    ('Tutoria', 'Documentos de tutorías académicas')
 ON CONFLICT (nombre_categoria) DO NOTHING;
 
 -- ============================================================================
--- SENTENCIAS DE PRUEBA
+-- SENTENCIAS DE PRUEBA (comentadas)
 -- ============================================================================
+-- INSERT INTO user_profe (correo_profe, password_profe, numero_profe, full_name)
+-- VALUES ('profesor@universidad.edu', 'hashed_password', 5551234567, 'Dr. Juan Pérez');
 
--- Crear un profesor de prueba
--- INSERT INTO user_profe (correo_profe, password_profe, numero_profe, genero_profe, rol_profe)
--- VALUES ('profesor@universidad.edu', 'hashed_password', 5551234567, 'M', 'TIEMPO_COMPLETO');
-
--- -- Obtener el ID del profesor creado (reemplazar con el valor real)
--- -- SELECT id_profesor FROM user_profe WHERE correo_profe = 'profesor@universidad.edu';
-
--- -- Crear información CURP
--- INSERT INTO inf_curp (id_profesor, full_name, fecha_nacimiento)
--- VALUES (1, 'Dr. Juan Pérez García', '1980-05-15'::TIMESTAMP);
-
--- -- Crear carpeta raíz
 -- INSERT INTO inf_carpeta (nombre_carpeta, id_profesor, id_padre)
 -- VALUES ('Mi Documentación', 1, NULL);
 
--- -- Crear subcarpeta
--- INSERT INTO inf_carpeta (nombre_carpeta, id_profesor, id_padre)
--- VALUES ('Artículos', 1, 1);
-
--- -- Crear documento
--- INSERT INTO doc_documento (id_profesor, titulo_doc, id_folder, id_tipo, ruta_archivo, fecha_expedicion)
--- VALUES (1, 'Estudio sobre IA', 2, 1, '/documentos/articulo_ia_2024.pdf', '2024-01-15'::TIMESTAMP);
+-- INSERT INTO doc_documento
+--   (id_profesor, titulo_doc, id_folder, id_tipo, ruta_archivo, fecha_expedicion,
+--    tamano_bytes, extension_archivo, metadatos)
+-- VALUES
+--   (1, 'Programa Curso IA', 1, 1, '/media/documentos/1/programa.pdf', '2024-01-15',
+--    1048576, 'pdf',
+--    '{"_categoria":"Docencia","cicloEscolar":"2024-A","claveMateria":"IL803",
+--      "crn":"189895","nombreMateria":"Inteligencia Artificial","carrera":"ISI",
+--      "grupo":"5°","cargaHoraria":80,"sede":"CUTonalá"}'::jsonb);
 
 -- ============================================================================
 -- FIN DEL SCRIPT

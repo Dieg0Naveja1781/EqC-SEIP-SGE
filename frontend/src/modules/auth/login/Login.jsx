@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from "react";
-import "../../Styles/App.css";
+import { useNavigate, Link } from "react-router-dom";
+import { authService, saveSessionProfesor } from "../../../shared/api/authService";
+import logotipo from "../../../assets/logotipo.png";
+import logotipoOscuro from "../../../assets/Logotipo_o.png";
+import "../Styles/App.css";
 
 const Login = () => {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
   //Estado del Tema con persistencia (Lee del localStorage al cargar)  AUN NECESITO REPARARLO
   const [isDark, setIsDark] = useState(() => {
     const savedTheme = localStorage.getItem("theme");
@@ -27,10 +34,23 @@ const Login = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Intentando iniciar sesión con:", formData);
-    // Aquí iría la lógica de conexión al backend
+    setErrorMsg("");
+    setLoading(true);
+    try {
+      const result = await authService.login(formData.email, formData.password);
+      if (result?.success) {
+        saveSessionProfesor(result.profesor);
+        navigate("/main");
+      } else {
+        setErrorMsg(result?.error || "Credenciales inválidas");
+      }
+    } catch (err) {
+      setErrorMsg(err?.data?.error || "Error de conexión con el servidor");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -52,28 +72,7 @@ const Login = () => {
 
       {/* Brand Section */}
       <div className="brand-section">
-        <div
-          className="logo-box"
-          style={{
-            width: "60px",
-            height: "60px",
-            background: "var(--color-500)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            borderRadius: "12px",
-            color: "white",
-            fontWeight: "bold",
-            marginBottom: "10px",
-          }}
-        >
-          LOGO
-        </div>
-        <h1
-          style={{ color: "var(--color-500)", margin: 0, fontSize: "1.5rem" }}
-        >
-          NOMBRE DEL SITIO
-        </h1>
+        <img src={isDark ? logotipoOscuro : logotipo} alt="Logotipo" className="brand-logo" />
       </div>
 
       {/* Tarjeta de Login */}
@@ -114,18 +113,25 @@ const Login = () => {
             />
           </div>
 
-          <button type="submit" className="btn-login">
-            Entrar
+          {errorMsg && (
+            <p style={{ color: "#ff6b6b", textAlign: "center", marginTop: "0.5rem" }}>
+              {errorMsg}
+            </p>
+          )}
+
+          <button type="submit" className="btn-login" disabled={loading}>
+            {loading ? "Entrando…" : "Entrar"}
           </button>
         </form>
 
         <div className="footer-links">
           ¿No tienes cuenta?{" "}
-          <a href="../create_account/Registro.html">Regístrate aquí</a>
+          <Link to="/register">Regístrate aquí</Link>
         </div>
       </div>
     </div>
   );
 };
 
+export { Login };
 export default Login;

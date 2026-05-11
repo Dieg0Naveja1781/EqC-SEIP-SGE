@@ -1,0 +1,207 @@
+.dashboard-layout {
+  display: flex;
+  background-color: var(--bg-body);
+  color: var(--text-primary);
+  transition: all 0.3s ease;
+}
+
+/* Sidebar Styles */
+.sidebar {
+  width: 260px;
+  background-color: var(--bg-card);
+  border-right: none;
+  padding: 25px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-brand {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--color-500);
+  margin-bottom: 2.5rem;
+  padding-left: 0.5rem;
+}
+
+.nav-item {
+  padding: 12px 15px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--text-s);
+  text-decoration: none;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-item.active,
+.nav-item:hover {
+  background-color: rgba(29, 154, 226, 0.1);
+  color: var(--color-main);
+}
+
+/* Main Content & Header */
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.header-dashboard {
+  height: 70px;
+  background-color: var(--bg-card);
+  border-bottom: none;
+  padding: 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Empuja el contenido a los extremos */
+  width: 100%; /* Obliga a tomar todo el ancho disponible */
+  align-self: stretch; /* Evita que se encoja si el padre lo centra */
+  box-sizing: border-box; /* Evita que el padding rompa el tamaño */
+  gap: 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-dashboard h1 {
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.user-avatar {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  background-color: var(--color-400);
+}
+
+.page-content {
+  padding: 2rem;
+  flex: 1;
+}
+
+/* Theme Switcher Styles (Shared) */
+.theme-toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 30px;
+}
+
+.theme-toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.theme-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+}
+
+.theme-slider:before {
+  position: absolute;
+  content: "";
+  height: 22px;
+  width: 22px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+  z-index: 2;
+}
+
+input:checked + .theme-slider {
+  background-color: var(--color-600);
+}
+
+input:checked + .theme-slider:before {
+  transform: translateX(30px);
+}
+
+.theme-icon {
+  font-size: 14px;
+  z-index: 1;
+}
+
+/* Dark mode overrides if needed specifically for layout can go here */
+
+/* ============================================================
+   Reset y estilos base de elementos dentro del Dashboard
+   ------------------------------------------------------------
+   Estas reglas vivían como selectores globales en SubirDoc.css
+   y UserData.css. Aquí están scoped a `.dashboard-layout` para
+   que NUNCA se filtren a Login, Register ni Landing (ninguna de
+   esas páginas está dentro de `.dashboard-layout`).
+   ============================================================ */
+.dashboard-layout *,
+.dashboard-layout *::before,
+.dashboard-layout *::after {
+  box-sizing: border-box;
+}
+
+.dashboard-layout label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-s);
+}
+
+.dashboard-layout input,
+.dashboard-layout select,
+.dashboard-layout textarea {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background-color: var(--bg-body);
+  color: var(--text-p);
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.dashboard-layout input:focus,
+.dashboard-layout select:focus,
+.dashboard-layout textarea:focus {
+  outline: 2px solid var(--color-main);
+  border-color: transparent;
+}
+
+.dashboard-layout button {
+  
+  color: white;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.dashboard-layout ::placeholder {
+  color: #999;
+}

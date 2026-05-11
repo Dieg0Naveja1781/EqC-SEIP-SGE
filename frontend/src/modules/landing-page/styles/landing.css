@@ -1,0 +1,114 @@
+/* ── landing.css ── */
+
+.lpage {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 1rem 2rem;
+  background-color: #1d9ae2;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  min-height: 70px;
+}
+
+.navbar-brand-text {
+  color: #ffffff;
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.main-content {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background-color: #eef2f7;
+  min-height: 80vh;
+}
+
+/* Capas parallax que viven detrás del logo dentro del main-content.
+   Cada capa cubre todo el área y se desplaza hacia abajo con el scroll. */
+.parallax-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  user-select: none;
+  will-change: transform;
+  z-index: 1;
+}
+
+.parallax-layer img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 130%;
+  object-fit: cover;
+}
+
+.parallax-layer.back img {
+  opacity: 0.35;
+}
+
+.parallax-layer.front img {
+  opacity: 0.55;
+}
+
+.main-content-inner {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 3rem 2rem;
+  gap: 1.5rem;
+}
+
+.main-content-inner .main-logo {
+  height: 180px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.15));
+}
+
+.auth-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.btn {
+  display: inline-flex;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+.btn-outline {
+  background-color: rgba(255, 255, 255, 0.8);
+  color: #374151;
+  border: 1.5px solid #d1d5db;
+}
