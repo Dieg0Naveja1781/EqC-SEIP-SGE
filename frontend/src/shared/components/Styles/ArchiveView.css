@@ -48,7 +48,7 @@
 
 }
 
-p {
+.archive-view-container p {
   margin: 8px 0;
   display: flex;
   justify-content: flex-start;
@@ -67,10 +67,10 @@ p {
   margin-top: 20px;
 }
 
-h3 {
+.archive-view-container h3 {
   font-size: 24px;
 }
 
-strong {
+.archive-view-container strong {
   margin-left: 5px;
 }

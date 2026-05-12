@@ -59,7 +59,7 @@ function LandingPage() {
         </div>
       </header>
 
-      <main className="main-content">
+      <main className="lpage-main">
         {/* Capas decorativas que viven detrás del logo y se desplazan
             hacia abajo cuando el usuario scrollea. */}
         <div className="parallax-layer back" ref={layer1Ref} aria-hidden="true">
@@ -69,7 +69,7 @@ function LandingPage() {
           <img src={bgIcons} alt="" />
         </div>
 
-        <div className="main-content-inner">
+        <div className="lpage-main-inner">
           <img src={isDark ? logoOscuro : logo} alt="Logotipo" className="main-logo" />
 
           <div className="auth-buttons">

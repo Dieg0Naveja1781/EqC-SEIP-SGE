@@ -19,6 +19,15 @@
   --error: #ff4d4d;
   --search-bar-bg: #ece6f0;
   --new-archive-bg: #E8DEF8;
+
+  /* Alias usados por DashboardLayout.css y módulos de upload/edit.
+     Conviven con los nombres canónicos para no romper consumidores. */
+  --color-main: var(--color-500);
+  --color-hover: var(--color-600);
+  --bg-body: var(--bg-main);
+  --text-p: var(--text-primary);
+  --text-s: var(--text-secondary);
+  --shadow: rgba(0, 0, 0, 0.05);
 }
 
 /* VARIABLES TEMA OSCURO */
@@ -31,6 +40,9 @@
   --error: #ff6666;
   --search-bar-bg: var(--color-900);
   --new-archive-bg: #3a2a4a;
+
+  /* Alias en oscuro (los que dependen de --bg-main/etc. ya se actualizan via var()) */
+  --shadow: rgba(0, 0, 0, 0.4);
 }
 
 /* RESET Y CENTRADO ABSOLUTO */
@@ -63,44 +75,51 @@ body {
   box-sizing: border-box;
 }
 
-h1,
-h2 {
+/* Tipografía base envuelta en :where() para que tenga especificidad 0
+   y los estilos de cualquier módulo (header-dashboard h1, etc.) ganen
+   sin necesidad de !important ni reglas más anidadas. */
+:where(h1, h2) {
   font-family: var(--heading);
   font-weight: 500;
   color: var(--text-h);
 }
 
-h1 {
+:where(h1) {
   font-size: 56px;
   letter-spacing: -1.68px;
   margin: 32px 0;
-  @media (max-width: 1024px) {
+}
+@media (max-width: 1024px) {
+  :where(h1) {
     font-size: 36px;
     margin: 20px 0;
   }
 }
-h2 {
+
+:where(h2) {
   font-size: 24px;
   line-height: 118%;
   letter-spacing: -0.24px;
   margin: 0 0 8px;
-  @media (max-width: 1024px) {
+}
+@media (max-width: 1024px) {
+  :where(h2) {
     font-size: 20px;
   }
 }
-p {
+
+:where(p) {
   margin: 0;
 }
 
-code,
-.counter {
+:where(code, .counter) {
   font-family: var(--mono);
   display: inline-flex;
   border-radius: 4px;
   color: var(--text-h);
 }
 
-code {
+:where(code) {
   font-size: 15px;
   line-height: 135%;
   padding: 4px 8px;

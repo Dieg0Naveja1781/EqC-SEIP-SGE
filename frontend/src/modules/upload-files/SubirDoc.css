@@ -22,6 +22,8 @@
   padding: 40px;
   display: flex;
   justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .upload-card {
