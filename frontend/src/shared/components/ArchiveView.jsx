@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import "./Styles/ArchiveView.css";
 import { DashboardLayout } from "./DashboardLayout";
+import { EditarDoc } from '../../modules/Editar Archivo/EditarDoc'; 
 
 export function ArchiveView() {
     const navigate = useNavigate();
@@ -96,7 +97,7 @@ export function ArchiveView() {
 
                         <div className="botones">
                             <button className="descargar">Descargar</button>
-                            <button className="editar">Editar</button>
+                            <button className="editar" onClick={() => navigate('/editar_doc', { state: { documento: doc } })}>Editar</button>
                         </div>
                     </div>
                 </div>
