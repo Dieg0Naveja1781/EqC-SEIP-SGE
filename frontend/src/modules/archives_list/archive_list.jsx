@@ -51,6 +51,8 @@ export function ArchiveList() {
   const fileInputRef = useRef(null);
   const { isDark, toggleTheme } = useTheme();
   const [tiposSeleccionados, setTiposSeleccionados] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [folderName, setFolderName] = useState("");
 
   // Filtra por tipo de documento, si no hay ninguno seleccionado muestra todo
   const showFiles = tiposSeleccionados.length === 0
@@ -111,19 +113,29 @@ export function ArchiveList() {
     cargarDatos();
   }, []);
 
-  const handleNuevaCarpeta = async () => {
-    const nombre = window.prompt("Nombre de la nueva carpeta:");
-    if (!nombre) return;
+  const handleNuevaCarpeta = () => {
+    setShowModal(true);
+  };
+
+  const handleConfirmFolder = async () => {
+    if (!folderName.trim()) return;
     try {
-      const res = await documentsService.createFolder(nombre);
+      const res = await documentsService.createFolder(folderName.trim());
       if (res?.success) {
         cargarDatos();
+        setShowModal(false);
+        setFolderName("");
       } else {
         alert(res?.error || "No se pudo crear la carpeta");
       }
     } catch (err) {
       alert(err?.data?.error || "Error al crear la carpeta");
     }
+  };
+
+  const handleCancelFolder = () => {
+    setShowModal(false);
+    setFolderName("");
   };
 
   const handleSubirArchivoClick = () => {
@@ -373,6 +385,35 @@ export function ArchiveList() {
             Nueva Carpeta
           </button>
         </div>
+
+        {/* === MODAL === */}
+        {showModal && (
+          <div className="modal_overlay">
+            <div className="modal_content">
+              <h3>Crear Nueva Carpeta</h3>
+              <input
+                type="text"
+                placeholder="Nombre de la carpeta"
+                value={folderName}
+                onChange={(e) => setFolderName(e.target.value)}
+                className="modal_input"
+                autoFocus
+              />
+              <div className="modal_buttons">
+                <button className="btn_cancel" onClick={handleCancelFolder}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+                <button className="btn_confirm" onClick={handleConfirmFolder}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );
