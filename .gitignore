@@ -62,8 +62,7 @@ desktop.ini
 *.log
 *.tmp
 *.temp
-iniciar.bat
-detener.bat
+*.bat
 
 # User-specific files
 *.rsuser
