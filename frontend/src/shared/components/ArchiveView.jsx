@@ -2,20 +2,23 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import "./Styles/ArchiveView.css";
 import { DashboardLayout } from "./DashboardLayout";
-import { EditarDoc } from '../../modules/Editar Archivo/EditarDoc'; 
 
 export function ArchiveView() {
     const navigate = useNavigate();
     const location = useLocation();
-    
+
     // Si no hay datos, usamos valores por defecto para evitar errores
     const doc = location.state?.documento || {
         titulo_doc: "Sin nombre",
         categoria: "Docencia",
-        fecha_subida: "N/A",
+        fecha_creacion: null,
         metadatos: {},
         descripcion: ""
     };
+
+    const fechaTxt = doc.fecha_creacion
+        ? new Date(doc.fecha_creacion).toLocaleDateString("es-MX")
+        : "Sin fecha";
 
     const ETIQUETAS = {
         cicloEscolar: "Ciclo Escolar",
@@ -73,7 +76,7 @@ export function ArchiveView() {
                         <div className="info-grid">
                             <p>Nombre: <strong>{doc.titulo_doc}</strong></p>
                             <p>Categoría: <span className="badge-categoria"><strong>{doc.categoria}</strong></span></p>
-                            <p>Fecha: <strong>{new Date(doc.fecha_subida).toLocaleDateString()}</strong></p>
+                            <p>Fecha: <strong>{fechaTxt}</strong></p>
                         </div>
 
                         <hr />

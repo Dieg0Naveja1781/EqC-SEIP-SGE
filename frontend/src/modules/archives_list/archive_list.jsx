@@ -52,6 +52,13 @@ export function ArchiveList() {
   const fileInputRef = useRef(null);
   const { isDark, toggleTheme } = useTheme();
   const [tiposSeleccionados, setTiposSeleccionados] = useState([]);
+  const navigate = useNavigate();
+
+  const handleVerDocumento = (file) => {
+    if (file.type === "pdf") {
+      navigate("/archive_view", { state: { documento: file } });
+    }
+  };
 
   // Filtra por tipo de documento, si no hay ninguno seleccionado muestra todo
   const showFiles = tiposSeleccionados.length === 0
@@ -92,16 +99,12 @@ export function ArchiveList() {
         type: "pdf",
         name: d.titulo_doc,
         date: formatFecha(d.fecha_creacion),
-        categoria: d.categoria || null,
+        titulo_doc: d.titulo_doc,
+        categoria: d.nombre_categoria || null,
+        fecha_creacion: d.fecha_creacion,
+        metadatos: d.metadatos || {},
+        descripcion: d.descripcion || "",
       }));
-
-      const navigate = useNavigate();
-
-      const handleVerDocumento = (file) => {
-        if (file.type === "pdf") {
-          navigate("/archivo", { state: { documento: file } });
-        }
-      };
 
       setFiles([...carpetas, ...docs]);
       setCategorias(catsRes?.categorias || []);
