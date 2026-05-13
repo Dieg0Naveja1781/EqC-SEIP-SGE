@@ -104,18 +104,39 @@ class ServicioExpedientes:
         try:
             profe = UserProfe.objects.get(id_profesor=id_profesor)
 
-            # Si id_tipo no viene o la categoria es custom, resolver id_tipo
-            # usando la categoria "Gestion" como comodin generico del backend.
+            # Resolver la categoría de BD:
+            # - Si es categoría fija y se proporcionó id_tipo: usarlo directamente.
+            # - Si es categoría fija sin id_tipo: buscar por nombre en la BD.
+            # - Si es categoría custom: usar/crear una categoría comodín "Personalizada".
             CATEGORIAS_FIJAS = ['Docencia', 'Gestion', 'Titulacion', 'Produccion', 'Tutoria']
-            if id_tipo is None or categoria not in CATEGORIAS_FIJAS:
-                try:
-                    categoria_obj = CategoriasDoc.objects.get(nombre_categoria='Gestion')
-                except CategoriasDoc.DoesNotExist:
-                    categoria_obj = CategoriasDoc.objects.first()
-                    if not categoria_obj:
-                        return {'success': False, 'error': 'No hay categorias disponibles en el servidor'}
-            else:
+            if categoria in CATEGORIAS_FIJAS and id_tipo:
                 categoria_obj = CategoriasDoc.objects.get(id_tipo=id_tipo)
+            elif categoria in CATEGORIAS_FIJAS and not id_tipo:
+                # Buscar por nombre en la BD (mapeo frontend→BD)
+                NOMBRE_MAP = {
+                    'Docencia': 'Docencia',
+                    'Gestion': 'Gestión Académica',
+                    'Titulacion': 'Gestión Académica (Titulación)',
+                    'Produccion': 'Producción Académica',
+                    'Tutoria': 'Tutoría',
+                }
+                nombre_bd = NOMBRE_MAP.get(categoria, categoria)
+                cat_qs = CategoriasDoc.objects.filter(nombre_categoria__iexact=nombre_bd)
+                if not cat_qs.exists():
+                    cat_qs = CategoriasDoc.objects.filter(nombre_categoria__icontains=categoria[:4])
+                if cat_qs.exists():
+                    categoria_obj = cat_qs.first()
+                else:
+                    categoria_obj, _ = CategoriasDoc.objects.get_or_create(
+                        nombre_categoria='Personalizada',
+                        defaults={'descripcion': 'Categoría comodín para documentos personalizados'},
+                    )
+            else:
+                # Categoría custom del usuario: usar/crear categoría comodín
+                categoria_obj, _ = CategoriasDoc.objects.get_or_create(
+                    nombre_categoria='Personalizada',
+                    defaults={'descripcion': 'Categoría comodín para documentos personalizados'},
+                )
 
             carpeta = None
             if id_folder:

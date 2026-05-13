@@ -152,7 +152,7 @@ class DocumentoViewSet(viewsets.ViewSet):
             id_profesor=id_profesor,
             archivo=serializer.validated_data['archivo'],
             titulo_doc=serializer.validated_data['titulo_doc'],
-            id_tipo=serializer.validated_data['id_tipo'],
+            id_tipo=serializer.validated_data.get('id_tipo'),
             categoria=serializer.validated_data['categoria'],
             metadatos=serializer.validated_data.get('metadatos') or {},
             id_folder=serializer.validated_data.get('id_folder'),
