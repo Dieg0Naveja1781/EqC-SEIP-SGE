@@ -33,6 +33,7 @@ export function DashboardLayout({ children, title }) {
     { name: "Listado de Archivos", path: "/archive_list" },
     { name: "Subir Archivo", path: "/subir_doc" },
     { name: "Perfil", path: "/perfil" },
+    { name: "Crear Expediente", path: "/crear_expediente" },
   ];
 
   return (
