@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
 import { authService, clearSessionProfesor, getSessionProfesor } from "../api/authService";
+import { ModalCrearExpediente } from "../../modules/CrearExpediente/ModalCrearExpediente";
 import "./DashboardLayout.css";
 
 export function DashboardLayout({ children, title }) {
@@ -9,6 +10,9 @@ export function DashboardLayout({ children, title }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [nombreProfesor, setNombreProfesor] = useState("Usuario");
+
+  // 2. Crea un estado para controlar la visibilidad del modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const profesor = getSessionProfesor();
@@ -33,12 +37,12 @@ export function DashboardLayout({ children, title }) {
     { name: "Listado de Archivos", path: "/archive_list" },
     { name: "Subir Archivo", path: "/subir_doc" },
     { name: "Perfil", path: "/perfil" },
-    { name: "Crear Expediente", path: "/crear_expediente" },
+    // Este item ya no necesita necesariamente un "path" si solo abrirá el modal
+    { name: "Crear Expediente", isModalTrigger: true }, 
   ];
 
   return (
     <div className={`dashboard-layout ${isDark ? "dark" : ""}`}>
-      {/* SIDEBAR COMÚN */}
       <aside className="sidebar">
         <div
           className="sidebar-brand"
@@ -50,9 +54,16 @@ export function DashboardLayout({ children, title }) {
         <nav>
           {menuItems.map((item) => (
             <div
-              key={item.path}
+              key={item.name}
               className={`nav-item ${location.pathname === item.path ? "active" : ""}`}
-              onClick={() => navigate(item.path)}
+              onClick={() => {
+                // 3. Lógica condicionada: Si es el botón del modal, lo abre; si no, navega.
+                if (item.isModalTrigger) {
+                  setIsModalOpen(true);
+                } else {
+                  navigate(item.path);
+                }
+              }}
             >
               {item.name}
             </div>
@@ -64,12 +75,9 @@ export function DashboardLayout({ children, title }) {
         </button>
       </aside>
 
-      {/* CONTENIDO PRINCIPAL */}
       <main className="main-content">
-        {/* HEADER COMÚN */}
         <header className="header-dashboard">
           <div className="header-left">{title && <h1>{title}</h1>}</div>
-
           <div className="header-right">
             <div className="user-profile">
               <span className="user-name">{nombreProfesor}</span>
@@ -78,9 +86,14 @@ export function DashboardLayout({ children, title }) {
           </div>
         </header>
 
-        {/* CONTENIDO DINÁMICO */}
         <div className="page-content">{children}</div>
       </main>
+
+      {/* 4. Renderiza el Modal al final, pasando las props de control */}
+      <ModalCrearExpediente 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+      />
     </div>
   );
 }
