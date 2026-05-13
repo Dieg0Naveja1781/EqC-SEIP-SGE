@@ -1,12 +1,32 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
+import { authService, clearSessionProfesor, getSessionProfesor } from "../api/authService";
 import "./DashboardLayout.css";
 
 export function DashboardLayout({ children, title }) {
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
+  const [nombreProfesor, setNombreProfesor] = useState("Usuario");
+
+  useEffect(() => {
+    const profesor = getSessionProfesor();
+    if (profesor?.full_name) {
+      setNombreProfesor(profesor.full_name);
+    }
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error);
+    } finally {
+      clearSessionProfesor();
+      navigate("/");
+    }
+  };
 
   const menuItems = [
     { name: "Página Principal", path: "/main" },
@@ -37,6 +57,10 @@ export function DashboardLayout({ children, title }) {
             </div>
           ))}
         </nav>
+
+        <button onClick={handleLogout} className="logout-btn">
+          Cerrar Sesión
+        </button>
       </aside>
 
       {/* CONTENIDO PRINCIPAL */}
@@ -47,7 +71,7 @@ export function DashboardLayout({ children, title }) {
 
           <div className="header-right">
             <div className="user-profile">
-              <span className="user-name">Usuario</span>
+              <span className="user-name">{nombreProfesor}</span>
               <div className="user-avatar"></div>
             </div>
           </div>
