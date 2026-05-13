@@ -1,10 +1,10 @@
-footer {
+.lpage-footer {
   text-align: center;
   padding: 5px;
   background-color: var(--bg-card);
   color: var(--text-primary);
 }
 
-p {
+.lpage-footer p {
   font-style: italic;
 }

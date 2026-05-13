@@ -3,6 +3,7 @@ import "./Styles/archive_list.css";
 import { useTheme } from "../../shared/context/ThemeContext";
 import { documentsService } from "../../shared/api/documentsService";
 import { DashboardLayout } from "../../shared/components/DashboardLayout";
+import { useNavigate } from "react-router-dom";
 
 // Lista de categorias de documentos
 const CATEGORIAS_FILTRO = [
@@ -54,7 +55,14 @@ export function ArchiveList() {
   const [showModal, setShowModal] = useState(false);
   const [folderName, setFolderName] = useState("");
   const [ordenarPor, setOrdenarPor] = useState("Fecha ↓");
-  
+    const navigate = useNavigate();
+
+  const handleVerDocumento = (file) => {
+    if (file.type === "pdf") {
+      navigate("/archive_view", { state: { documento: file } });
+    }
+  };
+
   // Filtra por tipo de documento, si no hay ninguno seleccionado muestra todo
   const archivosFiltrados = tiposSeleccionados.length === 0
     ? files
@@ -122,7 +130,11 @@ export function ArchiveList() {
         type: "pdf",
         name: d.titulo_doc,
         date: formatFecha(d.fecha_creacion),
+        titulo_doc: d.titulo_doc,
         categoria: d.nombre_categoria || null,
+        fecha_creacion: d.fecha_creacion,
+        metadatos: d.metadatos || {},
+        descripcion: d.descripcion || "",
       }));
 
       setFiles([...carpetas, ...docs]);
@@ -396,7 +408,7 @@ export function ArchiveList() {
               <p>No hay archivos. Crea una carpeta o sube un documento.</p>
             )}
             {showFiles.map((file) => (
-              <div key={file.id} className="file_row">
+              <div key={file.id} className="file_row" onClick={() => handleVerDocumento(file)} style={{ cursor: file.type === "pdf" ? "pointer" : "default" }}>
                 <span>{file.type === "folder" ? "📁" : "📄"}</span>
                 <span className="file_name">{file.name}</span>
                 <span className="file_date">{file.date}</span>

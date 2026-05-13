@@ -1,51 +1,5 @@
-:root {
-  --color-50: #e8f5fc;
-  --color-100: #c0e3f7;
-  --color-200: #97d0f2;
-  --color-300: #6fbeec;
-  --color-400: #46ace7;
-  --color-500: #1d9ae2;
-  --color-600: #1984c2;
-  --color-700: #136290;
-  --color-800: #0d4768;
-  --color-900: #082b3f;
-
-  /* TEMA CLARO */
-  --bg-main: #f0eee9;
-  --bg-card: #ffffff;
-  --border: #c0e3f7;
-  --text-primary: #082b3f;
-  --text-secondary: #136290;
-  --error: #ff4d4d;
-}
-
-/* VARIABLES TEMA OSCURO */
-[data-theme="dark"] {
-  --bg-main: #171515;
-  --bg-card: #221f1f;
-  --border: #353030;
-  --text-primary: #e8f5fc;
-  --text-secondary: #97d0f2;
-  --error: #ff6666;
-}
-
-/* RESET Y CENTRADO ABSOLUTO */
-html,
-body,
-#root {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  background-color: var(--bg-main);
-  color: var(--text-primary);
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  transition:
-    background-color 0.3s,
-    color 0.3s;
-}
+/* Tokens de tema y resets globales viven en index.css.
+   Aquí solo estilos específicos de las páginas de Login y Register. */
 
 /* Contenedor Maestro para centrar el cuadro */
 .register-page-container,
