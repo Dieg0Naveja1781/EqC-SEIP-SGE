@@ -9,7 +9,9 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from .serializers import (
     SubidaDocumentoSerializer, CrearCarpetaSerializer, CrearExpedienteSerializer,
+    DocDocumentoSerializer,
 )
+from .models import DocDocumento
 from .services import ServicioExpedientes
 import os
 
@@ -133,6 +135,18 @@ class DocumentoViewSet(viewsets.ViewSet):
             resultado,
             status=status.HTTP_200_OK if resultado['success'] else status.HTTP_400_BAD_REQUEST,
         )
+
+    @action(detail=False, methods=['get'])
+    def buscar(self, request):
+        id_profesor = _get_id_profesor(request)
+        if not id_profesor:
+            return _no_auth()
+        q = request.query_params.get('q', '')
+        if not q:
+            return Response({'success': False, 'error': 'Parámetro q requerido'}, status=status.HTTP_400_BAD_REQUEST)
+        documentos = DocDocumento.objects.filter(id_profesor=id_profesor, titulo_doc__icontains=q)
+        serializer = DocDocumentoSerializer(documentos, many=True)
+        return Response({'success': True, 'documentos': serializer.data})
 
     @action(detail=False, methods=['post'])
     def subir(self, request):

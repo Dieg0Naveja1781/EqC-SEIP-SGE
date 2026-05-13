@@ -31,6 +31,9 @@ export const documentsService = {
   downloadDocumentUrl: (id_doc) =>
     `${API_BASE}/documentos/${id_doc}/descargar/`,
 
+  buscarDocumentos: (query) =>
+    apiClient.get(`/documentos/buscar/?q=${encodeURIComponent(query)}`),
+
   listExpedientes: () => apiClient.get("/expedientes/"),
 
   createExpediente: (nombre_convocatoria, descripcion = "") =>
