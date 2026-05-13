@@ -10,6 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .serializers import (
     SubidaDocumentoSerializer, CrearCarpetaSerializer, CrearExpedienteSerializer,
     DocDocumentoSerializer,
+    CrearCategoriaCustomSerializer,
 )
 from .models import DocDocumento
 from .services import ServicioExpedientes
@@ -154,7 +155,10 @@ class DocumentoViewSet(viewsets.ViewSet):
         if not id_profesor:
             return _no_auth()
 
-        serializer = SubidaDocumentoSerializer(data=request.data)
+        serializer = SubidaDocumentoSerializer(
+            data=request.data,
+            context={'id_profesor': id_profesor},
+        )
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -162,7 +166,7 @@ class DocumentoViewSet(viewsets.ViewSet):
             id_profesor=id_profesor,
             archivo=serializer.validated_data['archivo'],
             titulo_doc=serializer.validated_data['titulo_doc'],
-            id_tipo=serializer.validated_data['id_tipo'],
+            id_tipo=serializer.validated_data.get('id_tipo'),
             categoria=serializer.validated_data['categoria'],
             metadatos=serializer.validated_data.get('metadatos') or {},
             id_folder=serializer.validated_data.get('id_folder'),
@@ -287,3 +291,57 @@ class CategoriaDocViewSet(viewsets.ViewSet):
     def list(self, request):
         resultado = ServicioExpedientes.listar_categorias()
         return Response(resultado, status=status.HTTP_200_OK)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class CategoriaCustomViewSet(viewsets.ViewSet):
+    """
+    Endpoints de categorías personalizadas por profesor:
+      GET    /api/categorias-custom/       Lista las del profesor autenticado
+      POST   /api/categorias-custom/       Crea una nueva
+      DELETE /api/categorias-custom/<id>/  Elimina una (solo si es del profesor)
+    """
+    permission_classes = [AllowAny]
+
+    def list(self, request):
+        id_profesor = _get_id_profesor(request)
+        if not id_profesor:
+            return _no_auth()
+        resultado = ServicioExpedientes.listar_categorias_custom(id_profesor)
+        return Response(
+            resultado,
+            status=status.HTTP_200_OK if resultado['success'] else status.HTTP_400_BAD_REQUEST,
+        )
+
+    def create(self, request):
+        id_profesor = _get_id_profesor(request)
+        if not id_profesor:
+            return _no_auth()
+
+        serializer = CrearCategoriaCustomSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        resultado = ServicioExpedientes.crear_categoria_custom(
+            id_profesor=id_profesor,
+            nombre=serializer.validated_data['nombre'],
+            campos=serializer.validated_data['campos'],
+        )
+        return Response(
+            resultado,
+            status=status.HTTP_201_CREATED if resultado['success'] else status.HTTP_400_BAD_REQUEST,
+        )
+
+    def destroy(self, request, pk=None):
+        id_profesor = _get_id_profesor(request)
+        if not id_profesor:
+            return _no_auth()
+
+        resultado = ServicioExpedientes.eliminar_categoria_custom(
+            id_cat_custom=pk,
+            id_profesor=id_profesor,
+        )
+        return Response(
+            resultado,
+            status=status.HTTP_200_OK if resultado['success'] else status.HTTP_404_NOT_FOUND,
+        )

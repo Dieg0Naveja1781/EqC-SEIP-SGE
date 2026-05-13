@@ -6,12 +6,13 @@ from django.db import transaction
 from modules.usuarios_backend.models import UserProfe
 from .models import (
     CategoriasDoc, InfCarpeta, DocDocumento, DocExpediente,
-    ExpedienteContenido, VersionDoc,
+    ExpedienteContenido, VersionDoc, CategoriaCustom,
 )
 from .serializers import (
     DocExpedienteSerializer, DocDocumentoSerializer,
     InfCarpetaSerializer, VersionDocSerializer,
     ExpedienteContenidoSerializer, CategoriaDocSerializer,
+    CategoriaCustomSerializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -102,7 +103,40 @@ class ServicioExpedientes:
                         id_folder=None, fecha_expedicion=None):
         try:
             profe = UserProfe.objects.get(id_profesor=id_profesor)
-            categoria_obj = CategoriasDoc.objects.get(id_tipo=id_tipo)
+
+            # Resolver la categoría de BD:
+            # - Si es categoría fija y se proporcionó id_tipo: usarlo directamente.
+            # - Si es categoría fija sin id_tipo: buscar por nombre en la BD.
+            # - Si es categoría custom: usar/crear una categoría comodín "Personalizada".
+            CATEGORIAS_FIJAS = ['Docencia', 'Gestion', 'Titulacion', 'Produccion', 'Tutoria']
+            if categoria in CATEGORIAS_FIJAS and id_tipo:
+                categoria_obj = CategoriasDoc.objects.get(id_tipo=id_tipo)
+            elif categoria in CATEGORIAS_FIJAS and not id_tipo:
+                # Buscar por nombre en la BD (mapeo frontend→BD)
+                NOMBRE_MAP = {
+                    'Docencia': 'Docencia',
+                    'Gestion': 'Gestión Académica',
+                    'Titulacion': 'Gestión Académica (Titulación)',
+                    'Produccion': 'Producción Académica',
+                    'Tutoria': 'Tutoría',
+                }
+                nombre_bd = NOMBRE_MAP.get(categoria, categoria)
+                cat_qs = CategoriasDoc.objects.filter(nombre_categoria__iexact=nombre_bd)
+                if not cat_qs.exists():
+                    cat_qs = CategoriasDoc.objects.filter(nombre_categoria__icontains=categoria[:4])
+                if cat_qs.exists():
+                    categoria_obj = cat_qs.first()
+                else:
+                    categoria_obj, _ = CategoriasDoc.objects.get_or_create(
+                        nombre_categoria='Personalizada',
+                        defaults={'descripcion': 'Categoría comodín para documentos personalizados'},
+                    )
+            else:
+                # Categoría custom del usuario: usar/crear categoría comodín
+                categoria_obj, _ = CategoriasDoc.objects.get_or_create(
+                    nombre_categoria='Personalizada',
+                    defaults={'descripcion': 'Categoría comodín para documentos personalizados'},
+                )
 
             carpeta = None
             if id_folder:
@@ -258,3 +292,54 @@ class ServicioExpedientes:
     def listar_categorias():
         cats = CategoriasDoc.objects.all()
         return {'success': True, 'categorias': CategoriaDocSerializer(cats, many=True).data}
+
+    # ---------------- CATEGORÍAS CUSTOM ----------------
+    @staticmethod
+    def listar_categorias_custom(id_profesor):
+        try:
+            cats = CategoriaCustom.objects.filter(id_profesor=id_profesor)
+            return {
+                'success': True,
+                'categorias_custom': CategoriaCustomSerializer(cats, many=True).data,
+            }
+        except Exception as e:
+            logger.error(f"Error al listar categorias custom: {str(e)}")
+            return {'success': False, 'error': str(e)}
+
+    @staticmethod
+    def crear_categoria_custom(id_profesor, nombre, campos):
+        try:
+            profe = UserProfe.objects.get(id_profesor=id_profesor)
+
+            if CategoriaCustom.objects.filter(id_profesor=profe, nombre=nombre).exists():
+                return {'success': False, 'error': f"Ya existe una categoría llamada '{nombre}'"}
+
+            cat = CategoriaCustom.objects.create(
+                id_profesor=profe,
+                nombre=nombre,
+                campos=campos,
+            )
+            logger.info(f"Categoria custom creada: '{nombre}' (profesor {id_profesor})")
+            return {'success': True, 'categoria': CategoriaCustomSerializer(cat).data}
+        except UserProfe.DoesNotExist:
+            return {'success': False, 'error': 'Profesor no encontrado'}
+        except Exception as e:
+            logger.error(f"Error al crear categoria custom: {str(e)}")
+            return {'success': False, 'error': str(e)}
+
+    @staticmethod
+    def eliminar_categoria_custom(id_cat_custom, id_profesor):
+        try:
+            cat = CategoriaCustom.objects.get(
+                id_cat_custom=id_cat_custom,
+                id_profesor=id_profesor,
+            )
+            nombre = cat.nombre
+            cat.delete()
+            logger.info(f"Categoria custom eliminada: '{nombre}' (profesor {id_profesor})")
+            return {'success': True, 'mensaje': f"Categoría '{nombre}' eliminada"}
+        except CategoriaCustom.DoesNotExist:
+            return {'success': False, 'error': 'Categoría no encontrada'}
+        except Exception as e:
+            logger.error(f"Error al eliminar categoria custom: {str(e)}")
+            return {'success': False, 'error': str(e)}

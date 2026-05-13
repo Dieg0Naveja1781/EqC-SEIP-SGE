@@ -5,15 +5,6 @@ import { documentsService } from "../../shared/api/documentsService";
 import { DashboardLayout } from "../../shared/components/DashboardLayout";
 import { useNavigate } from "react-router-dom";
 
-// Lista de categorias de documentos
-const CATEGORIAS_FILTRO = [
-  "Docencia",
-  "Gestión Académica",
-  "Gestión Académica (Titulación)",
-  "Producción",
-  "Tutoría",
-];
-
 const MONTHS = [
   "Enero",
   "Febrero",
@@ -52,7 +43,10 @@ export function ArchiveList() {
   const fileInputRef = useRef(null);
   const { isDark, toggleTheme } = useTheme();
   const [tiposSeleccionados, setTiposSeleccionados] = useState([]);
-  const navigate = useNavigate();
+  const [showModal, setShowModal] = useState(false);
+  const [folderName, setFolderName] = useState("");
+  const [ordenarPor, setOrdenarPor] = useState("Fecha ↓");
+    const navigate = useNavigate();
 
   const handleVerDocumento = (file) => {
     if (file.type === "pdf") {
@@ -61,12 +55,58 @@ export function ArchiveList() {
   };
 
   // Filtra por tipo de documento, si no hay ninguno seleccionado muestra todo
-  const showFiles = tiposSeleccionados.length === 0
+  const archivosFiltrados = tiposSeleccionados.length === 0
     ? files
     : files.filter((f) =>
       f.type === "folder" ||
       tiposSeleccionados.includes(f.categoria)
-    );
+  );
+
+  // Filtrado por fecha
+  const filtradosFecha = archivosFiltrados.filter((f) => {
+    // Obtener la fecha del archivo
+    const fechaISO = f.fecha_creacion || null;
+    let fechaObj = null;
+    if (fechaISO) {
+      fechaObj = new Date(fechaISO);
+    } else if (f.date) {
+      // Intenta parsear el string formateado
+      const partes = f.date.split("/");
+      if (partes.length === 3) {
+        // El formato esperado es "dd/MM/yyyy", así que la parte[0] es el día, parte[1] es el mes y la parte[2] es el año
+        fechaObj = new Date(`${partes[2]}-${partes[1].padStart(2, "0")}-${partes[0].padStart(2, "0")}`);
+      }
+    }
+
+    const fileAnio = fechaObj.getFullYear().toString();
+    const fileMes = MONTHS[fechaObj.getMonth()];
+    const fileDia = fechaObj.getDate();
+
+    if (anio !== "Cualquier Año" && fileAnio !== anio) return false;
+    if (mes !== "Cualquier Mes" && fileMes !== mes) return false;
+    if (dia !== "Cualquier Día" && fileDia !== Number(dia)) return false;
+
+    return true;
+  });
+
+  // Ordena los archivos filtrados según el criterio seleccionado en el estado "ordenarPor"
+  const showFiles = [...filtradosFecha].sort((a, b) => {
+      // Para ordenar por nombre, usamos localeCompare para comparar los nombres de los archivos
+      if (ordenarPor === "Nombre A-Z") {
+      return a.name.localeCompare(b.name);
+    }
+    if (ordenarPor === "Nombre Z-A") {
+      return b.name.localeCompare(a.name);
+    }
+    // Para ordenar por fecha, convertimos las fechas a objetos Date y restamos para obtener el orden correcto
+    if (ordenarPor === "Fecha ↑") {
+      return new Date(a.date) - new Date(b.date);
+    }
+    if (ordenarPor === "Fecha ↓") {
+      return new Date(b.date) - new Date(a.date);
+    }
+    return 0;
+  });
 
   const handleTipoChange = (categoria) => {
     setTiposSeleccionados((prev) =>
@@ -74,6 +114,15 @@ export function ArchiveList() {
         ? prev.filter((t) => t !== categoria)
         : [...prev, categoria]
     );
+  };
+
+  // Funciones para los botones de ordenamiento, alternan entre los estados correspondientes
+  const toggleSortNombre = () => {
+    setOrdenarPor((prev) => (prev === "Nombre A-Z" ? "Nombre Z-A" : "Nombre A-Z")); // Si el estado actual es "Nombre A-Z", cambia a "Nombre Z-A", y viceversa
+  };
+
+  const toggleSortFecha = () => {
+    setOrdenarPor((prev) => (prev === "Fecha ↑" ? "Fecha ↓" : "Fecha ↑")); // Si el estado actual es "Fecha ↑", cambia a "Fecha ↓", y viceversa
   };
 
   const cargarDatos = async () => {
@@ -123,19 +172,29 @@ export function ArchiveList() {
     cargarDatos();
   }, []);
 
-  const handleNuevaCarpeta = async () => {
-    const nombre = window.prompt("Nombre de la nueva carpeta:");
-    if (!nombre) return;
+  const handleNuevaCarpeta = () => {
+    setShowModal(true);
+  };
+
+  const handleConfirmFolder = async () => {
+    if (!folderName.trim()) return;
     try {
-      const res = await documentsService.createFolder(nombre);
+      const res = await documentsService.createFolder(folderName.trim());
       if (res?.success) {
         cargarDatos();
+        setShowModal(false);
+        setFolderName("");
       } else {
         alert(res?.error || "No se pudo crear la carpeta");
       }
     } catch (err) {
       alert(err?.data?.error || "Error al crear la carpeta");
     }
+  };
+
+  const handleCancelFolder = () => {
+    setShowModal(false);
+    setFolderName("");
   };
 
   const handleSubirArchivoClick = () => {
@@ -209,11 +268,17 @@ export function ArchiveList() {
             {filtrosAvanzados ? (
               <div className="simple_view">
                 <div className="simple_header">
+                   {/* Boton para ordenar alfabeticamente */}
                   <h3 className="col_nombre">
-                    Nombre <button className="btn_sort">↑↓</button>
+                    Nombre <button className="btn_sort" onClick={toggleSortNombre}>
+                      {ordenarPor === "Nombre A-Z" ? "↓" : ordenarPor === "Nombre Z-A" ? "↑" : "↑↓"}
+                    </button>
                   </h3>
+                  {/* Boton para ordenar por fecha */}
                   <h3 className="col_fecha">
-                    Fecha <button className="btn_sort">↑↓</button>
+                    Fecha <button className="btn_sort" onClick={toggleSortFecha}>
+                      {ordenarPor === "Fecha ↑" ? "↑" : ordenarPor === "Fecha ↓" ? "↓" : "↑↓"}
+                    </button>
                   </h3>
                   <button
                     className="btn_advanced"
@@ -297,13 +362,16 @@ export function ArchiveList() {
                   <div className="filter_right">
                     <div className="sort_row">
                       <h2 className="filter_label">Ordenar por</h2>
-                      <select className="filter_select">
-                        <option>Nombre A-Z</option>
-                        <option>Nombre Z-A</option>
-                        <option>Fecha ↑</option>
-                        <option>Fecha ↓</option>
+                      <select
+                        className="filter_select"
+                        value={ordenarPor} // El valor del select se controla con el estado "ordenarPor"
+                        onChange={(e) => setOrdenarPor(e.target.value)} // Cuando se selecciona una opción, actualizamos el estado "ordenarPor"
+                      >
+                        <option value="Nombre A-Z">Nombre A-Z</option>
+                        <option value="Nombre Z-A">Nombre Z-A</option>
+                        <option value="Fecha ↑">Fecha ↑</option>
+                        <option value="Fecha ↓">Fecha ↓</option>
                       </select>
-                      <button className="btn_apply">Aplicar</button>
                     </div>
                   </div>
                   <button
@@ -330,17 +398,18 @@ export function ArchiveList() {
                 </div>
 
                 {/* === CHECKBOXES === */}
-                <div className="checkbox_label">Tipo de Documento</div>
+                <div className="checkbox_label">Categoria del Documento</div>
                 <div className="checkbox_row">
-                  {CATEGORIAS_FILTRO.map((cat) => (
-                    <label key={cat} className="checkbox_item">
+                  {/* Mapea las categorias obtenidas del backend para crear un checkbox para cada una */}
+                  {categorias.map((cat) => (
+                    <label key={cat.id_tipo} className="checkbox_item">
                       <input
                         type="checkbox"
-                        value={cat}
-                        checked={tiposSeleccionados.includes(cat)}
-                        onChange={() => handleTipoChange(cat)}
+                        value={cat.nombre_categoria}
+                        checked={tiposSeleccionados.includes(cat.nombre_categoria)}
+                        onChange={() => handleTipoChange(cat.nombre_categoria)}
                       />
-                      {cat}
+                      {cat.nombre_categoria}
                     </label>
                   ))}
                 </div>
@@ -385,6 +454,35 @@ export function ArchiveList() {
             Nueva Carpeta
           </button>
         </div>
+
+        {/* === MODAL === */}
+        {showModal && (
+          <div className="modal_overlay">
+            <div className="modal_content">
+              <h3>Crear Nueva Carpeta</h3>
+              <input
+                type="text"
+                placeholder="Nombre de la carpeta"
+                value={folderName}
+                onChange={(e) => setFolderName(e.target.value)}
+                className="modal_input"
+                autoFocus
+              />
+              <div className="modal_buttons">
+                <button className="btn_cancel" onClick={handleCancelFolder}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+                <button className="btn_confirm" onClick={handleConfirmFolder}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );
