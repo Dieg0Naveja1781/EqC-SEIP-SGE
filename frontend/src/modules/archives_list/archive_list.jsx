@@ -3,6 +3,7 @@ import "./Styles/archive_list.css";
 import { useTheme } from "../../shared/context/ThemeContext";
 import { documentsService } from "../../shared/api/documentsService";
 import { DashboardLayout } from "../../shared/components/DashboardLayout";
+import { useNavigate } from "react-router-dom";
 
 // Lista de categorias de documentos
 const CATEGORIAS_FILTRO = [
@@ -124,6 +125,14 @@ export function ArchiveList() {
         date: formatFecha(d.fecha_creacion),
         categoria: d.nombre_categoria || null,
       }));
+
+      const navigate = useNavigate();
+
+      const handleVerDocumento = (file) => {
+        if (file.type === "pdf") {
+          navigate("/archivo", { state: { documento: file } });
+        }
+      };
 
       setFiles([...carpetas, ...docs]);
       setCategorias(catsRes?.categorias || []);
@@ -396,7 +405,7 @@ export function ArchiveList() {
               <p>No hay archivos. Crea una carpeta o sube un documento.</p>
             )}
             {showFiles.map((file) => (
-              <div key={file.id} className="file_row">
+              <div key={file.id} className="file_row" onClick={() => handleVerDocumento(file)} style={{ cursor: file.type === "pdf" ? "pointer" : "default" }}>
                 <span>{file.type === "folder" ? "📁" : "📄"}</span>
                 <span className="file_name">{file.name}</span>
                 <span className="file_date">{file.date}</span>

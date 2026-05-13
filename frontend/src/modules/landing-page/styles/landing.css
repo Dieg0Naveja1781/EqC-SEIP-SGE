@@ -27,18 +27,18 @@
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-.main-content {
+.lpage-main {
   position: relative;
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background-color: #eef2f7;
+
   min-height: 80vh;
 }
 
-/* Capas parallax que viven detrás del logo dentro del main-content.
+/* Capas parallax que viven detrás del logo dentro del .lpage-main.
    Cada capa cubre todo el área y se desplaza hacia abajo con el scroll. */
 .parallax-layer {
   position: absolute;
@@ -67,7 +67,7 @@
   opacity: 0.55;
 }
 
-.main-content-inner {
+.lpage-main-inner {
   position: relative;
   z-index: 10;
   display: flex;
@@ -78,7 +78,7 @@
   gap: 1.5rem;
 }
 
-.main-content-inner .main-logo {
+.lpage-main-inner .main-logo {
   height: 180px;
   width: auto;
   object-fit: contain;
