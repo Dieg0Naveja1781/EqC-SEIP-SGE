@@ -106,7 +106,7 @@ class SubidaDocumentoSerializer(serializers.Serializer):
     id_tipo = serializers.IntegerField(required=False, allow_null=True)
     id_folder = serializers.IntegerField(required=False, allow_null=True)
     archivo = serializers.FileField()
-    fecha_expedicion = serializers.DateTimeField(required=False, allow_null=True)
+    fecha_expedicion = serializers.DateField(required=False, allow_null=True)
     categoria = serializers.CharField(max_length=100)
     # id_profesor se inyecta en validate() desde el contexto de la vista
     metadatos = serializers.JSONField(required=False, default=dict)
@@ -187,4 +187,4 @@ class CrearCarpetaSerializer(serializers.Serializer):
 class CrearExpedienteSerializer(serializers.Serializer):
     nombre_convocatoria = serializers.CharField(max_length=50)
     descripcion = serializers.CharField(required=False, allow_blank=True)
-    fecha_expedicion = serializers.DateTimeField(required=False, allow_null=True)
+    fecha_expedicion = serializers.DateField(required=False, allow_null=True)

@@ -62,7 +62,7 @@ class DocDocumento(models.Model):
     )
     titulo_doc = models.CharField(max_length=50)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
-    fecha_expedicion = models.DateTimeField(blank=True, null=True)
+    fecha_expedicion = models.DateField(blank=True, null=True)
     ruta_archivo = models.TextField()
     tamano_bytes = models.BigIntegerField(blank=True, null=True)
     extension_archivo = models.CharField(max_length=10, blank=True, default='')
@@ -87,7 +87,7 @@ class DocExpediente(models.Model):
     )
     nombre_convocatoria = models.CharField(max_length=50)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
-    fecha_expedicion = models.DateTimeField(blank=True, null=True)
+    fecha_expedicion = models.DateField(blank=True, null=True)
     descripcion = models.TextField(blank=True, null=True)
 
     class Meta:

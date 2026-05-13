@@ -25,6 +25,14 @@
   padding-left: 0.5rem;
 }
 
+.sidebar-logo {
+  height: 60px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
 .nav-item {
   padding: 12px 15px;
   margin-bottom: 10px;
