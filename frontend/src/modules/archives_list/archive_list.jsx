@@ -5,15 +5,6 @@ import { documentsService } from "../../shared/api/documentsService";
 import { DashboardLayout } from "../../shared/components/DashboardLayout";
 import { useNavigate } from "react-router-dom";
 
-// Lista de categorias de documentos
-const CATEGORIAS_FILTRO = [
-  "Docencia",
-  "Gestión Académica",
-  "Gestión Académica (Titulación)",
-  "Producción",
-  "Tutoría",
-];
-
 const MONTHS = [
   "Enero",
   "Febrero",
@@ -71,8 +62,35 @@ export function ArchiveList() {
       tiposSeleccionados.includes(f.categoria)
   );
 
+  // Filtrado por fecha
+  const filtradosFecha = archivosFiltrados.filter((f) => {
+    // Obtener la fecha del archivo
+    const fechaISO = f.fecha_creacion || null;
+    let fechaObj = null;
+    if (fechaISO) {
+      fechaObj = new Date(fechaISO);
+    } else if (f.date) {
+      // Intenta parsear el string formateado
+      const partes = f.date.split("/");
+      if (partes.length === 3) {
+        // El formato esperado es "dd/MM/yyyy", así que la parte[0] es el día, parte[1] es el mes y la parte[2] es el año
+        fechaObj = new Date(`${partes[2]}-${partes[1].padStart(2, "0")}-${partes[0].padStart(2, "0")}`);
+      }
+    }
+
+    const fileAnio = fechaObj.getFullYear().toString();
+    const fileMes = MONTHS[fechaObj.getMonth()];
+    const fileDia = fechaObj.getDate();
+
+    if (anio !== "Cualquier Año" && fileAnio !== anio) return false;
+    if (mes !== "Cualquier Mes" && fileMes !== mes) return false;
+    if (dia !== "Cualquier Día" && fileDia !== Number(dia)) return false;
+
+    return true;
+  });
+
   // Ordena los archivos filtrados según el criterio seleccionado en el estado "ordenarPor"
-  const showFiles = [...archivosFiltrados].sort((a, b) => {
+  const showFiles = [...filtradosFecha].sort((a, b) => {
       // Para ordenar por nombre, usamos localeCompare para comparar los nombres de los archivos
       if (ordenarPor === "Nombre A-Z") {
       return a.name.localeCompare(b.name);
@@ -354,7 +372,6 @@ export function ArchiveList() {
                         <option value="Fecha ↑">Fecha ↑</option>
                         <option value="Fecha ↓">Fecha ↓</option>
                       </select>
-                      <button className="btn_apply">Aplicar</button>
                     </div>
                   </div>
                   <button
@@ -381,7 +398,7 @@ export function ArchiveList() {
                 </div>
 
                 {/* === CHECKBOXES === */}
-                <div className="checkbox_label">Tipo de Documento</div>
+                <div className="checkbox_label">Categoria del Documento</div>
                 <div className="checkbox_row">
                   {/* Mapea las categorias obtenidas del backend para crear un checkbox para cada una */}
                   {categorias.map((cat) => (
