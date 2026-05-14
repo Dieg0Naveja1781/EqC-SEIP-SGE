@@ -36,9 +36,8 @@ export function DashboardLayout({ children, title }) {
     { name: "Página Principal", path: "/main" },
     { name: "Listado de Archivos", path: "/archive_list" },
     { name: "Subir Archivo", path: "/subir_doc" },
-    { name: "Perfil", path: "/perfil" },
-    // Este item ya no necesita necesariamente un "path" si solo abrirá el modal
     { name: "Crear Expediente", isModalTrigger: true }, 
+    { name: "Perfil", path: "/perfil" },
   ];
 
   return (
