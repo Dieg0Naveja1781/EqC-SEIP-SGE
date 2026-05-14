@@ -5,11 +5,11 @@ import "../styles/landing.css";
 import logo from "../../../assets/logotipo.png";
 import logoOscuro from "../../../assets/Logotipo_o.png";
 import bgStripes from "../../../assets/bg-stripes.png";
-import bgIcons from "../../../assets/bg-icons.png";
+import bgIconsClaro from "../../../assets/bg-icons.png";
+import bgIconsOscuro from "../../../assets/bg-icons_o.png";
 
 function LandingPage() {
   const { isDark, toggleTheme } = useTheme();
-  // Capas parallax del fondo del logo (se desplazan hacia abajo con el scroll)
   const layer1Ref = useRef(null);
   const layer2Ref = useRef(null);
 
@@ -21,8 +21,6 @@ function LandingPage() {
         window.requestAnimationFrame(() => {
           const scrollY = window.scrollY;
 
-          // Cada capa se mueve hacia abajo a velocidad distinta para
-          // dar efecto de profundidad (la de atrás más lenta, la de delante más rápida).
           if (layer1Ref.current) {
             layer1Ref.current.style.transform = `translate3d(0, ${scrollY * 0.25}px, 0)`;
           }
@@ -60,13 +58,13 @@ function LandingPage() {
       </header>
 
       <main className="lpage-main">
-        {/* Capas decorativas que viven detrás del logo y se desplazan
-            hacia abajo cuando el usuario scrollea. */}
         <div className="parallax-layer back" ref={layer1Ref} aria-hidden="true">
           <img src={bgStripes} alt="" />
         </div>
+
+        {/* 👉 Aquí está el cambio: condicional según modo */}
         <div className="parallax-layer front" ref={layer2Ref} aria-hidden="true">
-          <img src={bgIcons} alt="" />
+          <img src={isDark ? bgIconsOscuro : bgIconsClaro} alt="" />
         </div>
 
         <div className="lpage-main-inner">

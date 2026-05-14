@@ -67,6 +67,11 @@
   opacity: 0.55;
 }
 
+body.light .parallax-layer.front img {
+  opacity: 0.55;
+}
+
+
 .lpage-main-inner {
   position: relative;
   z-index: 10;
