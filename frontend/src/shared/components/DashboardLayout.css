@@ -2,6 +2,7 @@
   display: flex;
   flex: 1;
   min-width: 0;
+  min-height: 100vh; /* NUEVO: Asegura que todo el dashboard tome el alto de la pantalla */
   background-color: var(--bg-body);
   color: var(--text-primary);
   transition: all 0.3s ease;
@@ -54,6 +55,7 @@
 
 .logout-btn {
   margin: 10px;
+  margin-top: auto; /* NUEVO: Empuja el botón hasta abajo */
   padding: 12px 15px;
   background-color: white;
   color: #ff4444;

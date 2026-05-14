@@ -94,6 +94,7 @@ export function UserData() {
         </div>
 
         <div className="datos-editables">
+
           <div className="campo-grupo">
             <label>Nombre Completo</label>
             <input
@@ -113,6 +114,21 @@ export function UserData() {
               value={form.correo_profe}
               readOnly
             />
+          </div>
+
+          <div className="campo-grupo">
+            <label>Preferencia de Tema</label>
+            <div className="campo-fila" style={{ alignItems: "center" }}>
+              <button
+                type="button"
+                className="btn-tema"
+                onClick={toggleTheme}
+                aria-label="Cambiar tema"
+              >
+                <span className="btn-tema-icon">{isDark ? "☀️" : "🌙"}</span>
+                <span>{isDark ? "Cambiar a Modo Claro" : "Cambiar a Modo Oscuro"}</span>
+              </button>
+            </div>
           </div>
 
           <div className="campo-grupo">
@@ -136,31 +152,12 @@ export function UserData() {
             </div>
           </div>
 
-          <div className="campo-grupo">
-            <label>Preferencia de Tema</label>
-            <div className="campo-fila" style={{ gap: "15px", alignItems: "center" }}>
-              <label className="theme-toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={isDark}
-                  onChange={toggleTheme}
-                />
-                <span className="theme-slider">
-                  <span className="theme-icon">☀️</span>
-                  <span className="theme-icon">🌙</span>
-                </span>
-              </label>
-              <span style={{ color: "var(--text-secondary)", fontSize: "0.9rem", fontWeight: "500" }}>
-                {isDark ? "Modo Oscuro" : "Modo Claro"}
-              </span>
-            </div>
-          </div>
-
           {message && (
             <p style={{ textAlign: "center", marginTop: "0.75rem" }}>
               {message}
             </p>
           )}
+
         </div>
       </div>
     </DashboardLayout>

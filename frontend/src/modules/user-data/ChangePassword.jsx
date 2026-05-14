@@ -3,18 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { userService } from "../../shared/api/userService";
 import { DashboardLayout } from "../../shared/components/DashboardLayout";
 import "./Styles/ChangePassword.css";
+import lerolero from "../../assets/lerolero.png";
 
 export function ChangePassword() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({
-    actual: "",
-    nueva: "",
-    confirmar: "",
-  });
+  const [form, setForm] = useState({ actual: "", nueva: "", confirmar: "" });
   const [errors, setErrors] = useState({});
   const [serverMsg, setServerMsg] = useState("");
   const [serverMsgType, setServerMsgType] = useState("error");
   const [loading, setLoading] = useState(false);
+  const [showImage, setShowImage] = useState(false);
 
   const handleChange = (e) => {
     const { id, value } = e.target;
@@ -22,14 +20,12 @@ export function ChangePassword() {
     if (errors[id]) setErrors((prev) => ({ ...prev, [id]: null }));
   };
 
-  // Mismas validaciones que Register: mínimo 8 caracteres y coincidencia.
   const validate = () => {
     const tempErrors = {};
     if (!form.actual) tempErrors.actual = "La contraseña actual es obligatoria";
     if (form.nueva.length < 8) tempErrors.nueva = "Mínimo 8 caracteres";
-    if (form.nueva !== form.confirmar) {
+    if (form.nueva !== form.confirmar)
       tempErrors.confirmar = "Las contraseñas no coinciden";
-    }
     setErrors(tempErrors);
     return Object.keys(tempErrors).length === 0;
   };
@@ -38,7 +34,6 @@ export function ChangePassword() {
     e.preventDefault();
     setServerMsg("");
     if (!validate()) return;
-
     setLoading(true);
     try {
       const res = await userService.changePassword(form.actual, form.nueva);
@@ -64,8 +59,18 @@ export function ChangePassword() {
 
   return (
     <DashboardLayout title="Cambiar Contraseña">
+      {/* Sin clase dinámica — el CSS escucha data-theme en <html> */}
       <div className="change-password-page">
         <div className="change-password-card">
+
+          <button
+            className="cp-close"
+            onClick={() => navigate("/perfil")}
+            aria-label="Cerrar"
+          >
+            ✕
+          </button>
+
           <h2>Cambiar Contraseña</h2>
 
           <form onSubmit={handleSubmit} noValidate>
@@ -94,7 +99,7 @@ export function ChangePassword() {
             </div>
 
             <div className="cp-group">
-              <label htmlFor="confirmar">Repetir la Contraseña Nueva</label>
+              <label htmlFor="confirmar">Confirmar Contraseña Nueva</label>
               <input
                 type="password"
                 id="confirmar"
@@ -122,7 +127,29 @@ export function ChangePassword() {
           </form>
 
           <div className="cp-footer">
-            <a href="#">¿Olvidaste tu contraseña?</a>
+            <a
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                setShowImage(!showImage);
+              }}
+            >
+              ¿Olvidaste tu contraseña?
+            </a>
+
+            {showImage && (
+              <div style={{ marginTop: "1rem" }}>
+                <img
+                  src={lerolero}
+                  alt="lerolero"
+                  style={{
+                    maxWidth: "250px",
+                    width: "100%",
+                    borderRadius: "12px",
+                  }}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
