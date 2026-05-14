@@ -5,6 +5,7 @@ import { documentsService } from "../../shared/api/documentsService";
 
 // Pool completo de campos disponibles para categorías personalizadas
 const TODOS_LOS_CAMPOS = [
+  { key: "fechaExpedicion", label: "Fecha de Expedición" },
   { key: "cicloEscolar",    label: "Ciclo Escolar" },
   { key: "claveMateria",    label: "Clave de Materia" },
   { key: "crn",             label: "CRN" },
@@ -209,11 +210,11 @@ export function SubirDoc() {
     const esCustom = !CATEGORIAS_FIJAS.includes(categoria);
 
     const camposObligatoriosFijos = {
-      Docencia:   ["nombreNube","cicloEscolar","claveMateria","crn","nombreMateria","carrera","grupo","cargaHoraria","sede"],
-      Gestion:    ["nombreNube","tipoActividad","nombreActividad","instancia","periodo","duracion","rol"],
-      Titulacion: ["nombreNube","rolTesis","alumno","nivel","tituloTesis","fechaAsignacion","estatus","avance"],
-      Produccion: ["nombreNube","tipoProducto","tituloTrabajo","estado","identificador","idiomas"],
-      Tutoria:    ["nombreNube","cicloTutoria","programa","tipoTutoria","numeroAlumnos","docAsignacion"],
+      Docencia:   ["nombreNube","fechaExpedicion","cicloEscolar","claveMateria","crn","nombreMateria","carrera","grupo","cargaHoraria","sede"],
+      Gestion:    ["nombreNube","fechaExpedicion","tipoActividad","nombreActividad","instancia","periodo","duracion","rol"],
+      Titulacion: ["nombreNube","fechaExpedicion","rolTesis","alumno","nivel","tituloTesis","fechaAsignacion","estatus","avance"],
+      Produccion: ["nombreNube","fechaExpedicion","tipoProducto","tituloTrabajo","estado","identificador","idiomas"],
+      Tutoria:    ["nombreNube","fechaExpedicion","cicloTutoria","programa","tipoTutoria","numeroAlumnos","docAsignacion"],
     };
 
     let requeridos;
@@ -242,6 +243,8 @@ export function SubirDoc() {
 
     const metadatos = { ...formData };
     delete metadatos.nombreNube;
+    const fechaExpedicion = metadatos.fechaExpedicion;
+    delete metadatos.fechaExpedicion;
     if (esCustom) metadatos._categoriaCustom = categoria;
 
     setSubiendo(true);
@@ -251,6 +254,7 @@ export function SubirDoc() {
         titulo_doc: formData.nombreNube,
         id_tipo,
         categoria,
+        fecha_expedicion: fechaExpedicion,
         metadatos,
       });
       if (res?.success) {
@@ -289,10 +293,13 @@ export function SubirDoc() {
           {catObj.campos.map((key) => {
             const campo = TODOS_LOS_CAMPOS.find((f) => f.key === key);
             if (!campo) return null;
+            let inputType = "text";
+            if (key === "fechaAsignacion" || key === "fechaExpedicion") inputType = "date";
+            else if (key === "numeroAlumnos") inputType = "number";
             return (
               <div className="field-group" key={key}>
                 <label>{campo.label}</label>
-                <input type={key === "fechaAsignacion" ? "date" : key === "numeroAlumnos" ? "number" : "text"} {...inputProps(key, `Ingresa ${campo.label}`)} />
+                <input type={inputType} {...inputProps(key, `Ingresa ${campo.label}`)} />
               </div>
             );
           })}
@@ -304,6 +311,7 @@ export function SubirDoc() {
       case "Docencia":
         return (
           <>
+            <div className="field-group"><label>Fecha de Expedición *</label><input type="date" {...inputProps("fechaExpedicion", "")} /></div>
             <div className="field-group"><label>Ciclo Escolar</label><input type="text" {...inputProps("cicloEscolar", "Ej: 2022-A, 2024-B")} /></div>
             <div className="field-group"><label>Clave de Materia</label><input type="text" {...inputProps("claveMateria", "Ej: IL803, C0410")} /></div>
             <div className="field-group"><label>CRN</label><input type="text" {...inputProps("crn", "Ej: 189895, 207575")} /></div>
@@ -317,6 +325,7 @@ export function SubirDoc() {
       case "Gestion":
         return (
           <>
+            <div className="field-group"><label>Fecha de Expedición *</label><input type="date" {...inputProps("fechaExpedicion", "")} /></div>
             <div className="field-group"><label>Tipo de Actividad</label><input type="text" {...inputProps("tipoActividad", "Ej: Jefe de Depto., Coordinador...")} /></div>
             <div className="field-group"><label>Nombre de Actividad</label><input type="text" {...inputProps("nombreActividad", 'Ej: Asesoría "LA CUENCA"')} /></div>
             <div className="field-group"><label>Instancia/Dependencia</label><input type="text" {...inputProps("instancia", "Ej: Depto. de Estudios Organizacionales")} /></div>
@@ -328,6 +337,7 @@ export function SubirDoc() {
       case "Titulacion":
         return (
           <>
+            <div className="field-group"><label>Fecha de Expedición *</label><input type="date" {...inputProps("fechaExpedicion", "")} /></div>
             <div className="field-group"><label>Rol</label><input type="text" {...inputProps("rolTesis", "Ej: Director o Codirector")} /></div>
             <div className="field-group"><label>Nombre del Alumno</label><input type="text" {...inputProps("alumno", "Ej: Karla Iveth Ayón Rendón")} /></div>
             <div className="field-group"><label>Nivel Educativo</label><input type="text" {...inputProps("nivel", "Ej: Licenciatura, Maestría...")} /></div>
@@ -340,6 +350,7 @@ export function SubirDoc() {
       case "Produccion":
         return (
           <>
+            <div className="field-group"><label>Fecha de Expedición *</label><input type="date" {...inputProps("fechaExpedicion", "")} /></div>
             <div className="field-group"><label>Tipo de Producto</label><input type="text" {...inputProps("tipoProducto", "Ej: Artículo indexado, Libro...")} /></div>
             <div className="field-group"><label>Título del Trabajo</label><input type="text" {...inputProps("tituloTrabajo", "Título oficial de la publicación")} /></div>
             <div className="field-group"><label>Estado</label><input type="text" {...inputProps("estado", "Ej: Publicado, En prensa...")} /></div>
@@ -350,6 +361,7 @@ export function SubirDoc() {
       case "Tutoria":
         return (
           <>
+            <div className="field-group"><label>Fecha de Expedición *</label><input type="date" {...inputProps("fechaExpedicion", "")} /></div>
             <div className="field-group"><label>Ciclo de Tutoría</label><input type="text" {...inputProps("cicloTutoria", "Ej: 2024-B")} /></div>
             <div className="field-group"><label>Programa Académico</label><input type="text" {...inputProps("programa", "Ej: Licenciatura en Administración")} /></div>
             <div className="field-group"><label>Tipo de Tutoría</label><input type="text" {...inputProps("tipoTutoria", "Ej: Individual o Grupal")} /></div>
