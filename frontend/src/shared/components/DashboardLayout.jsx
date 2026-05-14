@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
 import { authService, clearSessionProfesor, getSessionProfesor } from "../api/authService";
 import { ModalCrearExpediente } from "../../modules/CrearExpediente/ModalCrearExpediente";
+import logoClear from "../../assets/logotipo.png";
+import logoDark from "../../assets/Logotipo_o.png";
 import "./DashboardLayout.css";
 
 export function DashboardLayout({ children, title }) {
@@ -48,7 +50,11 @@ export function DashboardLayout({ children, title }) {
           onClick={() => navigate("/")}
           style={{ cursor: "pointer" }}
         >
-          EQC Software
+          <img 
+            src={isDark ? logoDark : logoClear} 
+            alt="EQC Software" 
+            className="sidebar-logo"
+          />
         </div>
         <nav>
           {menuItems.map((item) => (
