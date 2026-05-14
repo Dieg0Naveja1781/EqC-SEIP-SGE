@@ -43,7 +43,7 @@ export function ModalCrearExpediente({ isOpen, onClose }) {
             <input 
               type="text" 
               className="modal-input" 
-              placeholder="Convocatoria-Ej. Curi Skibidiego" 
+              placeholder="Convocatoria Ejemplo: Webinar de Prácticas Pre Profesionales" 
             />
           </div>
         </div>
@@ -54,7 +54,7 @@ export function ModalCrearExpediente({ isOpen, onClose }) {
             <button className="modal-action-btn">
               Explorar Archivos
             </button>
-            <span className="upload-hint">Formatos: PDF, PNG, JPG</span>
+            <span className="upload-hint">Formato PDF solamente</span>
           </div>
 
           <div className="modal-file-table">
