@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import "./Styles/archive_list.css";
 import { useTheme } from "../../shared/context/ThemeContext";
 import { documentsService } from "../../shared/api/documentsService";
@@ -39,6 +40,8 @@ function formatFecha(iso) {
 }
 
 export function ArchiveList() {
+  const location = useLocation();
+  const selectedFolderId = location.state?.folderId;
   const [anio, setAnio] = useState("Cualquier Año");
   const [mes, setMes] = useState("Cualquier Mes");
   const [dia, setDia] = useState("Cualquier Día");
@@ -74,30 +77,51 @@ export function ArchiveList() {
     setLoading(true);
     setErrorMsg("");
     try {
-      const [carpetasRes, docsRes, catsRes] = await Promise.all([
-        documentsService.listFolders().catch(() => ({ carpetas: [] })),
-        documentsService.listDocuments().catch(() => ({ documentos: [] })),
-        documentsService.listCategories().catch(() => ({ categorias: [] })),
-      ]);
+      // Si venimos de una carpeta específica, solo obtener documentos de esa carpeta
+      if (selectedFolderId) {
+        const [docsRes, catsRes] = await Promise.all([
+          documentsService.listDocuments(selectedFolderId).catch(() => ({ documentos: [] })),
+          documentsService.listCategories().catch(() => ({ categorias: [] })),
+        ]);
 
-      const carpetas = (carpetasRes?.carpetas || []).map((c) => ({
-        id: `f-${c.id_folder}`,
-        type: "folder",
-        name: c.nombre_carpeta,
-        date: formatFecha(c.fecha_creacion),
-      }));
+        const docs = (docsRes?.documentos || []).map((d) => ({
+          id: `d-${d.id_doc}`,
+          id_doc: d.id_doc,
+          type: "pdf",
+          name: d.titulo_doc,
+          date: formatFecha(d.fecha_creacion),
+          categoria: d.categoria || null,
+        }));
 
-      const docs = (docsRes?.documentos || []).map((d) => ({
-        id: `d-${d.id_doc}`,
-        id_doc: d.id_doc,
-        type: "pdf",
-        name: d.titulo_doc,
-        date: formatFecha(d.fecha_creacion),
-        categoria: d.categoria || null,
-      }));
+        setFiles(docs);
+        setCategorias(catsRes?.categorias || []);
+      } else {
+        // Mostrar todas las carpetas y documentos
+        const [carpetasRes, docsRes, catsRes] = await Promise.all([
+          documentsService.listFolders().catch(() => ({ carpetas: [] })),
+          documentsService.listDocuments().catch(() => ({ documentos: [] })),
+          documentsService.listCategories().catch(() => ({ categorias: [] })),
+        ]);
 
-      setFiles([...carpetas, ...docs]);
-      setCategorias(catsRes?.categorias || []);
+        const carpetas = (carpetasRes?.carpetas || []).map((c) => ({
+          id: `f-${c.id_folder}`,
+          type: "folder",
+          name: c.nombre_carpeta,
+          date: formatFecha(c.fecha_creacion),
+        }));
+
+        const docs = (docsRes?.documentos || []).map((d) => ({
+          id: `d-${d.id_doc}`,
+          id_doc: d.id_doc,
+          type: "pdf",
+          name: d.titulo_doc,
+          date: formatFecha(d.fecha_creacion),
+          categoria: d.categoria || null,
+        }));
+
+        setFiles([...carpetas, ...docs]);
+        setCategorias(catsRes?.categorias || []);
+      }
     } catch (err) {
       setErrorMsg(
         err?.status === 401
@@ -111,7 +135,7 @@ export function ArchiveList() {
 
   useEffect(() => {
     cargarDatos();
-  }, []);
+  }, [selectedFolderId]);
 
   const handleNuevaCarpeta = () => {
     setShowModal(true);
