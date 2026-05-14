@@ -67,10 +67,13 @@
   opacity: 0.55;
 }
 
-body.light .parallax-layer.front img {
-  opacity: 0.55;
+body.light .register-hint {
+  color: #374151;
 }
 
+body.dark .register-hint {
+  color: #e5e7eb;
+}
 
 .lpage-main-inner {
   position: relative;

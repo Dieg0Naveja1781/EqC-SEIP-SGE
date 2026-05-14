@@ -74,7 +74,7 @@ function LandingPage() {
             <a href="/login" className="btn btn-primary">Iniciar Sesión</a>
 
             <div className="register-group" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem' }}>
-              <span className="register-hint" style={{ fontSize: '0.85rem', color: '#374151' }}>
+              <span className="register-hint" style={{ fontSize: '0.85rem' }}>
                 ¿No tienes cuenta?
               </span>
               <a href="/register" className="btn btn-outline">Crear Cuenta</a>
