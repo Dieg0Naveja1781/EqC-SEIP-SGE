@@ -17,6 +17,7 @@ function SearchBar() {
   const [query, setQuery] = useState("");
   const [history, setHistory] = useState([]);
   const [results, setResults] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -33,6 +34,7 @@ function SearchBar() {
       console.log("Respuesta de API:", response);
       if (response.success) {
         setResults(response.documentos);
+        setShowHistory(false);
         // Guardar en historial
         const newHistory = [searchQuery, ...history.filter(h => h !== searchQuery)].slice(0, 5);
         setHistory(newHistory);
@@ -57,6 +59,12 @@ function SearchBar() {
     navigate(`/archive_view?id=${doc.id_doc}`);
   };
 
+  const handleInputFocus = () => {
+    if (history.length > 0 && query.trim() === "") {
+      setShowHistory(true);
+    }
+  };
+
   return (
     <div className="search-section">
       <form onSubmit={handleSubmit} className="search-form">
@@ -64,28 +72,36 @@ function SearchBar() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Buscar documentos..."
+          onFocus={handleInputFocus}
+          onBlur={() => setTimeout(() => setShowHistory(false), 200)}
+          placeholder="🔍 Buscar documentos por título, categoría..."
           className="search-input"
         />
         <button type="submit" className="search-button">Buscar</button>
       </form>
-      {history.length > 0 && (
+      {showHistory && history.length > 0 && (
         <div className="search-history">
-          <p>Últimas búsquedas:</p>
-          {history.map((hist, index) => (
-            <button key={index} onClick={() => handleHistoryClick(hist)} className="history-item">
-              {hist}
-            </button>
-          ))}
+          <p>📋 Búsquedas recientes</p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+            {history.map((hist, index) => (
+              <button 
+                key={index} 
+                onMouseDown={() => handleHistoryClick(hist)} 
+                className="history-item"
+              >
+                {hist}
+              </button>
+            ))}
+          </div>
         </div>
       )}
       {results.length > 0 && (
         <div className="search-results">
-          <h3>Resultados:</h3>
+          <h3>📄 Resultados encontrados ({results.length})</h3>
           <ul>
             {results.map((doc) => (
               <li key={doc.id_doc} onClick={() => handleResultClick(doc)} className="result-item">
-                {doc.titulo_doc} ({doc.nombre_categoria})
+                <strong>{doc.titulo_doc}</strong> <span style={{opacity: 0.7}}>({doc.nombre_categoria})</span>
               </li>
             ))}
           </ul>
@@ -93,7 +109,7 @@ function SearchBar() {
       )}
       {results.length === 0 && query.trim() !== "" && (
         <div className="no-results">
-          <p>Sin resultados</p>
+          <p>No se encontraron documentos para "{query}"</p>
         </div>
       )}
     </div>

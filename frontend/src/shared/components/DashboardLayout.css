@@ -216,20 +216,29 @@ input:checked + .theme-slider:before {
 .dashboard-layout input,
 .dashboard-layout select,
 .dashboard-layout textarea {
-  padding: 12px;
+  padding: 12px 14px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   background-color: var(--bg-body);
   color: var(--text-p);
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-family: inherit;
+  transition: all 0.3s ease;
+}
+
+.dashboard-layout input:hover,
+.dashboard-layout select:hover,
+.dashboard-layout textarea:hover {
+  border-color: var(--color-400);
 }
 
 .dashboard-layout input:focus,
 .dashboard-layout select:focus,
 .dashboard-layout textarea:focus {
-  outline: 2px solid var(--color-main);
-  border-color: transparent;
+  outline: none;
+  border-color: var(--color-main);
+  box-shadow: 0 0 0 3px rgba(29, 154, 226, 0.1);
+  background-color: var(--bg-card);
 }
 
 .dashboard-layout button {

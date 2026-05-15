@@ -31,12 +31,12 @@
 .register-card,
 .login-card {
   background-color: var(--bg-card);
-  padding: 2.5rem;
+  padding: 45px;
   border-radius: 16px;
   border: 1px solid var(--border);
   width: 100%;
-  max-width: 420px; /* Ancho que especificaste */
-  box-shadow: 0 10px 30px rgba(13, 71, 104, 0.08);
+  max-width: 450px; /* Ancho que especificaste */
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
   box-sizing: border-box;
 }
 
@@ -44,9 +44,10 @@
 .login-card h2 {
   color: var(--text-primary);
   text-align: center;
-  margin-bottom: 0.5rem;
-  font-size: 1.8rem;
-  margin-top: 0;
+  margin: 0 0 1rem 0;
+  font-size: 1.9rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
 }
 
 .register-card p {
@@ -54,69 +55,86 @@
   color: var(--text-secondary);
   margin-bottom: 2rem;
   font-size: 0.95rem;
+  line-height: 1.5;
 }
 
 /*FORMULARIOS */
 .form-group,
 .input-group {
-  margin-bottom: 1.2rem;
+  margin-bottom: 1.3rem;
 }
 
 .form-group label,
 .input-group label {
   display: block;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.5rem;
   color: var(--text-primary);
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
 }
 
 .form-group input,
 .input-group input {
   width: 100%;
-  padding: 0.75rem;
-  border: 2px solid var(--border);
-  border-radius: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
   background-color: var(--bg-main);
   color: var(--text-primary);
   box-sizing: border-box;
-  font-size: 1rem;
+  font-size: 0.95rem;
+  font-family: inherit;
   transition: all 0.3s ease;
+}
+
+.form-group input:hover,
+.input-group input:hover {
+  border-color: var(--color-400);
 }
 
 .form-group input:focus,
 .input-group input:focus {
   outline: none;
-  border-color: var(--color-400);
-  box-shadow: 0 0 0 4px var(--color-50);
+  border-color: var(--color-500);
+  box-shadow: 0 0 0 3px rgba(29, 154, 226, 0.1);
+  background-color: var(--bg-card);
 }
 
 /*BOTONES */
 .btn-register,
 .btn-login {
   width: 100%;
-  padding: 0.9rem;
-  background-color: var(--color-500);
+  padding: 14px 24px;
+  background: linear-gradient(135deg, var(--color-500), var(--color-600));
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: bold;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
   cursor: pointer;
-  transition:
-    background-color 0.3s,
-    transform 0.1s;
-  margin-top: 1rem;
+  transition: all 0.3s ease;
+  margin-top: 1.5rem;
+  box-shadow: 0 4px 12px rgba(29, 154, 226, 0.3);
 }
 
 .btn-register:hover,
 .btn-login:hover {
-  background-color: var(--color-600);
+  background: linear-gradient(135deg, var(--color-600), #156ba6);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(29, 154, 226, 0.4);
 }
 
 .btn-register:active,
 .btn-login:active {
-  transform: scale(0.98);
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(29, 154, 226, 0.3);
+}
+
+.btn-register:disabled,
+.btn-login:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /*LINKS Y TEXTOS EXTRA */

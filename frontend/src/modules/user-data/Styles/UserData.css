@@ -152,19 +152,44 @@
    (0,2,0) y recuperamos el aspecto original de cada elemento.
    ============================================================ */
 .user-container .btn-gestionar {
-  padding: 0 20px;
+  padding: 10px 20px;
   border-radius: 10px;
   background-color: white;
   color: #1e1e1e;
-  border: 2px solid #d9d9d9;
+  border: 1.5px solid var(--border);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.user-container .btn-gestionar:hover {
+  background-color: var(--bg-body);
+  border-color: var(--color-main);
+  color: var(--color-main);
 }
 
 .user-container .btn-guardar {
-  padding: 10px 30px;
-  background-color: #1984c2;
+  padding: 12px 32px;
+  background: linear-gradient(135deg, var(--color-main), var(--color-hover));
   color: white;
   border: none;
-  border-radius: 50px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(29, 154, 226, 0.3);
+}
+
+.user-container .btn-guardar:hover {
+  background: linear-gradient(135deg, var(--color-hover), #156ba6);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(29, 154, 226, 0.4);
+}
+
+.user-container .btn-guardar:active {
+  transform: translateY(0);
 }
 
 /* Selects dentro de UserData con estilo gris claro propio
@@ -173,10 +198,26 @@
 .user-container .select-puesto {
   width: 100%;
   border-radius: 10px;
-  border: 2px solid #d9d9d9;
-  padding: 7px;
+  border: 1px solid var(--border);
+  padding: 10px 12px;
   background-color: white;
   color: #1e1e1e;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.user-container .select-id:hover,
+.user-container .select-puesto:hover {
+  border-color: var(--color-main);
+}
+
+.user-container .select-id:focus,
+.user-container .select-puesto:focus {
+  outline: none;
+  border-color: var(--color-main);
+  box-shadow: 0 0 0 3px rgba(29, 154, 226, 0.1);
 }
 
 .user-container .select-puesto {
