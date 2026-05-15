@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import (
     ExpedienteViewSet, DocumentoViewSet, CarpetaViewSet, CategoriaDocViewSet,
+    CategoriaCustomViewSet,
 )
 
 app_name = 'gestion_expedientes_backend'
@@ -21,6 +22,9 @@ urlpatterns = [
     path('documentos/',
          DocumentoViewSet.as_view({'get': 'list'}),
          name='documento-list'),
+    path('documentos/buscar/',
+         DocumentoViewSet.as_view({'get': 'buscar'}),
+         name='documento-buscar'),
     path('documentos/subir/',
          DocumentoViewSet.as_view({'post': 'subir'}),
          name='documento-subir'),
@@ -43,4 +47,12 @@ urlpatterns = [
     path('categorias/',
          CategoriaDocViewSet.as_view({'get': 'list'}),
          name='categoria-list'),
+
+    # Categorías personalizadas por usuario
+    path('categorias-custom/',
+         CategoriaCustomViewSet.as_view({'get': 'list', 'post': 'create'}),
+         name='categoria-custom-list'),
+    path('categorias-custom/<int:pk>/',
+         CategoriaCustomViewSet.as_view({'delete': 'destroy'}),
+         name='categoria-custom-detail'),
 ]

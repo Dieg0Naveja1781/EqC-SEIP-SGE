@@ -50,6 +50,7 @@
 .dark .sidebar_link:hover {
   background: #303030;
 }
+
 /* ── MAIN ── */
 .main_content {
   flex: 1;
@@ -71,6 +72,7 @@
   font-size: 20px;
   font-weight: 800;
 }
+
 .dark .header_title {
   color: var(--color-200);
 }
@@ -114,9 +116,11 @@
   flex-direction: column;
   justify-content: space-between;
   gap: 16px;
-  padding: 15px 20px;
-  margin-bottom: 4px;
+  padding: 10px 15px;
+  margin-bottom: 8px;
   width: 100%;
+  background: white;
+  border-radius: 16px;
 }
 
 .advanced_filters {
@@ -126,7 +130,6 @@
   flex-wrap: wrap;
   width: 100%;
 }
-
 
 .filters_row {
   margin-left: auto;
@@ -140,29 +143,32 @@
 .filters {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .filter_label {
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 10px;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
+  opacity: 0.85;
 }
 
+/* --- Select --- */
 .filter_select {
-  background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  padding: 6px 28px 6px 10px;
-  font-family: sans-serif;
+  border-radius: 10px;
+  padding: 7px 32px 7px 12px;
   font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2300bcd4'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 10px center;
+  background-position: right 11px center;
   cursor: pointer;
-  min-width: 130px;
+  min-width: 140px;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  outline: none;
 }
 
 .filter_right {
@@ -178,43 +184,32 @@
   display: flex;
   align-items: center;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
+/* --- Botón Filtros Avanzados --- */
 .btn_advanced {
-  background: #00bcd4;
   color: #fff;
   border: none;
   border-radius: 20px;
-  padding: 7px 16px;
-  font-family: sans-serif;
+  padding: 8px 18px;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   margin-left: auto;
+  letter-spacing: 0.3px;
+  box-shadow: 0 2px 10px rgba(0, 188, 212, 0.22);
+  transition: box-shadow 0.2s, filter 0.2s, transform 0.15s;
 }
 
 .btn_advanced:hover {
-  background: #00acc1;
-}
-
-.btn_apply {
-  background: #7c4dff;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 18px;
-  font-family: sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.btn_apply:hover {
-  background: #6c3fef;
+  filter: brightness(1.1);
+  box-shadow: 0 4px 18px rgba(0, 188, 212, 0.35);
+  transform: translateY(-1px);
 }
 
 /* ===  SIMPLIFIED VIEW ===  */
@@ -228,50 +223,89 @@
   display: flex;
   gap: 80px;
   width: 100%;
-  align-items: center; 
+  align-items: center;
 }
 
+/* --- flechas ed Ordenamiento --- */
 .btn_sort {
   background: none;
   border: none;
   font-family: sans-serif;
   font-size: 18px;
   font-weight: bold;
+  color: inherit;
   cursor: pointer;
+  border-radius: 0;
+  white-space: normal;
 }
 
-/* ===  CHECKBOXES ===  */
+/* ===  CHECKBOXES  ===  */
 
 .checkbox_label {
-  font-size: 13px;
-  font-weight: 700;
-  margin-top: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.85;
+  margin-top: 6px;
   align-self: flex-start;
 }
 
 .checkbox_row {
   display: flex;
-  align-items:center;
-  gap: 16px;
+  align-items: center;
+  gap: 10px;
   margin-top: 6px;
   flex-wrap: wrap;
   align-self: flex-start;
 }
 
+/* Construimos pills para mejorar la apariencia */
 .checkbox_item {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-size: 13px;
-  font-weight: 600;
+  gap: 7px;
+  padding: 5px 14px 5px 10px;
+  border-radius: 20px;
+  border: 1.5px solid rgba(0, 188, 212, 0.3);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
   cursor: pointer;
+  user-select: none;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+  letter-spacing: 0.2px;
+}
+
+.checkbox_item:hover {
+  background: rgba(0, 188, 212, 0.15);
+  border-color: #00bcd4;
+}
+
+/* Pill activo */
+.checkbox_item:has(input:checked) {
+  background: #dcf2f5;
+  border-color: #00bcd4;
+  color: #2a2727;
 }
 
 .checkbox_item input[type="checkbox"] {
-  accent-color: #00bcd4;
-  width: 15px;
-  height: 15px;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 188, 212, 0.5);
+  background: transparent;
   cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.checkbox_item input[type="checkbox"]:checked {
+  border-color: #00bcd4;
+  box-shadow: 0 0 0 3px rgba(0, 188, 212, 0.2);
 }
 
 /* ===  FILE LIST ===  */
@@ -383,6 +417,97 @@
   border-color: #999;
 }
 
+/* === MODAL === */
+.modal_overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal_content {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 24px;
+  width: 300px;
+  max-width: 90%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.modal_content h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.modal_input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: sans-serif;
+  font-size: 14px;
+  background: var(--bg-main);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.modal_input:focus {
+  border-color: #00bcd4;
+}
+
+.modal_buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+  gap: 12px;
+}
+
+.btn_cancel {
+  background: #e53935;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.btn_cancel:hover {
+  background: #c62828;
+}
+
+.btn_confirm {
+  background: #4caf50;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.btn_confirm:hover {
+  background: #388e3c;
+}
+
 /* ============================================================
    Overrides sobre los estilos base del Dashboard
    ------------------------------------------------------------
@@ -417,22 +542,6 @@
 
 .archive_list_container_inner .btn_advanced:hover {
   background: #00acc1;
-}
-
-.archive_list_container_inner .btn_apply {
-  background: #7c4dff;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 18px;
-  font-family: sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.archive_list_container_inner .btn_apply:hover {
-  background: #6c3fef;
 }
 
 .archive_list_container_inner .btn_sort {
@@ -521,19 +630,22 @@
 
 /* --- Filtros (select) --- */
 .archive_list_container_inner .filter_select {
-  background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  padding: 6px 28px 6px 10px;
-  font-family: sans-serif;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1.5px solid rgba(0, 188, 212, 0.35);
+  border-radius: 10px;
+  padding: 7px 32px 7px 12px;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
   font-size: 13px;
+  font-weight: 600;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2300bcd4'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 10px center;
+  background-position: right 11px center;
   cursor: pointer;
-  min-width: 130px;
+  min-width: 140px;
   color: var(--text-primary);
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  outline: none;
 }
 
 /* --- Search bar input (sin borde, transparente) --- */
@@ -554,14 +666,66 @@
   border: none;
 }
 
-/* --- Checkboxes con accent-color y tamaño propio --- */
+/* --- Checkboxes pill --- */
 .archive_list_container_inner .checkbox_item input[type="checkbox"] {
-  accent-color: #00bcd4;
-  width: 15px;
-  height: 15px;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 188, 212, 0.5);
+  background: transparent;
   cursor: pointer;
   padding: 0;
-  border: none;
-  border-radius: 0;
-  background: none;
+  transition: background 0.2s, border-color 0.2s;
+  flex-shrink: 0;
+}
+
+.archive_list_container_inner .checkbox_item input[type="checkbox"]:checked {
+  box-shadow: 0 0 0 3px rgba(0, 188, 212, 0.2);
+}
+
+/* === FILTER PANEL - DARK MODE === */
+.dark .filters_panel {
+  background: var(--bg-card);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.dark .filter_select {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(0, 188, 212, 0.3);
+  color: var(--color-200);
+}
+
+.dark .filter_select:focus {
+  border-color: #00bcd4;
+  box-shadow: 0 0 0 3px rgba(0, 188, 212, 0.15);
+}
+
+.dark .filter_label,
+.dark .checkbox_label {
+  color: var(--color-400);
+}
+
+.dark .checkbox_item {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(0, 188, 212, 0.25);
+  color: var(--color-200);
+}
+
+.dark .checkbox_item:hover {
+  background: rgba(0, 188, 212, 0.12);
+  border-color: #00bcd4;
+}
+
+.dark .checkbox_item:has(input:checked) {
+  background: rgba(0, 188, 212, 0.18);
+  border-color: #00bcd4;
+  color: #e0f7fa;
+}
+
+.dark .filter_select option {
+  background: #1e1e1e;
+  border-color: #1e1e1e;
+  color: #e0e0e0;
 }

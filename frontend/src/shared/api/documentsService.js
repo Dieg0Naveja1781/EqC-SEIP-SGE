@@ -20,7 +20,7 @@ export const documentsService = {
     const formData = new FormData();
     formData.append("archivo", archivo);
     formData.append("titulo_doc", titulo_doc);
-    formData.append("id_tipo", id_tipo);
+    if (id_tipo) formData.append("id_tipo", id_tipo);
     if (id_folder) formData.append("id_folder", id_folder);
     if (fecha_expedicion) formData.append("fecha_expedicion", fecha_expedicion);
     if (categoria) formData.append("categoria", categoria);
@@ -31,8 +31,19 @@ export const documentsService = {
   downloadDocumentUrl: (id_doc) =>
     `${API_BASE}/documentos/${id_doc}/descargar/`,
 
+  buscarDocumentos: (query) =>
+    apiClient.get(`/documentos/buscar/?q=${encodeURIComponent(query)}`),
+
   listExpedientes: () => apiClient.get("/expedientes/"),
 
   createExpediente: (nombre_convocatoria, descripcion = "") =>
     apiClient.post("/expedientes/", { nombre_convocatoria, descripcion }),
+
+  // ---- Categorías personalizadas ----
+  listCustomCategories: () => apiClient.get("/categorias-custom/"),
+
+  createCustomCategory: (nombre, campos) =>
+    apiClient.post("/categorias-custom/", { nombre, campos }),
+
+  deleteCustomCategory: (id) => apiClient.delete(`/categorias-custom/${id}/`),
 };

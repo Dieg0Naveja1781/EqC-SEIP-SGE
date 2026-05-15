@@ -1,6 +1,9 @@
 import { DashboardLayout } from "../../../shared/components/DashboardLayout";
 import LastSessionTable from "../components/LastSessionTable";
 import "../styles/MainPage.css";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { documentsService } from "../../../shared/api/documentsService";
 
 const recentFolders = [
   { id: "folder-1", name: "Planeacion" },
@@ -9,6 +12,93 @@ const recentFolders = [
   { id: "folder-4", name: "Convenios" },
   { id: "folder-5", name: "Reportes" },
 ];
+
+function SearchBar() {
+  const [query, setQuery] = useState("");
+  const [history, setHistory] = useState([]);
+  const [results, setResults] = useState([]);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const savedHistory = JSON.parse(localStorage.getItem("searchHistory") || "[]");
+    setHistory(savedHistory);
+  }, []);
+
+  const handleSearch = async (searchQuery) => {
+    if (!searchQuery.trim()) return;
+
+    console.log("Llamando a API con query:", searchQuery);
+    try {
+      const response = await documentsService.buscarDocumentos(searchQuery);
+      console.log("Respuesta de API:", response);
+      if (response.success) {
+        setResults(response.documentos);
+        // Guardar en historial
+        const newHistory = [searchQuery, ...history.filter(h => h !== searchQuery)].slice(0, 5);
+        setHistory(newHistory);
+        localStorage.setItem("searchHistory", JSON.stringify(newHistory));
+      }
+    } catch (error) {
+      console.error("Error buscando documentos:", error);
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    handleSearch(query);
+  };
+
+  const handleHistoryClick = (histQuery) => {
+    setQuery(histQuery);
+    handleSearch(histQuery);
+  };
+
+  const handleResultClick = (doc) => {
+    navigate(`/archive_view?id=${doc.id_doc}`);
+  };
+
+  return (
+    <div className="search-section">
+      <form onSubmit={handleSubmit} className="search-form">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Buscar documentos..."
+          className="search-input"
+        />
+        <button type="submit" className="search-button">Buscar</button>
+      </form>
+      {history.length > 0 && (
+        <div className="search-history">
+          <p>Últimas búsquedas:</p>
+          {history.map((hist, index) => (
+            <button key={index} onClick={() => handleHistoryClick(hist)} className="history-item">
+              {hist}
+            </button>
+          ))}
+        </div>
+      )}
+      {results.length > 0 && (
+        <div className="search-results">
+          <h3>Resultados:</h3>
+          <ul>
+            {results.map((doc) => (
+              <li key={doc.id_doc} onClick={() => handleResultClick(doc)} className="result-item">
+                {doc.titulo_doc} ({doc.nombre_categoria})
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {results.length === 0 && query.trim() !== "" && (
+        <div className="no-results">
+          <p>Sin resultados</p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function FolderIcon({ className }) {
   return (
@@ -47,6 +137,7 @@ function MainPage() {
     <DashboardLayout title="Página Principal">
       <div className="main-page-wrap">
         <main className="main-page">
+          <SearchBar />
           <section className="main-section">
             <h2 className="section-title">Ultimas carpetas</h2>
             <div className="folder-grid" role="list">
