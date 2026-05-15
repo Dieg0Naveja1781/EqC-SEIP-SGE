@@ -117,6 +117,55 @@ export function UserData() {
           </div>
 
           <div className="campo-grupo">
+            <label>Profesión o carrera</label>
+            <input
+              type="text"
+              name="profesion"
+              placeholder="Médico, Ingeniéría en computación..."
+              value={form.profesion}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="campo-grupo">
+            <label>Nivel de estudios</label>
+            <input
+              type="text"
+              name="nivel_estudios"
+              placeholder="Licenciatura, Maestría, Doctorado..."
+              value={form.nivel_estudios}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="campo-grupo">
+            <label>Universidad/Escuela</label>
+            <input
+              type="text"
+              name="universidad"
+              placeholder="Universidad de Guadalajara, Instituto Tecnológico..."
+              value={form.universidad}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="campo-grupo">
+            <label>Empresa y puesto</label>
+            <div className="campo-fila">
+              <input
+                type="text"
+                name="empresa"
+                placeholder="Nombre de la empresa"
+                value={form.empresa}
+                onChange={handleChange}
+              />
+              <input
+                type="text"
+                name="puesto"
+                placeholder="Puesto en la empresa"
+                value={form.puesto}
+                onChange={handleChange}
+              />
             <label>Preferencia de Tema</label>
             <div className="campo-fila" style={{ alignItems: "center" }}>
               <button
@@ -129,6 +178,28 @@ export function UserData() {
                 <span>{isDark ? "Cambiar a Modo Claro" : "Cambiar a Modo Oscuro"}</span>
               </button>
             </div>
+          </div>
+
+          <div className="campo-grupo">
+            <label>Ubicación</label>
+            <input
+              type="text"
+              name="ubicacion"
+              placeholder="Ciudad, Estado"
+              value={form.ubicacion}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="campo-grupo">
+            <label>Descripción</label>
+            <input
+              type="text"
+              name="descripcion"
+              placeholder="Breve descripción de tu perfil (habilidades, fortalezas, intereses...)"
+              value={form.descripcion}
+              onChange={handleChange}
+            />
           </div>
 
           <div className="campo-grupo">
