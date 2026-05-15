@@ -4,13 +4,14 @@ import "../styles/MainPage.css";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { documentsService } from "../../../shared/api/documentsService";
+import lupaIcon from "../../../assets/lupa.svg";
 
 const recentFolders = [
-  { id: "folder-1", name: "Planeacion" },
-  { id: "folder-2", name: "Evidencias" },
-  { id: "folder-3", name: "Actas" },
-  { id: "folder-4", name: "Convenios" },
-  { id: "folder-5", name: "Reportes" },
+  { id: "folder-1", name: "Carpeta 1" },
+  { id: "folder-2", name: "Carpeta 2" },
+  { id: "folder-3", name: "Carpeta 3" },
+  { id: "folder-4", name: "Carpeta 4" },
+  { id: "folder-5", name: "Carpeta 5" },
 ];
 
 function SearchBar() {
@@ -67,7 +68,9 @@ function SearchBar() {
           placeholder="Buscar documentos..."
           className="search-input"
         />
-        <button type="submit" className="search-button">Buscar</button>
+        <button type="submit" className="search-button" aria-label="Buscar">
+          <img src={lupaIcon} alt="" aria-hidden="true" className="search-button-icon" />
+        </button>
       </form>
       {history.length > 0 && (
         <div className="search-history">

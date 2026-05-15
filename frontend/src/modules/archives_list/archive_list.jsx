@@ -4,6 +4,9 @@ import { useTheme } from "../../shared/context/ThemeContext";
 import { documentsService } from "../../shared/api/documentsService";
 import { DashboardLayout } from "../../shared/components/DashboardLayout";
 import { useNavigate } from "react-router-dom";
+import descargasIcon from "../../assets/descargas.svg";
+import basuraIcon from "../../assets/basura.svg";
+import archivoIcon from "../../assets/archivo.svg";
 
 const MONTHS = [
   "Enero",
@@ -436,12 +439,18 @@ export function ArchiveList() {
                       href={documentsService.downloadDocumentUrl(file.id_doc)}
                       target="_blank"
                       rel="noreferrer"
+                      aria-label="Descargar"
+                      data-tooltip="Descargar"
                     >
-                      Descargar
+                      <img src={descargasIcon} alt="" aria-hidden="true" className="btn_icon" />
                     </a>
                   )}
-                  <button className="btn_mov">Mover</button>
-                  <button className="btn_del">Eliminar</button>
+                  <button className="btn_mov" aria-label="Mover" data-tooltip="Mover">
+                    <img src={archivoIcon} alt="" aria-hidden="true" className="btn_icon" />
+                  </button>
+                  <button className="btn_del" aria-label="Eliminar" data-tooltip="Eliminar">
+                    <img src={basuraIcon} alt="" aria-hidden="true" className="btn_icon" />
+                  </button>
                 </div>
               </div>
             ))}

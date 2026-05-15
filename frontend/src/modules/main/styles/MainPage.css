@@ -275,16 +275,33 @@
 }
 
 .search-button {
-  padding: 0.5rem 1rem;
+  width: 44px;
+  min-width: 44px;
+  height: 38px;
+  padding: 0;
   background: var(--main-accent-primary);
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background-color 0.2s ease, transform 0.12s ease;
 }
 
 .search-button:hover {
   background: var(--color-600);
+}
+
+.search-button:active {
+  transform: scale(0.97);
+}
+
+.search-button-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  filter: brightness(0) invert(1) drop-shadow(0 1px 1px rgba(0, 0, 0, 0.2));
 }
 
 .search-history {
