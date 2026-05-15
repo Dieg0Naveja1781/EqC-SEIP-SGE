@@ -1,9 +1,9 @@
-import { DashboardLayout } from "../../../shared/components/DashboardLayout";
-import LastSessionTable from "../components/LastSessionTable";
-import "../styles/MainPage.css";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { DashboardLayout } from "../../../shared/components/DashboardLayout";
+import LastSessionTable from "../components/LastSessionTable";
 import { documentsService } from "../../../shared/api/documentsService";
+import "../styles/MainPage.css";
 
 const recentFolders = [
   { id: "folder-1", name: "Planeacion" },
@@ -133,6 +133,55 @@ c-49 75 -92 140 -93 145 -2 6 440 8 1056 7 l1060 -3 44 -31z" />
 }
 
 function MainPage() {
+  const navigate = useNavigate();
+  const [recentFolders, setRecentFolders] = useState([]);
+  const [documents, setDocuments] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        
+        // Obtener todas las carpetas y ordenarlas por fecha de creación descendente
+        const foldersResponse = await documentsService.listFolders();
+        if (foldersResponse?.success && foldersResponse?.carpetas) {
+          const sortedFolders = [...foldersResponse.carpetas]
+            .sort((a, b) => {
+              const dateA = new Date(a.fecha_creacion).getTime();
+              const dateB = new Date(b.fecha_creacion).getTime();
+              return dateB - dateA; // Descendente: más recientes primero
+            })
+            .slice(0, 5); // Tomar los últimos 5
+          setRecentFolders(sortedFolders);
+        }
+
+        // Obtener todos los documentos y ordenarlos por fecha de creación descendente
+        const docsResponse = await documentsService.listDocuments();
+        if (docsResponse?.success && docsResponse?.documentos) {
+          const sortedDocs = [...docsResponse.documentos]
+            .sort((a, b) => {
+              const dateA = new Date(a.fecha_creacion).getTime();
+              const dateB = new Date(b.fecha_creacion).getTime();
+              return dateB - dateA; // Descendente: más recientes primero
+            })
+            .slice(0, 10); // Tomar los últimos 10
+          setDocuments(sortedDocs);
+        }
+      } catch (error) {
+        console.error("Error cargando datos:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const handleFolderClick = (folderId) => {
+    navigate(`/archive_list`, { state: { folderId } });
+  };
+
   return (
     <DashboardLayout title="Página Principal">
       <div className="main-page-wrap">
@@ -140,21 +189,32 @@ function MainPage() {
           <SearchBar />
           <section className="main-section">
             <h2 className="section-title">Ultimas carpetas</h2>
-            <div className="folder-grid" role="list">
-              {recentFolders.map((folder) => (
-                <button
-                  key={folder.id}
-                  type="button"
-                  className="folder-card"
-                  role="listitem"
-                >
-                  <FolderIcon className="folder-icon" />
-                  <span className="folder-label">{folder.name}</span>
-                </button>
-              ))}
-            </div>
+            {loading ? (
+              <div className="folder-grid" style={{ textAlign: "center", gridColumn: "1 / -1" }}>
+                Cargando carpetas...
+              </div>
+            ) : recentFolders.length === 0 ? (
+              <div className="folder-grid" style={{ textAlign: "center", gridColumn: "1 / -1" }}>
+                No hay carpetas disponibles
+              </div>
+            ) : (
+              <div className="folder-grid" role="list">
+                {recentFolders.map((folder) => (
+                  <button
+                    key={folder.id_folder}
+                    type="button"
+                    className="folder-card"
+                    role="listitem"
+                    onClick={() => handleFolderClick(folder.id_folder)}
+                  >
+                    <FolderIcon className="folder-icon" />
+                    <span className="folder-label">{folder.nombre_carpeta}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </section>
-          <LastSessionTable />
+          <LastSessionTable records={documents} loading={loading} />
         </main>
       </div>
     </DashboardLayout>
