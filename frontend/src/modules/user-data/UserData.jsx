@@ -94,7 +94,6 @@ export function UserData() {
         </div>
 
         <div className="datos-editables">
-
           <div className="campo-grupo">
             <label>Nombre Completo</label>
             <input
@@ -166,17 +165,6 @@ export function UserData() {
                 value={form.puesto}
                 onChange={handleChange}
               />
-            <label>Preferencia de Tema</label>
-            <div className="campo-fila" style={{ alignItems: "center" }}>
-              <button
-                type="button"
-                className="btn-tema"
-                onClick={toggleTheme}
-                aria-label="Cambiar tema"
-              >
-                <span className="btn-tema-icon">{isDark ? "☀️" : "🌙"}</span>
-                <span>{isDark ? "Cambiar a Modo Claro" : "Cambiar a Modo Oscuro"}</span>
-              </button>
             </div>
           </div>
 
@@ -200,6 +188,22 @@ export function UserData() {
               value={form.descripcion}
               onChange={handleChange}
             />
+          </div>
+          <div className="campo-grupo">
+            <label>Preferencia de Tema</label>
+            <div className="campo-fila" style={{ alignItems: "center" }}>
+              <button
+                type="button"
+                className="btn-tema"
+                onClick={toggleTheme}
+                aria-label="Cambiar tema"
+              >
+                <span className="btn-tema-icon">{isDark ? "☀️" : "🌙"}</span>
+                <span>
+                  {isDark ? "Cambiar a Modo Claro" : "Cambiar a Modo Oscuro"}
+                </span>
+              </button>
+            </div>
           </div>
 
           <div className="campo-grupo">
@@ -228,7 +232,6 @@ export function UserData() {
               {message}
             </p>
           )}
-
         </div>
       </div>
     </DashboardLayout>
