@@ -1,4 +1,4 @@
-mport logging
+import logging
 import os
 from django.conf import settings as django_settings
 from django.db import transaction
