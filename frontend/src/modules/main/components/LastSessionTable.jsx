@@ -2,6 +2,11 @@ import { useMemo, useState } from 'react';
 
 function LastSessionTable({ records = [], loading = false }) {
   const [sortDirection, setSortDirection] = useState('desc');
+  const navigate = useNavigate();
+
+  const handleVerDocumento = (file) => {
+      navigate("/archive_view", { state: { documento: file } });
+  };
 
   const sortedRows = useMemo(() => {
     return [...records].sort((a, b) => {
@@ -68,7 +73,7 @@ function LastSessionTable({ records = [], loading = false }) {
             )}
 
             {!loading && sortedRows.map((row, index) => (
-              <tr key={`${row.id_doc}-${index}`}>
+              <tr key={`${row.id_doc}-${index}`} onClick={() => handleVerDocumento(row)} style={{ cursor: "pointer" }}>
                 <td>{row.titulo_doc}</td>
                 <td>{formatDate(row.fecha_creacion)}</td>
               </tr>
