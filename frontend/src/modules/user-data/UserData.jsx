@@ -234,7 +234,6 @@ export function UserData() {
           )}
         </div>
       </div>
-      </div>
     </DashboardLayout>
   );
 }
