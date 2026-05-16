@@ -9,25 +9,46 @@
 .upload-card {
   background-color: var(--bg-card);
   width: 100%;
-  max-width: 700px;
-  padding: 40px;
-  border-radius: 20px;
-  box-shadow: 0 10px 30px var(--shadow);
+  max-width: 750px;
+  padding: 45px;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
   border: 1px solid var(--border);
+}
+
+.upload-card h2 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--text-p);
+}
+
+.upload-card > p {
+  font-size: 0.95rem;
+  margin-bottom: 2rem;
 }
 
 .drop-zone {
   border: 2px dashed var(--color-main);
-  background-color: rgba(29, 154, 226, 0.05);
-  padding: 40px;
-  border-radius: 15px;
+  background-color: rgba(29, 154, 226, 0.08);
+  padding: 50px 40px;
+  border-radius: 16px;
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 35px;
   cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
 }
 
 .drop-zone:hover {
-  background-color: rgba(29, 154, 226, 0.1);
+  background-color: rgba(29, 154, 226, 0.15);
+  border-color: var(--color-hover);
+  transform: scale(1.01);
+}
+
+.drop-zone.dragging {
+  background-color: rgba(29, 154, 226, 0.2);
+  border-color: var(--color-hover);
 }
 
 .form-grid {
@@ -46,20 +67,65 @@
   gap: 8px;
 }
 
+.field-group label {
+  font-weight: 600;
+  color: var(--text-p);
+  font-size: 0.95rem;
+}
+
+.field-group input,
+.field-group select {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-body);
+  color: var(--text-p);
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.field-group input:focus,
+.field-group select:focus {
+  outline: none;
+  border-color: var(--color-main);
+  box-shadow: 0 0 0 3px rgba(29, 154, 226, 0.1);
+  background: var(--bg-card);
+}
+
+.field-group input::placeholder {
+  color: var(--text-s);
+  opacity: 0.7;
+}
+
 .btn-submit {
-  background-color: var(--color-main);
+  background: linear-gradient(135deg, var(--color-main), var(--color-hover));
   color: white;
   border: none;
-  padding: 15px;
+  padding: 14px 24px;
   border-radius: 10px;
-  font-weight: bold;
+  font-weight: 700;
   font-size: 1rem;
   cursor: pointer;
   width: 100%;
-  margin-top: 10px;
+  margin-top: 20px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(29, 154, 226, 0.3);
 }
 
 .btn-submit:hover {
-  background-color: var(--color-hover);
+  background: linear-gradient(135deg, var(--color-hover), #156ba6);
   transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(29, 154, 226, 0.4);
+}
+
+.btn-submit:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(29, 154, 226, 0.3);
+}
+
+.btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
