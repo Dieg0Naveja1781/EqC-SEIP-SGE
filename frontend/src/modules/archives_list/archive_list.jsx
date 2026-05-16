@@ -48,6 +48,7 @@ function parseDate(str) {
 export function ArchiveList() {
   const location = useLocation();
   const selectedFolderId = location.state?.folderId;
+  const selectedFolderName = location.state?.folderName;
   const [anio, setAnio] = useState("Cualquier Año");
   const [mes, setMes] = useState("Cualquier Mes");
   const [dia, setDia] = useState("Cualquier Día");
@@ -70,8 +71,8 @@ export function ArchiveList() {
   const [carpetasDestino, setCarpetasDestino] = useState([]);
   const [destinoSeleccionado, setDestinoSeleccionado] = useState("");
   const [moving, setMoving] = useState(false);
-  const [currentFolderId, setCurrentFolderId] = useState(null);
-  const [folderPath, setFolderPath] = useState([]);
+  const [currentFolderId, setCurrentFolderId] = useState(selectedFolderId || null);
+  const [folderPath, setFolderPath] = useState(selectedFolderId && selectedFolderName ? [{ id: selectedFolderId, name: selectedFolderName }] : []);
 
   const handleVerDocumento = (file) => {
     if (file.type === "folder") {

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 function LastSessionTable({ records = [], loading = false }) {
   const [sortDirection, setSortDirection] = useState('desc');
