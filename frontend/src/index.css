@@ -18,7 +18,7 @@
   --text-secondary: #136290;
   --error: #ff4d4d;
   --search-bar-bg: #ece6f0;
-  --new-archive-bg: #E8DEF8;
+  --new-archive-bg: #205bd1;
 
   /* Alias usados por DashboardLayout.css y módulos de upload/edit.
      Conviven con los nombres canónicos para no romper consumidores. */
@@ -39,7 +39,7 @@
   --text-secondary: #97d0f2;
   --error: #ff6666;
   --search-bar-bg: var(--color-900);
-  --new-archive-bg: #3a2a4a;
+  --new-archive-bg: #205bd1;
 
   /* Alias en oscuro (los que dependen de --bg-main/etc. ya se actualizan via var()) */
   --shadow: rgba(0, 0, 0, 0.4);

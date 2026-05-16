@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import descargasIcon from "../../assets/descargas.svg";
 import basuraIcon from "../../assets/basura.svg";
 import archivoIcon from "../../assets/archivo.svg";
+import nuevaCarpetaIcon from "../../assets/nueva-carpeta.svg";
 
 const MONTHS = [
   "Enero",
@@ -629,8 +630,8 @@ export function ArchiveList() {
 
         {/* === BOTTOM BAR === */}
         <div className="bottom_bar">
-          <button className="btn_new_folder" onClick={handleNuevaCarpeta}>
-            Nueva Carpeta
+          <button className="btn_new_folder" onClick={handleNuevaCarpeta} aria-label="Nueva Carpeta" data-tooltip="Nueva Carpeta">
+            <img src={nuevaCarpetaIcon} alt="" aria-hidden="true" className="btn_folder_icon" />
           </button>
         </div>
 
