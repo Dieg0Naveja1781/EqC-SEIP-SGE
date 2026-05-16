@@ -1,9 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import "./Styles/archive_list.css";
 import { useTheme } from "../../shared/context/ThemeContext";
 import { documentsService } from "../../shared/api/documentsService";
 import { DashboardLayout } from "../../shared/components/DashboardLayout";
 import { useNavigate } from "react-router-dom";
+import descargasIcon from "../../assets/descargas.svg";
+import basuraIcon from "../../assets/basura.svg";
+import archivoIcon from "../../assets/archivo.svg";
 
 const MONTHS = [
   "Enero",
@@ -30,7 +34,19 @@ function formatFecha(iso) {
   }
 }
 
+// Parsea fechas en formato YYYY-MM-DD o DD/MM/YYYY
+function parseDate(str) {
+  if (!str) return new Date(0);
+  const partes = str.split("/");
+  if (partes.length === 3) {
+    return new Date(`${partes[2]}-${partes[1].padStart(2, "0")}-${partes[0].padStart(2, "0")}`);
+  }
+  return new Date(str);
+}
+
 export function ArchiveList() {
+  const location = useLocation();
+  const selectedFolderId = location.state?.folderId;
   const [anio, setAnio] = useState("Cualquier Año");
   const [mes, setMes] = useState("Cualquier Mes");
   const [dia, setDia] = useState("Cualquier Día");
@@ -46,10 +62,21 @@ export function ArchiveList() {
   const [showModal, setShowModal] = useState(false);
   const [folderName, setFolderName] = useState("");
   const [ordenarPor, setOrdenarPor] = useState("Fecha ↓");
-    const navigate = useNavigate();
+  const navigate = useNavigate();
+  const [showMoveModal, setShowMoveModal] = useState(false);
+  const [elementoAMover, setElementoAMover] = useState(null);
+  const [carpetasDestino, setCarpetasDestino] = useState([]);
+  const [destinoSeleccionado, setDestinoSeleccionado] = useState("");
+  const [moving, setMoving] = useState(false);
+  const [currentFolderId, setCurrentFolderId] = useState(null);
+  const [folderPath, setFolderPath] = useState([]);
 
   const handleVerDocumento = (file) => {
-    if (file.type === "pdf") {
+    if (file.type === "folder") {
+      const realId = file.id.replace("f-", "");
+      setFolderPath([...folderPath, { id: realId, name: file.name }]);
+      setCurrentFolderId(realId);
+    } else if (file.type === "pdf") {
       navigate("/archive_view", { state: { documento: file } });
     }
   };
@@ -60,22 +87,72 @@ export function ArchiveList() {
     : files.filter((f) =>
       f.type === "folder" ||
       tiposSeleccionados.includes(f.categoria)
-  );
+    );
+
+  // Descargar documento
+  const handleDownload = async (id_doc) => {
+    try {
+      // Buscar el archivo en la lista para obtener su nombre real
+      const file = files.find((f) => f.id_doc === id_doc);
+      const fileName = file && file.name ? `${file.name}.pdf` : `documento_${id_doc}.pdf`;
+
+      const blob = await documentsService.downloadDocument(id_doc);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error descargando documento", error);
+      alert("Error al descargar el documento. Verifica tu sesión.");
+    }
+  };
+
+
+  // Eliminar documento
+  const handleDelete = async (id_doc) => {
+    const confirmar = window.confirm(
+      "¿Eliminar este documento?"
+    );
+
+    if (!confirmar) return;
+
+    try {
+      const res = await documentsService.deleteDocument(id_doc);
+
+      if (res?.success) {
+        cargarDatos();
+      } else {
+        alert(res?.error || "No se pudo eliminar");
+      }
+
+    } catch (err) {
+      console.error("Error eliminando documento", err);
+
+      alert(
+        err?.response?.data?.error ||
+        "Error eliminando documento"
+      );
+    }
+  };
 
   // Filtrado por fecha
   const filtradosFecha = archivosFiltrados.filter((f) => {
+    // Las carpetas no tienen fecha de expedición, siempre se muestran
+    if (f.type === "folder") return true;
     // Obtener la fecha del archivo
-    const fechaISO = f.fecha_creacion || null;
+    const fechaISO = f.fecha_expedicion || null;
     let fechaObj = null;
     if (fechaISO) {
       fechaObj = new Date(fechaISO);
-    } else if (f.date) {
-      // Intenta parsear el string formateado
-      const partes = f.date.split("/");
-      if (partes.length === 3) {
-        // El formato esperado es "dd/MM/yyyy", así que la parte[0] es el día, parte[1] es el mes y la parte[2] es el año
-        fechaObj = new Date(`${partes[2]}-${partes[1].padStart(2, "0")}-${partes[0].padStart(2, "0")}`);
-      }
+    }
+
+    // Si no tiene fecha de expedición y hay algún filtro activo, no pasa
+    if (!fechaObj) {
+      return anio === "Cualquier Año" && mes === "Cualquier Mes" && dia === "Cualquier Día";
     }
 
     const fileAnio = fechaObj.getFullYear().toString();
@@ -91,8 +168,11 @@ export function ArchiveList() {
 
   // Ordena los archivos filtrados según el criterio seleccionado en el estado "ordenarPor"
   const showFiles = [...filtradosFecha].sort((a, b) => {
-      // Para ordenar por nombre, usamos localeCompare para comparar los nombres de los archivos
-      if (ordenarPor === "Nombre A-Z") {
+    // Las carpetas siempre van primero
+    if (a.type === "folder" && b.type !== "folder") return -1;
+    if (a.type !== "folder" && b.type === "folder") return 1;
+    // Para ordenar por nombre, usamos localeCompare para comparar los nombres de los archivos
+    if (ordenarPor === "Nombre A-Z") {
       return a.name.localeCompare(b.name);
     }
     if (ordenarPor === "Nombre Z-A") {
@@ -100,10 +180,10 @@ export function ArchiveList() {
     }
     // Para ordenar por fecha, convertimos las fechas a objetos Date y restamos para obtener el orden correcto
     if (ordenarPor === "Fecha ↑") {
-      return new Date(a.date) - new Date(b.date);
+      return new Date(a.fecha_expedicion) - new Date(b.fecha_expedicion);
     }
     if (ordenarPor === "Fecha ↓") {
-      return new Date(b.date) - new Date(a.date);
+      return new Date(b.fecha_expedicion) - new Date(a.fecha_expedicion);
     }
     return 0;
   });
@@ -130,17 +210,17 @@ export function ArchiveList() {
     setErrorMsg("");
     try {
       const [carpetasRes, docsRes, catsRes] = await Promise.all([
-        documentsService.listFolders().catch(() => ({ carpetas: [] })),
-        documentsService.listDocuments().catch(() => ({ documentos: [] })),
+        documentsService.listFolders(currentFolderId).catch(() => ({ carpetas: [] })),
+        documentsService.listDocuments(currentFolderId).catch(() => ({ documentos: [] })),
         documentsService.listCategories().catch(() => ({ categorias: [] })),
       ]);
 
-      const carpetas = (carpetasRes?.carpetas || []).map((c) => ({
-        id: `f-${c.id_folder}`,
-        type: "folder",
-        name: c.nombre_carpeta,
-        date: formatFecha(c.fecha_creacion),
-      }));
+        const carpetas = (carpetasRes?.carpetas || []).map((c) => ({
+          id: `f-${c.id_folder}`,
+          type: "folder",
+          name: c.nombre_carpeta,
+          date: formatFecha(c.fecha_creacion),
+        }));
 
       const docs = (docsRes?.documentos || []).map((d) => ({
         id: `d-${d.id_doc}`,
@@ -153,10 +233,11 @@ export function ArchiveList() {
         fecha_creacion: d.fecha_creacion,
         metadatos: d.metadatos || {},
         descripcion: d.descripcion || "",
+        fecha_expedicion: d.fecha_expedicion || null,
       }));
 
-      setFiles([...carpetas, ...docs]);
-      setCategorias(catsRes?.categorias || []);
+        setFiles([...carpetas, ...docs]);
+        setCategorias(catsRes?.categorias || []);
     } catch (err) {
       setErrorMsg(
         err?.status === 401
@@ -170,7 +251,7 @@ export function ArchiveList() {
 
   useEffect(() => {
     cargarDatos();
-  }, []);
+  }, [currentFolderId]);
 
   const handleNuevaCarpeta = () => {
     setShowModal(true);
@@ -179,7 +260,7 @@ export function ArchiveList() {
   const handleConfirmFolder = async () => {
     if (!folderName.trim()) return;
     try {
-      const res = await documentsService.createFolder(folderName.trim());
+      const res = await documentsService.createFolder(folderName.trim(), currentFolderId);
       if (res?.success) {
         cargarDatos();
         setShowModal(false);
@@ -195,6 +276,57 @@ export function ArchiveList() {
   const handleCancelFolder = () => {
     setShowModal(false);
     setFolderName("");
+  };
+
+  // Abre el modal de mover y carga las carpetas disponibles como destino
+  const handleMover = async (e, file) => {
+    e.stopPropagation();
+    setElementoAMover(file);
+    try {
+      const res = await documentsService.listFolders("all");
+      if (res?.success) {
+        setCarpetasDestino(res.carpetas);
+      }
+    } catch(err) {
+      console.error("Error al cargar carpetas destino", err);
+    }
+    setShowMoveModal(true);
+  };
+
+  // Confirma el movimiento llamando al servicio correspondiente
+  const handleConfirmMove = async () => {
+    if (!elementoAMover) return;
+    setMoving(true);
+    try {
+      const id_destino = destinoSeleccionado === "" ? null : parseInt(destinoSeleccionado, 10);
+      let res;
+      if (elementoAMover.type === "folder") {
+        const id_carpeta = elementoAMover.id.replace("f-", "");
+        res = await documentsService.moverCarpeta(id_carpeta, id_destino);
+      } else {
+        res = await documentsService.moverDocumento(elementoAMover.id_doc, id_destino);
+      }
+
+      if (res?.success) {
+        setShowMoveModal(false);
+        setElementoAMover(null);
+        setDestinoSeleccionado("");
+        cargarDatos();
+      } else {
+        alert(res?.error || "Error al mover el archivo");
+      }
+    } catch (err) {
+      alert(err?.data?.error || "Error al mover");
+    } finally {
+      setMoving(false);
+    }
+  };
+
+  // Cancela el modal de mover
+  const handleCancelMove = () => {
+    setShowMoveModal(false);
+    setElementoAMover(null);
+    setDestinoSeleccionado("");
   };
 
   const handleSubirArchivoClick = () => {
@@ -235,6 +367,7 @@ export function ArchiveList() {
         titulo_doc: titulo,
         id_tipo: cat.id_tipo,
         categoria: cat.nombre_categoria,
+        id_folder: currentFolderId,
         metadatos: {},
       });
       if (res?.success) {
@@ -262,13 +395,43 @@ export function ArchiveList() {
 
         {/* === CONTENT === */}
         <div className="content">
+         
+          {/* === BREADCRUMBS === */}
+          <div className="breadcrumbs" style={{ padding: "10px 0", fontSize: "16px", color: "#ccc" }}>
+            <span
+              onClick={() => { setFolderPath([]); setCurrentFolderId(null); }}
+              style={{ cursor: "pointer", color: "#5aedf1", fontWeight: "bold" }}
+            >
+              Raíz
+            </span>
+            {folderPath.map((f, i) => (
+              <React.Fragment key={f.id}>
+                <span style={{ margin: "0 8px", color: "#666" }}> {">"} </span>
+                <span
+                  onClick={() => {
+                    const newPath = folderPath.slice(0, i + 1);
+                    setFolderPath(newPath);
+                    setCurrentFolderId(f.id);
+                  }}
+                  style={{
+                    cursor: i === folderPath.length - 1 ? "default" : "pointer",
+                    color: i === folderPath.length - 1 ? "#fff" : "#5aedf1",
+                    fontWeight: i === folderPath.length - 1 ? "normal" : "bold"
+                  }}
+                >
+                  {f.name}
+                </span>
+              </React.Fragment>
+            ))}
+          </div>
+
           {/* === FILTER PANEL === */}
           <div className="filters_panel">
             {/* === SIMPLIFIED VIEW === */}
             {filtrosAvanzados ? (
               <div className="simple_view">
                 <div className="simple_header">
-                   {/* Boton para ordenar alfabeticamente */}
+                  {/* Boton para ordenar alfabeticamente */}
                   <h3 className="col_nombre">
                     Nombre <button className="btn_sort" onClick={toggleSortNombre}>
                       {ordenarPor === "Nombre A-Z" ? "↓" : ordenarPor === "Nombre Z-A" ? "↑" : "↑↓"}
@@ -431,17 +594,33 @@ export function ArchiveList() {
                 <span className="file_date">{file.date}</span>
                 <div className="file_actions">
                   {file.type !== "folder" && file.id_doc && (
-                    <a
+                    <button
                       className="btn_upd"
-                      href={documentsService.downloadDocumentUrl(file.id_doc)}
-                      target="_blank"
-                      rel="noreferrer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDownload(file.id_doc);
+                      }}
+                      aria-label="Descargar"
+                      data-tooltip="Descargar"
                     >
-                      Descargar
-                    </a>
+                      <img src={descargasIcon} alt="" aria-hidden="true" className="btn_icon" />
+                    </button>
                   )}
-                  <button className="btn_mov">Mover</button>
-                  <button className="btn_del">Eliminar</button>
+                  <button
+                    className="btn_mov" aria-label="Mover" data-tooltip="Mover"
+                    onClick={(e) => handleMover(e, file)}
+                  >
+                    <img src={archivoIcon} alt="" aria-hidden="true" className="btn_icon" />
+                  </button>
+                  <button
+                    className="btn_del" aria-label="Eliminar" data-tooltip="Eliminar"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(file.id_doc);
+                    }}
+                  >
+                    <img src={basuraIcon} alt="" aria-hidden="true" className="btn_icon" />
+                  </button>
                 </div>
               </div>
             ))}
@@ -455,7 +634,7 @@ export function ArchiveList() {
           </button>
         </div>
 
-        {/* === MODAL === */}
+        {/* === MODAL NUEVA CARPETA === */}
         {showModal && (
           <div className="modal_overlay">
             <div className="modal_content">
@@ -471,12 +650,45 @@ export function ArchiveList() {
               <div className="modal_buttons">
                 <button className="btn_cancel" onClick={handleCancelFolder}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </button>
                 <button className="btn_confirm" onClick={handleConfirmFolder}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* === MODAL MOVER === */}
+        {showMoveModal && (
+          <div className="modal_overlay">
+            <div className="modal_content">
+              <h3>Mover "{elementoAMover?.name}"</h3>
+              <select
+                className="modal_input"
+                value={destinoSeleccionado}
+                onChange={(e) => setDestinoSeleccionado(e.target.value)}
+              >
+                <option value="">Selecciona una carpeta destino</option>
+                {carpetasDestino.map((c) => (
+                  <option key={c.id_folder} value={c.id_folder}>
+                    {c.nombre_carpeta}
+                  </option>
+                ))}
+              </select>
+              <div className="modal_buttons">
+                <button className="btn_cancel" onClick={handleCancelMove} disabled={moving}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+                <button className="btn_confirm" onClick={handleConfirmMove} disabled={moving || !destinoSeleccionado}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </button>
               </div>

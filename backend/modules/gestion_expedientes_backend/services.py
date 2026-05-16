@@ -248,6 +248,59 @@ class ServicioExpedientes:
             return {'success': True, 'versiones': VersionDocSerializer(versiones, many=True).data}
         except DocDocumento.DoesNotExist:
             return {'success': False, 'error': 'Documento no encontrado'}
+        
+    @staticmethod
+    def mover_documento(id_doc, id_profesor, id_folder_destino):
+        try:
+            profe = UserProfe.objects.get(id_profesor=id_profesor)
+            doc = DocDocumento.objects.get(id_doc=id_doc, id_profesor=profe)
+            
+            destino = None
+            if id_folder_destino:
+                destino = InfCarpeta.objects.get(id_folder=id_folder_destino, id_profesor=profe)
+
+            doc.id_folder = destino
+            doc.save()
+            return {'success': True, 'documento': DocDocumentoSerializer(doc).data}
+        except DocDocumento.DoesNotExist:
+            return {'success': False, 'error': 'Documento no encontrado'}
+        except InfCarpeta.DoesNotExist:
+            return {'success': False, 'error': 'Carpeta destino no encontrada'}
+        except Exception as e:
+            logger.error(f"Error al mover documento: {str(e)}")
+            return {'success': False, 'error': str(e)}
+
+    @staticmethod
+    def eliminar_documento(id_doc, id_profesor):
+        try:
+            doc = DocDocumento.objects.filter(
+                id_doc=id_doc,
+                id_profesor=id_profesor
+            ).first()
+
+            if not doc:
+                return {
+                    "success": False,
+                    "error": "Documento no encontrado"
+                }
+
+            # eliminar archivo físico si existe
+            if doc.ruta_archivo and os.path.exists(doc.ruta_archivo):
+                os.remove(doc.ruta_archivo)
+
+            doc.delete()
+
+            return {
+                "success": True
+            }
+
+        except Exception as e:
+            logger.error(f"Error eliminando documento: {str(e)}")
+
+            return {
+                "success": False,
+                "error": str(e)
+            }
 
     # ---------------- CARPETAS ----------------
     @staticmethod
@@ -281,10 +334,34 @@ class ServicioExpedientes:
     @staticmethod
     def obtener_carpetas(id_profesor, id_padre=None):
         try:
-            qs = InfCarpeta.objects.filter(id_profesor=id_profesor, id_padre=id_padre)
+            if id_padre == 'all':
+                qs = InfCarpeta.objects.filter(id_profesor=id_profesor)
+            else:
+                qs = InfCarpeta.objects.filter(id_profesor=id_profesor, id_padre=id_padre)
             return {'success': True, 'carpetas': InfCarpetaSerializer(qs, many=True).data}
         except Exception as e:
             logger.error(f"Error al obtener carpetas: {str(e)}")
+            return {'success': False, 'error': str(e)}
+    
+    @staticmethod
+    def mover_carpeta(id_carpeta, id_profesor, id_padre_destino):
+        try:
+            profe = UserProfe.objects.get(id_profesor=id_profesor)
+            carpeta = InfCarpeta.objects.get(id_folder=id_carpeta, id_profesor=profe)
+            
+            destino = None
+            if id_padre_destino:
+                destino = InfCarpeta.objects.get(id_folder=id_padre_destino, id_profesor=profe)
+                if destino.id_folder == carpeta.id_folder:
+                    return {'success': False, 'error': 'No puede mover una carpeta dentro de sí misma'}
+
+            carpeta.id_padre = destino
+            carpeta.save()
+            return {'success': True, 'carpeta': InfCarpetaSerializer(carpeta).data}
+        except InfCarpeta.DoesNotExist:
+            return {'success': False, 'error': 'Carpeta origen o destino no encontrada'}
+        except Exception as e:
+            logger.error(f"Error al mover carpeta: {str(e)}")
             return {'success': False, 'error': str(e)}
 
     # ---------------- CATEGORÍAS ----------------

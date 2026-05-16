@@ -6,56 +6,166 @@
   min-height: 100vh;
 }
 
+/* ===== NAVBAR ===== */
+
 .navbar {
   position: sticky;
   top: 0;
   z-index: 100;
+
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  padding: 1rem 2rem;
-  background-color: #1d9ae2;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  min-height: 70px;
+  justify-content: space-between;
+
+  padding: 0.55rem 1.5rem;
+  min-height: 52px;
+
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
+/* ===== MODO CLARO ===== */
+
+body.light .navbar {
+  background-color: #1d9ae2;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* ===== MODO OSCURO ===== */
+
+body.dark .navbar {
+  background-color: #0f172a;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+}
+
+/* ===== TEXTO NAVBAR ===== */
+
 .navbar-brand-text {
-  color: #ffffff;
-  font-size: 1.4rem;
+  font-size: 1.15rem;
   font-weight: 800;
   letter-spacing: 0.5px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+
+  transition: color 0.3s ease;
 }
+
+body.light .navbar-brand-text {
+  color: #ffffff;
+}
+
+body.dark .navbar-brand-text {
+  color: #f8fafc;
+}
+
+/* ===== SWITCH TEMA ===== */
+
+.theme-switcher-container {
+  margin-left: auto;
+}
+
+.theme-toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 58px;
+  height: 30px;
+}
+
+.theme-toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.theme-slider {
+  position: absolute;
+  inset: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 6px;
+
+  border-radius: 999px;
+  cursor: pointer;
+
+  transition: background-color 0.3s ease;
+}
+
+body.light .theme-slider {
+  background-color: #0ea5e9;
+}
+
+body.dark .theme-slider {
+  background-color: #1e293b;
+}
+
+.theme-slider::before {
+  content: "";
+
+  position: absolute;
+  height: 22px;
+  width: 22px;
+
+  left: 4px;
+  bottom: 4px;
+
+  border-radius: 50%;
+  background-color: white;
+
+  transition: transform 0.3s ease;
+}
+
+.theme-toggle-switch input:checked + .theme-slider::before {
+  transform: translateX(28px);
+}
+
+.theme-icon {
+  font-size: 0.8rem;
+  z-index: 2;
+}
+
+/* ===== MAIN ===== */
 
 .lpage-main {
   position: relative;
   flex: 1;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   overflow: hidden;
 
   min-height: 80vh;
 }
 
-/* Capas parallax que viven detrás del logo dentro del .lpage-main.
-   Cada capa cubre todo el área y se desplaza hacia abajo con el scroll. */
+/* ===== PARALLAX ===== */
+
 .parallax-layer {
   position: absolute;
   inset: 0;
+
   pointer-events: none;
   user-select: none;
+
   will-change: transform;
   z-index: 1;
 }
 
 .parallax-layer img {
   position: absolute;
+
   top: 50%;
   left: 50%;
+
   transform: translate(-50%, -50%);
+
   width: 100%;
   height: 130%;
+
   object-fit: cover;
 }
 
@@ -67,48 +177,102 @@
   opacity: 0.55;
 }
 
+/* ===== CONTENIDO CENTRAL ===== */
+
 .lpage-main-inner {
   position: relative;
   z-index: 10;
+
   display: flex;
   flex-direction: column;
   align-items: center;
+
   text-align: center;
+
   padding: 3rem 2rem;
   gap: 1.5rem;
 }
 
+/* ===== LOGO ===== */
+
 .lpage-main-inner .main-logo {
   height: 180px;
   width: auto;
+
   object-fit: contain;
+
   filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.15));
 }
+
+/* ===== BOTONES ===== */
 
 .auth-buttons {
   display: flex;
   flex-direction: column;
   align-items: center;
+
   gap: 1rem;
   margin-top: 1rem;
 }
 
 .btn {
   display: inline-flex;
+
   padding: 0.5rem 1.25rem;
+
   border-radius: 8px;
+
   font-weight: 600;
   text-decoration: none;
+
   transition: all 0.2s ease;
 }
+
+/* ===== BOTÓN PRINCIPAL ===== */
 
 .btn-primary {
   background-color: #2563eb;
   color: #ffffff;
 }
 
+.btn-primary:hover {
+  background-color: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+/* ===== BOTÓN SECUNDARIO ===== */
+
 .btn-outline {
-  background-color: rgba(255, 255, 255, 0.8);
-  color: #374151;
   border: 1.5px solid #d1d5db;
+  transition: all 0.2s ease;
+}
+
+body.light .btn-outline {
+  background-color: rgba(255, 255, 255, 0.85);
+  color: #374151;
+}
+
+body.dark .btn-outline {
+  background-color: rgba(15, 23, 42, 0.85);
+  color: #f1f5f9;
+  border-color: #334155;
+}
+
+.btn-outline:hover {
+  transform: translateY(-1px);
+}
+
+/* ===== TEXTO REGISTRO ===== */
+
+.register-hint {
+  font-size: 0.85rem;
+  transition: color 0.3s ease;
+}
+
+body.light .register-hint {
+  color: #374151;
+}
+
+body.dark .register-hint {
+  color: #e5e7eb;
 }
