@@ -37,18 +37,27 @@ urlpatterns = [
     path('documentos/<int:pk>/versiones/',
          DocumentoViewSet.as_view({'get': 'versiones'}),
          name='documento-versiones'),
+    path('documentos/<int:pk>/mover/',
+         DocumentoViewSet.as_view({'post': 'mover'}),
+         name='documento-mover'),
+     path('documentos/<int:pk>/eliminar/',
+          DocumentoViewSet.as_view({'delete': 'eliminar'}),
+          name='documento-eliminar'),
 
     # Carpetas
     path('carpetas/',
          CarpetaViewSet.as_view({'get': 'list', 'post': 'create'}),
          name='carpeta-list'),
+    path('carpetas/<int:pk>/mover/',
+         CarpetaViewSet.as_view({'post': 'mover'}),
+         name='carpeta-mover'),
 
-    # Categorías
+    # CategorÃ­as
     path('categorias/',
          CategoriaDocViewSet.as_view({'get': 'list'}),
          name='categoria-list'),
 
-    # Categorías personalizadas por usuario
+    # CategorÃ­as personalizadas por usuario
     path('categorias-custom/',
          CategoriaCustomViewSet.as_view({'get': 'list', 'post': 'create'}),
          name='categoria-custom-list'),
