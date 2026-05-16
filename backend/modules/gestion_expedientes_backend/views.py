@@ -199,6 +199,26 @@ class DocumentoViewSet(viewsets.ViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
+    @action(detail=True, methods=['put'])
+    def editar(self, request, pk=None):
+        id_profesor = _get_id_profesor(request)
+        if not id_profesor:
+            return _no_auth()
+
+        resultado = ServicioExpedientes.actualizar_documento(
+            id_doc=pk,
+            id_profesor=id_profesor,
+            titulo_doc=request.data.get('titulo_doc'),
+            id_tipo=request.data.get('id_tipo'),
+            categoria=request.data.get('categoria'),
+            metadatos=request.data.get('metadatos') or {},
+            fecha_expedicion=request.data.get('fecha_expedicion') or None,
+        )
+        return Response(
+            resultado,
+            status=status.HTTP_200_OK if resultado['success'] else status.HTTP_400_BAD_REQUEST,
+        )
+
     @action(detail=True, methods=['post'], url_path='nueva-version')
     def nueva_version(self, request, pk=None):
         id_profesor = _get_id_profesor(request)

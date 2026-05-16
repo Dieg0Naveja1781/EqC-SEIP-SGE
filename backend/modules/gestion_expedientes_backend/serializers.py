@@ -94,7 +94,7 @@ class SubidaDocumentoSerializer(serializers.Serializer):
     CATEGORIAS_FIJAS = ['Docencia', 'Gestion', 'Titulacion', 'Produccion', 'Tutoria']
     MAX_SIZE = 50 * 1024 * 1024  # 50 MB
 
-    # Reglas numÃ©ricas por categorÃ­a: cada campo del JSON metadatos
+    # Reglas numéricas por categoría: cada campo del JSON metadatos
     # se valida contra estas reglas.
     NUMERIC_RULES = {
         'Docencia':   {'cargaHoraria':   {'min': 0, 'integer': True}},
@@ -117,16 +117,16 @@ class SubidaDocumentoSerializer(serializers.Serializer):
             raise serializers.ValidationError('Solo se permiten archivos PDF (.pdf)')
         ctype = (getattr(archivo, 'content_type', '') or '').lower()
         if ctype and ctype != 'application/pdf':
-            raise serializers.ValidationError('El archivo no es un PDF vÃ¡lido')
+            raise serializers.ValidationError('El archivo no es un PDF válido')
         if archivo.size > self.MAX_SIZE:
             raise serializers.ValidationError('El archivo no debe exceder 50MB')
         return archivo
 
     def validate_categoria(self, value):
-        """Acepta las 5 categorÃ­as fijas O cualquier categorÃ­a custom del profesor."""
+        """Acepta las 5 categorías fijas O cualquier categoría custom del profesor."""
         if value in self.CATEGORIAS_FIJAS:
             return value
-        # Verificar si es una categorÃ­a custom vÃ¡lida del profesor
+        # Verificar si es una categorí­a custom válida del profesor
         # El id_profesor llega en el contexto inyectado por la vista
         id_profesor = self.context.get('id_profesor')
         if id_profesor:
@@ -136,7 +136,7 @@ class SubidaDocumentoSerializer(serializers.Serializer):
             if existe:
                 return value
         raise serializers.ValidationError(
-            f"'{value}' no es una categorÃ­a vÃ¡lida."
+            f"'{value}' no es una categorí­a válida."
         )
 
     def validate(self, data):
@@ -146,11 +146,11 @@ class SubidaDocumentoSerializer(serializers.Serializer):
             try:
                 meta = json.loads(meta)
             except ValueError:
-                raise serializers.ValidationError({'metadatos': 'JSON invÃ¡lido'})
+                raise serializers.ValidationError({'metadatos': 'JSON inválido'})
         if not isinstance(meta, dict):
             raise serializers.ValidationError({'metadatos': 'Debe ser un objeto JSON'})
 
-        # Solo aplicar reglas numÃ©ricas a las categorÃ­as fijas
+        # Solo aplicar reglas numericas a las categorí­as fijas
         rules = self.NUMERIC_RULES.get(data.get('categoria', ''), {})
         for field, rule in rules.items():
             if field not in meta or meta[field] in ('', None):
@@ -158,7 +158,7 @@ class SubidaDocumentoSerializer(serializers.Serializer):
             try:
                 val = float(meta[field])
             except (TypeError, ValueError):
-                raise serializers.ValidationError({field: 'Debe ser numÃ©rico'})
+                raise serializers.ValidationError({field: 'Debe ser numérico'})
             if rule.get('integer') and not float(val).is_integer():
                 raise serializers.ValidationError({field: 'Debe ser un entero'})
             if 'min' in rule and val < rule['min']:

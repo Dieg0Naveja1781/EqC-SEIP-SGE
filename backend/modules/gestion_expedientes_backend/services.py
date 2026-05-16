@@ -198,6 +198,64 @@ class ServicioExpedientes:
             return {'success': False, 'error': str(e)}
 
     @staticmethod
+    def actualizar_documento(id_doc, id_profesor, titulo_doc, id_tipo, categoria, metadatos=None, fecha_expedicion=None):
+        try:
+            profe = UserProfe.objects.get(id_profesor=id_profesor)
+            doc = DocDocumento.objects.get(id_doc=id_doc, id_profesor=profe)
+
+            if not titulo_doc:
+                return {'success': False, 'error': 'El titulo es requerido'}
+
+            duplicado = DocDocumento.objects.filter(
+                id_profesor=profe,
+                titulo_doc=titulo_doc,
+            ).exclude(id_doc=id_doc).exists()
+            if duplicado:
+                return {'success': False, 'error': 'Ya existe un documento con ese titulo'}
+
+            CATEGORIAS_FIJAS = ['Docencia', 'Gestion', 'Titulacion', 'Produccion', 'Tutoria']
+            if categoria in CATEGORIAS_FIJAS and id_tipo:
+                categoria_obj = CategoriasDoc.objects.get(id_tipo=id_tipo)
+            elif categoria in CATEGORIAS_FIJAS:
+                nombre_map = {
+                    'Docencia': 'Docencia',
+                    'Gestion': 'Gestión Académica',
+                    'Titulacion': 'Gestión Académica (Titulación)',
+                    'Produccion': 'Producción Académica',
+                    'Tutoria': 'Tutoría',
+                }
+                categoria_obj = CategoriasDoc.objects.filter(
+                    nombre_categoria__iexact=nombre_map.get(categoria, categoria)
+                ).first()
+                if not categoria_obj:
+                    return {'success': False, 'error': 'Categoria no valida'}
+            else:
+                categoria_obj, _ = CategoriasDoc.objects.get_or_create(
+                    nombre_categoria='Personalizada',
+                    defaults={'descripcion': 'Categoria comodin para documentos personalizados'},
+                )
+
+            meta = dict(metadatos or {})
+            meta['_categoria'] = categoria
+
+            doc.titulo_doc = titulo_doc
+            doc.id_tipo = categoria_obj
+            doc.fecha_expedicion = fecha_expedicion
+            doc.metadatos = meta
+            doc.save(update_fields=['titulo_doc', 'id_tipo', 'fecha_expedicion', 'metadatos'])
+
+            return {'success': True, 'documento': DocDocumentoSerializer(doc).data}
+        except UserProfe.DoesNotExist:
+            return {'success': False, 'error': 'Profesor no encontrado'}
+        except DocDocumento.DoesNotExist:
+            return {'success': False, 'error': 'Documento no encontrado'}
+        except CategoriasDoc.DoesNotExist:
+            return {'success': False, 'error': 'Categoria no valida'}
+        except Exception as e:
+            logger.error(f"Error al actualizar documento: {str(e)}")
+            return {'success': False, 'error': str(e)}
+
+    @staticmethod
     def descargar_documento(id_doc, id_profesor):
         try:
             doc = DocDocumento.objects.get(id_doc=id_doc, id_profesor=id_profesor)

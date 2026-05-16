@@ -28,6 +28,15 @@ export const documentsService = {
     return apiClient.upload("/documentos/subir/", formData);
   },
 
+  updateDocument: (id_doc, { titulo_doc, id_tipo, fecha_expedicion, categoria, metadatos }) =>
+    apiClient.put(`/documentos/${id_doc}/editar/`, {
+      titulo_doc,
+      id_tipo,
+      fecha_expedicion,
+      categoria,
+      metadatos,
+    }),
+
   downloadDocument: (id_doc) =>
     apiClient.download(`/documentos/${id_doc}/descargar/`),
 
@@ -39,7 +48,7 @@ export const documentsService = {
   createExpediente: (nombre_convocatoria, descripcion = "") =>
     apiClient.post("/expedientes/", { nombre_convocatoria, descripcion }),
 
-  // ---- CategorÃ­as personalizadas ----
+  // ---- Categorías personalizadas ----
   listCustomCategories: () => apiClient.get("/categorias-custom/"),
 
   createCustomCategory: (nombre, campos) =>

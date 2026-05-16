@@ -31,6 +31,9 @@ urlpatterns = [
     path('documentos/<int:pk>/descargar/',
          DocumentoViewSet.as_view({'get': 'descargar'}),
          name='documento-descargar'),
+    path('documentos/<int:pk>/editar/',
+         DocumentoViewSet.as_view({'put': 'editar'}),
+         name='documento-editar'),
     path('documentos/<int:pk>/nueva-version/',
          DocumentoViewSet.as_view({'post': 'nueva_version'}),
          name='documento-nueva-version'),
@@ -52,12 +55,12 @@ urlpatterns = [
          CarpetaViewSet.as_view({'post': 'mover'}),
          name='carpeta-mover'),
 
-    # CategorÃ­as
+    # Categorías
     path('categorias/',
          CategoriaDocViewSet.as_view({'get': 'list'}),
          name='categoria-list'),
 
-    # CategorÃ­as personalizadas por usuario
+    # Categorías personalizadas por usuario
     path('categorias-custom/',
          CategoriaCustomViewSet.as_view({'get': 'list', 'post': 'create'}),
          name='categoria-custom-list'),
