@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import descargasIcon from "../../assets/descargas.svg";
 import basuraIcon from "../../assets/basura.svg";
 import archivoIcon from "../../assets/archivo.svg";
+import nuevaCarpetaIcon from "../../assets/nueva-carpeta.svg";
 
 const MONTHS = [
   "Enero",
@@ -52,6 +53,7 @@ export function ArchiveList() {
   const [dia, setDia] = useState("Cualquier Día");
   const [files, setFiles] = useState([]);
   const [categorias, setCategorias] = useState([]);
+  const [categoriasCustom, setCategoriasCustom] = useState([]);
   const [filtrosAvanzados, setFiltrosAvanzados] = useState(true);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -86,7 +88,8 @@ export function ArchiveList() {
     ? files
     : files.filter((f) =>
       f.type === "folder" ||
-      tiposSeleccionados.includes(f.categoria)
+      tiposSeleccionados.includes(f.categoria) ||
+      tiposSeleccionados.includes(f.metadatos?._categoria)
     );
 
   // Descargar documento
@@ -209,10 +212,11 @@ export function ArchiveList() {
     setLoading(true);
     setErrorMsg("");
     try {
-      const [carpetasRes, docsRes, catsRes] = await Promise.all([
+      const [carpetasRes, docsRes, catsRes, catsCustomRes] = await Promise.all([
         documentsService.listFolders(currentFolderId).catch(() => ({ carpetas: [] })),
         documentsService.listDocuments(currentFolderId).catch(() => ({ documentos: [] })),
         documentsService.listCategories().catch(() => ({ categorias: [] })),
+        documentsService.listCustomCategories().catch(() => ({ categorias_custom: [] })),
       ]);
 
         const carpetas = (carpetasRes?.carpetas || []).map((c) => ({
@@ -238,6 +242,7 @@ export function ArchiveList() {
 
         setFiles([...carpetas, ...docs]);
         setCategorias(catsRes?.categorias || []);
+        setCategoriasCustom(catsCustomRes?.categorias_custom || []);
     } catch (err) {
       setErrorMsg(
         err?.status === 401
@@ -564,7 +569,7 @@ export function ArchiveList() {
                 <div className="checkbox_label">Categoria del Documento</div>
                 <div className="checkbox_row">
                   {/* Mapea las categorias obtenidas del backend para crear un checkbox para cada una */}
-                  {categorias.map((cat) => (
+                  {categorias.filter((cat) => cat.nombre_categoria !== "Personalizada").map((cat) => (
                     <label key={cat.id_tipo} className="checkbox_item">
                       <input
                         type="checkbox"
@@ -576,6 +581,25 @@ export function ArchiveList() {
                     </label>
                   ))}
                 </div>
+                {/* Categorías personalizadas */}
+                {categoriasCustom.length > 0 && (
+                  <>
+                    <div className="checkbox_label" style={{ marginTop: "10px" }}>Categorías Personalizadas</div>
+                    <div className="checkbox_row">
+                      {categoriasCustom.map((cat) => (
+                        <label key={cat.id} className="checkbox_item">
+                          <input
+                            type="checkbox"
+                            value={cat.nombre}
+                            checked={tiposSeleccionados.includes(cat.nombre)}
+                            onChange={() => handleTipoChange(cat.nombre)}
+                          />
+                          {cat.nombre}
+                        </label>
+                      ))}
+                    </div>
+                  </>
+                )}
               </>
             )}
           </div>
@@ -629,8 +653,8 @@ export function ArchiveList() {
 
         {/* === BOTTOM BAR === */}
         <div className="bottom_bar">
-          <button className="btn_new_folder" onClick={handleNuevaCarpeta}>
-            Nueva Carpeta
+          <button className="btn_new_folder" onClick={handleNuevaCarpeta} aria-label="Nueva Carpeta" data-tooltip="Nueva Carpeta">
+            <img src={nuevaCarpetaIcon} alt="" aria-hidden="true" className="btn_folder_icon" />
           </button>
         </div>
 
