@@ -629,8 +629,16 @@ export function ArchiveList() {
 
         {/* === BOTTOM BAR === */}
         <div className="bottom_bar">
-          <button className="btn_new_folder" onClick={handleNuevaCarpeta}>
-            Nueva Carpeta
+          <button className="btn_new_folder" onClick={handleNuevaCarpeta} title="Nueva carpeta" aria-label="Nueva carpeta">
+            <span className="new_folder_icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 8a2 2 0 0 1 2-2h5l2 2h9a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8z" fill="currentColor" />
+                <path d="M12 11v5M9 14h6" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                <circle cx="18" cy="18" r="3" fill="white" />
+                <path d="M18 16v4M16 18h4" stroke="var(--new-archive-bg)" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            </span>
+            <span className="sr_only">Nueva Carpeta</span>
           </button>
         </div>
 
