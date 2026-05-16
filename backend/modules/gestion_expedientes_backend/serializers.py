@@ -3,7 +3,7 @@ import os
 from rest_framework import serializers
 from .models import (
     CategoriasDoc, InfCarpeta, DocDocumento, DocExpediente,
-    ExpedienteContenido, VersionDoc,
+    ExpedienteContenido, VersionDoc, CategoriaCustom,
 )
 
 
@@ -74,12 +74,27 @@ class DocExpedienteSerializer(serializers.ModelSerializer):
         return ExpedienteContenido.objects.filter(id_exp=obj).count()
 
 
+class CategoriaCustomSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CategoriaCustom
+        fields = ['id_cat_custom', 'nombre', 'campos', 'fecha_creacion']
+        read_only_fields = ['id_cat_custom', 'fecha_creacion']
+
+
+class CrearCategoriaCustomSerializer(serializers.Serializer):
+    nombre = serializers.CharField(max_length=100)
+    campos = serializers.ListField(
+        child=serializers.CharField(max_length=50),
+        min_length=1,
+    )
+
+
 class SubidaDocumentoSerializer(serializers.Serializer):
     """Valida los datos para subir un documento PDF."""
-    CATEGORIAS = ['Docencia', 'Gestion', 'Titulacion', 'Produccion', 'Tutoria']
+    CATEGORIAS_FIJAS = ['Docencia', 'Gestion', 'Titulacion', 'Produccion', 'Tutoria']
     MAX_SIZE = 50 * 1024 * 1024  # 50 MB
 
-    # Reglas numéricas por categoría: cada campo del JSON metadatos
+    # Reglas numÃ©ricas por categorÃ­a: cada campo del JSON metadatos
     # se valida contra estas reglas.
     NUMERIC_RULES = {
         'Docencia':   {'cargaHoraria':   {'min': 0, 'integer': True}},
@@ -88,11 +103,12 @@ class SubidaDocumentoSerializer(serializers.Serializer):
     }
 
     titulo_doc = serializers.CharField(max_length=50)
-    id_tipo = serializers.IntegerField()
+    id_tipo = serializers.IntegerField(required=False, allow_null=True)
     id_folder = serializers.IntegerField(required=False, allow_null=True)
     archivo = serializers.FileField()
-    fecha_expedicion = serializers.DateTimeField(required=False, allow_null=True)
-    categoria = serializers.ChoiceField(choices=CATEGORIAS)
+    fecha_expedicion = serializers.DateField(required=False, allow_null=True)
+    categoria = serializers.CharField(max_length=100)
+    # id_profesor se inyecta en validate() desde el contexto de la vista
     metadatos = serializers.JSONField(required=False, default=dict)
 
     def validate_archivo(self, archivo):
@@ -101,10 +117,27 @@ class SubidaDocumentoSerializer(serializers.Serializer):
             raise serializers.ValidationError('Solo se permiten archivos PDF (.pdf)')
         ctype = (getattr(archivo, 'content_type', '') or '').lower()
         if ctype and ctype != 'application/pdf':
-            raise serializers.ValidationError('El archivo no es un PDF válido')
+            raise serializers.ValidationError('El archivo no es un PDF vÃ¡lido')
         if archivo.size > self.MAX_SIZE:
             raise serializers.ValidationError('El archivo no debe exceder 50MB')
         return archivo
+
+    def validate_categoria(self, value):
+        """Acepta las 5 categorÃ­as fijas O cualquier categorÃ­a custom del profesor."""
+        if value in self.CATEGORIAS_FIJAS:
+            return value
+        # Verificar si es una categorÃ­a custom vÃ¡lida del profesor
+        # El id_profesor llega en el contexto inyectado por la vista
+        id_profesor = self.context.get('id_profesor')
+        if id_profesor:
+            existe = CategoriaCustom.objects.filter(
+                id_profesor=id_profesor, nombre=value
+            ).exists()
+            if existe:
+                return value
+        raise serializers.ValidationError(
+            f"'{value}' no es una categorÃ­a vÃ¡lida."
+        )
 
     def validate(self, data):
         meta = data.get('metadatos') or {}
@@ -113,18 +146,19 @@ class SubidaDocumentoSerializer(serializers.Serializer):
             try:
                 meta = json.loads(meta)
             except ValueError:
-                raise serializers.ValidationError({'metadatos': 'JSON inválido'})
+                raise serializers.ValidationError({'metadatos': 'JSON invÃ¡lido'})
         if not isinstance(meta, dict):
             raise serializers.ValidationError({'metadatos': 'Debe ser un objeto JSON'})
 
-        rules = self.NUMERIC_RULES.get(data['categoria'], {})
+        # Solo aplicar reglas numÃ©ricas a las categorÃ­as fijas
+        rules = self.NUMERIC_RULES.get(data.get('categoria', ''), {})
         for field, rule in rules.items():
             if field not in meta or meta[field] in ('', None):
                 continue
             try:
                 val = float(meta[field])
             except (TypeError, ValueError):
-                raise serializers.ValidationError({field: 'Debe ser numérico'})
+                raise serializers.ValidationError({field: 'Debe ser numÃ©rico'})
             if rule.get('integer') and not float(val).is_integer():
                 raise serializers.ValidationError({field: 'Debe ser un entero'})
             if 'min' in rule and val < rule['min']:
@@ -153,4 +187,7 @@ class CrearCarpetaSerializer(serializers.Serializer):
 class CrearExpedienteSerializer(serializers.Serializer):
     nombre_convocatoria = serializers.CharField(max_length=50)
     descripcion = serializers.CharField(required=False, allow_blank=True)
-    fecha_expedicion = serializers.DateTimeField(required=False, allow_null=True)
+    fecha_expedicion = serializers.DateField(required=False, allow_null=True)
+
+class MoverElementoSerializer(serializers.Serializer):
+    id_destino = serializers.IntegerField(required=False, allow_null=True)

@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import (
     ExpedienteViewSet, DocumentoViewSet, CarpetaViewSet, CategoriaDocViewSet,
+    CategoriaCustomViewSet,
 )
 
 app_name = 'gestion_expedientes_backend'
@@ -21,6 +22,9 @@ urlpatterns = [
     path('documentos/',
          DocumentoViewSet.as_view({'get': 'list'}),
          name='documento-list'),
+    path('documentos/buscar/',
+         DocumentoViewSet.as_view({'get': 'buscar'}),
+         name='documento-buscar'),
     path('documentos/subir/',
          DocumentoViewSet.as_view({'post': 'subir'}),
          name='documento-subir'),
@@ -33,14 +37,31 @@ urlpatterns = [
     path('documentos/<int:pk>/versiones/',
          DocumentoViewSet.as_view({'get': 'versiones'}),
          name='documento-versiones'),
+    path('documentos/<int:pk>/mover/',
+         DocumentoViewSet.as_view({'post': 'mover'}),
+         name='documento-mover'),
+     path('documentos/<int:pk>/eliminar/',
+          DocumentoViewSet.as_view({'delete': 'eliminar'}),
+          name='documento-eliminar'),
 
     # Carpetas
     path('carpetas/',
          CarpetaViewSet.as_view({'get': 'list', 'post': 'create'}),
          name='carpeta-list'),
+    path('carpetas/<int:pk>/mover/',
+         CarpetaViewSet.as_view({'post': 'mover'}),
+         name='carpeta-mover'),
 
-    # Categorías
+    # CategorÃ­as
     path('categorias/',
          CategoriaDocViewSet.as_view({'get': 'list'}),
          name='categoria-list'),
+
+    # CategorÃ­as personalizadas por usuario
+    path('categorias-custom/',
+         CategoriaCustomViewSet.as_view({'get': 'list', 'post': 'create'}),
+         name='categoria-custom-list'),
+    path('categorias-custom/<int:pk>/',
+         CategoriaCustomViewSet.as_view({'delete': 'destroy'}),
+         name='categoria-custom-detail'),
 ]

@@ -1,18 +1,35 @@
 import { useMemo, useState } from 'react';
 
-function LastSessionTable({ records = [] }) {
+function LastSessionTable({ records = [], loading = false }) {
   const [sortDirection, setSortDirection] = useState('desc');
 
   const sortedRows = useMemo(() => {
     return [...records].sort((a, b) => {
-      const dateA = new Date(a.lastModified).getTime();
-      const dateB = new Date(b.lastModified).getTime();
+      // Usar fecha_creacion del backend
+      const dateA = new Date(a.fecha_creacion).getTime();
+      const dateB = new Date(b.fecha_creacion).getTime();
       return sortDirection === 'desc' ? dateB - dateA : dateA - dateB;
     });
   }, [records, sortDirection]);
 
   const toggleSort = () => {
     setSortDirection((prev) => (prev === 'desc' ? 'asc' : 'desc'));
+  };
+
+  // Función para formatear la fecha
+  const formatDate = (dateString) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch {
+      return dateString;
+    }
   };
 
   return (
@@ -34,7 +51,15 @@ function LastSessionTable({ records = [] }) {
             </tr>
           </thead>
           <tbody>
-            {sortedRows.length === 0 && (
+            {loading && (
+              <tr>
+                <td colSpan="2" className="empty-table-row">
+                  Cargando documentos...
+                </td>
+              </tr>
+            )}
+
+            {!loading && sortedRows.length === 0 && (
               <tr>
                 <td colSpan="2" className="empty-table-row">
                   No hay documentos registrados en esta sesion.
@@ -42,10 +67,10 @@ function LastSessionTable({ records = [] }) {
               </tr>
             )}
 
-            {sortedRows.map((row, index) => (
-              <tr key={`${row.documentName}-${index}`}>
-                <td>{row.documentName}</td>
-                <td>{row.lastModified}</td>
+            {!loading && sortedRows.map((row, index) => (
+              <tr key={`${row.id_doc}-${index}`}>
+                <td>{row.titulo_doc}</td>
+                <td>{formatDate(row.fecha_creacion)}</td>
               </tr>
             ))}
           </tbody>

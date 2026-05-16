@@ -6,12 +6,13 @@ from django.db import transaction
 from modules.usuarios_backend.models import UserProfe
 from .models import (
     CategoriasDoc, InfCarpeta, DocDocumento, DocExpediente,
-    ExpedienteContenido, VersionDoc,
+    ExpedienteContenido, VersionDoc, CategoriaCustom,
 )
 from .serializers import (
     DocExpedienteSerializer, DocDocumentoSerializer,
     InfCarpetaSerializer, VersionDocSerializer,
     ExpedienteContenidoSerializer, CategoriaDocSerializer,
+    CategoriaCustomSerializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -102,7 +103,40 @@ class ServicioExpedientes:
                         id_folder=None, fecha_expedicion=None):
         try:
             profe = UserProfe.objects.get(id_profesor=id_profesor)
-            categoria_obj = CategoriasDoc.objects.get(id_tipo=id_tipo)
+
+            # Resolver la categoría de BD:
+            # - Si es categoría fija y se proporcionó id_tipo: usarlo directamente.
+            # - Si es categoría fija sin id_tipo: buscar por nombre en la BD.
+            # - Si es categoría custom: usar/crear una categoría comodín "Personalizada".
+            CATEGORIAS_FIJAS = ['Docencia', 'Gestion', 'Titulacion', 'Produccion', 'Tutoria']
+            if categoria in CATEGORIAS_FIJAS and id_tipo:
+                categoria_obj = CategoriasDoc.objects.get(id_tipo=id_tipo)
+            elif categoria in CATEGORIAS_FIJAS and not id_tipo:
+                # Buscar por nombre en la BD (mapeo frontend→BD)
+                NOMBRE_MAP = {
+                    'Docencia': 'Docencia',
+                    'Gestion': 'Gestión Académica',
+                    'Titulacion': 'Gestión Académica (Titulación)',
+                    'Produccion': 'Producción Académica',
+                    'Tutoria': 'Tutoría',
+                }
+                nombre_bd = NOMBRE_MAP.get(categoria, categoria)
+                cat_qs = CategoriasDoc.objects.filter(nombre_categoria__iexact=nombre_bd)
+                if not cat_qs.exists():
+                    cat_qs = CategoriasDoc.objects.filter(nombre_categoria__icontains=categoria[:4])
+                if cat_qs.exists():
+                    categoria_obj = cat_qs.first()
+                else:
+                    categoria_obj, _ = CategoriasDoc.objects.get_or_create(
+                        nombre_categoria='Personalizada',
+                        defaults={'descripcion': 'Categoría comodín para documentos personalizados'},
+                    )
+            else:
+                # Categoría custom del usuario: usar/crear categoría comodín
+                categoria_obj, _ = CategoriasDoc.objects.get_or_create(
+                    nombre_categoria='Personalizada',
+                    defaults={'descripcion': 'Categoría comodín para documentos personalizados'},
+                )
 
             carpeta = None
             if id_folder:
@@ -214,6 +248,59 @@ class ServicioExpedientes:
             return {'success': True, 'versiones': VersionDocSerializer(versiones, many=True).data}
         except DocDocumento.DoesNotExist:
             return {'success': False, 'error': 'Documento no encontrado'}
+        
+    @staticmethod
+    def mover_documento(id_doc, id_profesor, id_folder_destino):
+        try:
+            profe = UserProfe.objects.get(id_profesor=id_profesor)
+            doc = DocDocumento.objects.get(id_doc=id_doc, id_profesor=profe)
+            
+            destino = None
+            if id_folder_destino:
+                destino = InfCarpeta.objects.get(id_folder=id_folder_destino, id_profesor=profe)
+
+            doc.id_folder = destino
+            doc.save()
+            return {'success': True, 'documento': DocDocumentoSerializer(doc).data}
+        except DocDocumento.DoesNotExist:
+            return {'success': False, 'error': 'Documento no encontrado'}
+        except InfCarpeta.DoesNotExist:
+            return {'success': False, 'error': 'Carpeta destino no encontrada'}
+        except Exception as e:
+            logger.error(f"Error al mover documento: {str(e)}")
+            return {'success': False, 'error': str(e)}
+
+    @staticmethod
+    def eliminar_documento(id_doc, id_profesor):
+        try:
+            doc = DocDocumento.objects.filter(
+                id_doc=id_doc,
+                id_profesor=id_profesor
+            ).first()
+
+            if not doc:
+                return {
+                    "success": False,
+                    "error": "Documento no encontrado"
+                }
+
+            # eliminar archivo físico si existe
+            if doc.ruta_archivo and os.path.exists(doc.ruta_archivo):
+                os.remove(doc.ruta_archivo)
+
+            doc.delete()
+
+            return {
+                "success": True
+            }
+
+        except Exception as e:
+            logger.error(f"Error eliminando documento: {str(e)}")
+
+            return {
+                "success": False,
+                "error": str(e)
+            }
 
     # ---------------- CARPETAS ----------------
     @staticmethod
@@ -247,10 +334,34 @@ class ServicioExpedientes:
     @staticmethod
     def obtener_carpetas(id_profesor, id_padre=None):
         try:
-            qs = InfCarpeta.objects.filter(id_profesor=id_profesor, id_padre=id_padre)
+            if id_padre == 'all':
+                qs = InfCarpeta.objects.filter(id_profesor=id_profesor)
+            else:
+                qs = InfCarpeta.objects.filter(id_profesor=id_profesor, id_padre=id_padre)
             return {'success': True, 'carpetas': InfCarpetaSerializer(qs, many=True).data}
         except Exception as e:
             logger.error(f"Error al obtener carpetas: {str(e)}")
+            return {'success': False, 'error': str(e)}
+    
+    @staticmethod
+    def mover_carpeta(id_carpeta, id_profesor, id_padre_destino):
+        try:
+            profe = UserProfe.objects.get(id_profesor=id_profesor)
+            carpeta = InfCarpeta.objects.get(id_folder=id_carpeta, id_profesor=profe)
+            
+            destino = None
+            if id_padre_destino:
+                destino = InfCarpeta.objects.get(id_folder=id_padre_destino, id_profesor=profe)
+                if destino.id_folder == carpeta.id_folder:
+                    return {'success': False, 'error': 'No puede mover una carpeta dentro de sí misma'}
+
+            carpeta.id_padre = destino
+            carpeta.save()
+            return {'success': True, 'carpeta': InfCarpetaSerializer(carpeta).data}
+        except InfCarpeta.DoesNotExist:
+            return {'success': False, 'error': 'Carpeta origen o destino no encontrada'}
+        except Exception as e:
+            logger.error(f"Error al mover carpeta: {str(e)}")
             return {'success': False, 'error': str(e)}
 
     # ---------------- CATEGORÍAS ----------------
@@ -258,3 +369,54 @@ class ServicioExpedientes:
     def listar_categorias():
         cats = CategoriasDoc.objects.all()
         return {'success': True, 'categorias': CategoriaDocSerializer(cats, many=True).data}
+
+    # ---------------- CATEGORÍAS CUSTOM ----------------
+    @staticmethod
+    def listar_categorias_custom(id_profesor):
+        try:
+            cats = CategoriaCustom.objects.filter(id_profesor=id_profesor)
+            return {
+                'success': True,
+                'categorias_custom': CategoriaCustomSerializer(cats, many=True).data,
+            }
+        except Exception as e:
+            logger.error(f"Error al listar categorias custom: {str(e)}")
+            return {'success': False, 'error': str(e)}
+
+    @staticmethod
+    def crear_categoria_custom(id_profesor, nombre, campos):
+        try:
+            profe = UserProfe.objects.get(id_profesor=id_profesor)
+
+            if CategoriaCustom.objects.filter(id_profesor=profe, nombre=nombre).exists():
+                return {'success': False, 'error': f"Ya existe una categoría llamada '{nombre}'"}
+
+            cat = CategoriaCustom.objects.create(
+                id_profesor=profe,
+                nombre=nombre,
+                campos=campos,
+            )
+            logger.info(f"Categoria custom creada: '{nombre}' (profesor {id_profesor})")
+            return {'success': True, 'categoria': CategoriaCustomSerializer(cat).data}
+        except UserProfe.DoesNotExist:
+            return {'success': False, 'error': 'Profesor no encontrado'}
+        except Exception as e:
+            logger.error(f"Error al crear categoria custom: {str(e)}")
+            return {'success': False, 'error': str(e)}
+
+    @staticmethod
+    def eliminar_categoria_custom(id_cat_custom, id_profesor):
+        try:
+            cat = CategoriaCustom.objects.get(
+                id_cat_custom=id_cat_custom,
+                id_profesor=id_profesor,
+            )
+            nombre = cat.nombre
+            cat.delete()
+            logger.info(f"Categoria custom eliminada: '{nombre}' (profesor {id_profesor})")
+            return {'success': True, 'mensaje': f"Categoría '{nombre}' eliminada"}
+        except CategoriaCustom.DoesNotExist:
+            return {'success': False, 'error': 'Categoría no encontrada'}
+        except Exception as e:
+            logger.error(f"Error al eliminar categoria custom: {str(e)}")
+            return {'success': False, 'error': str(e)}

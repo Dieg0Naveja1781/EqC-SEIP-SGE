@@ -2,14 +2,17 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.conf import settings
 from django.http import FileResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from .serializers import (
     SubidaDocumentoSerializer, CrearCarpetaSerializer, CrearExpedienteSerializer,
+    DocDocumentoSerializer,
+    CrearCategoriaCustomSerializer, MoverElementoSerializer,
 )
+from .models import DocDocumento
 from .services import ServicioExpedientes
 import os
 
@@ -121,7 +124,7 @@ class DocumentoViewSet(viewsets.ViewSet):
       GET  /api/documentos/{id}/versiones/           Lista versiones del documento
     """
     permission_classes = [AllowAny]
-    parser_classes = (MultiPartParser, FormParser)
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
 
     def list(self, request):
         id_profesor = _get_id_profesor(request)
@@ -134,13 +137,28 @@ class DocumentoViewSet(viewsets.ViewSet):
             status=status.HTTP_200_OK if resultado['success'] else status.HTTP_400_BAD_REQUEST,
         )
 
+    @action(detail=False, methods=['get'])
+    def buscar(self, request):
+        id_profesor = _get_id_profesor(request)
+        if not id_profesor:
+            return _no_auth()
+        q = request.query_params.get('q', '')
+        if not q:
+            return Response({'success': False, 'error': 'Parámetro q requerido'}, status=status.HTTP_400_BAD_REQUEST)
+        documentos = DocDocumento.objects.filter(id_profesor=id_profesor, titulo_doc__icontains=q)
+        serializer = DocDocumentoSerializer(documentos, many=True)
+        return Response({'success': True, 'documentos': serializer.data})
+
     @action(detail=False, methods=['post'])
     def subir(self, request):
         id_profesor = _get_id_profesor(request)
         if not id_profesor:
             return _no_auth()
 
-        serializer = SubidaDocumentoSerializer(data=request.data)
+        serializer = SubidaDocumentoSerializer(
+            data=request.data,
+            context={'id_profesor': id_profesor},
+        )
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -148,7 +166,7 @@ class DocumentoViewSet(viewsets.ViewSet):
             id_profesor=id_profesor,
             archivo=serializer.validated_data['archivo'],
             titulo_doc=serializer.validated_data['titulo_doc'],
-            id_tipo=serializer.validated_data['id_tipo'],
+            id_tipo=serializer.validated_data.get('id_tipo'),
             categoria=serializer.validated_data['categoria'],
             metadatos=serializer.validated_data.get('metadatos') or {},
             id_folder=serializer.validated_data.get('id_folder'),
@@ -214,6 +232,45 @@ class DocumentoViewSet(viewsets.ViewSet):
             resultado,
             status=status.HTTP_200_OK if resultado['success'] else status.HTTP_404_NOT_FOUND,
         )
+    
+    @action(detail=True, methods=['post'])
+    def mover(self, request, pk=None):
+        id_profesor = _get_id_profesor(request)
+        if not id_profesor:
+            return _no_auth()
+        
+        serializer = MoverElementoSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        resultado = ServicioExpedientes.mover_documento(
+            id_doc=pk,
+            id_profesor=id_profesor,
+            id_folder_destino=serializer.validated_data.get('id_destino')
+        )
+        return Response(
+            resultado,
+            status=status.HTTP_200_OK if resultado['success'] else status.HTTP_400_BAD_REQUEST
+        )
+    
+    @action(detail=True, methods=['delete'])
+    def eliminar(self, request, pk=None):
+        id_profesor = _get_id_profesor(request)
+
+        if not id_profesor:
+            return _no_auth()
+
+        resultado = ServicioExpedientes.eliminar_documento(
+            id_doc=pk,
+            id_profesor=id_profesor,
+        )
+
+        return Response(
+            resultado,
+            status=status.HTTP_200_OK
+            if resultado['success']
+            else status.HTTP_400_BAD_REQUEST,
+        )
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -231,7 +288,9 @@ class CarpetaViewSet(viewsets.ViewSet):
             return _no_auth()
 
         id_padre = request.query_params.get('id_padre')
-        if id_padre in ('', 'null', 'None'):
+        if id_padre == 'all':
+            pass
+        elif id_padre in ('', 'null', 'None'):
             id_padre = None
         elif id_padre is not None:
             try:
@@ -264,6 +323,26 @@ class CarpetaViewSet(viewsets.ViewSet):
             status=status.HTTP_201_CREATED if resultado['success'] else status.HTTP_400_BAD_REQUEST,
         )
 
+    @action(detail=True, methods=['post'])
+    def mover(self, request, pk=None):
+        id_profesor = _get_id_profesor(request)
+        if not id_profesor:
+            return _no_auth()
+       
+        serializer = MoverElementoSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+       
+        resultado = ServicioExpedientes.mover_carpeta(
+            id_carpeta=pk,
+            id_profesor=id_profesor,
+            id_padre_destino=serializer.validated_data.get('id_destino')
+        )
+        return Response(
+            resultado,
+            status=status.HTTP_200_OK if resultado['success'] else status.HTTP_400_BAD_REQUEST
+        )
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class CategoriaDocViewSet(viewsets.ViewSet):
@@ -273,3 +352,57 @@ class CategoriaDocViewSet(viewsets.ViewSet):
     def list(self, request):
         resultado = ServicioExpedientes.listar_categorias()
         return Response(resultado, status=status.HTTP_200_OK)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class CategoriaCustomViewSet(viewsets.ViewSet):
+    """
+    Endpoints de categorías personalizadas por profesor:
+      GET    /api/categorias-custom/       Lista las del profesor autenticado
+      POST   /api/categorias-custom/       Crea una nueva
+      DELETE /api/categorias-custom/<id>/  Elimina una (solo si es del profesor)
+    """
+    permission_classes = [AllowAny]
+
+    def list(self, request):
+        id_profesor = _get_id_profesor(request)
+        if not id_profesor:
+            return _no_auth()
+        resultado = ServicioExpedientes.listar_categorias_custom(id_profesor)
+        return Response(
+            resultado,
+            status=status.HTTP_200_OK if resultado['success'] else status.HTTP_400_BAD_REQUEST,
+        )
+
+    def create(self, request):
+        id_profesor = _get_id_profesor(request)
+        if not id_profesor:
+            return _no_auth()
+
+        serializer = CrearCategoriaCustomSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        resultado = ServicioExpedientes.crear_categoria_custom(
+            id_profesor=id_profesor,
+            nombre=serializer.validated_data['nombre'],
+            campos=serializer.validated_data['campos'],
+        )
+        return Response(
+            resultado,
+            status=status.HTTP_201_CREATED if resultado['success'] else status.HTTP_400_BAD_REQUEST,
+        )
+
+    def destroy(self, request, pk=None):
+        id_profesor = _get_id_profesor(request)
+        if not id_profesor:
+            return _no_auth()
+
+        resultado = ServicioExpedientes.eliminar_categoria_custom(
+            id_cat_custom=pk,
+            id_profesor=id_profesor,
+        )
+        return Response(
+            resultado,
+            status=status.HTTP_200_OK if resultado['success'] else status.HTTP_404_NOT_FOUND,
+        )

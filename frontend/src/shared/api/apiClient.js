@@ -31,6 +31,7 @@ async function parseResponse(response) {
 }
 
 async function request(endpoint, options = {}) {
+  const { isDownload, ...fetchOptions } = options;
   const url = `${API_BASE_URL}${endpoint}`;
   const csrfToken = getCookie("csrftoken");
   const profesorId = getProfesorId();
@@ -48,12 +49,16 @@ async function request(endpoint, options = {}) {
   let response;
   try {
     response = await fetch(url, {
-      ...options,
+      ...fetchOptions,
       credentials: "include",
       headers,
     });
   } catch (err) {
     throw { status: 0, data: { error: "No se pudo conectar con el servidor" } };
+  }
+
+  if (isDownload && response.ok) {
+    return response.blob();
   }
 
   const data = await parseResponse(response);
@@ -72,6 +77,7 @@ export const apiClient = {
   delete: (endpoint) => request(endpoint, { method: "DELETE" }),
   upload: (endpoint, formData, method = "POST") =>
     request(endpoint, { method, body: formData }),
+  download: (endpoint) => request(endpoint, { method: "GET", isDownload: true }),
 };
 
 export const API_BASE = API_BASE_URL;
