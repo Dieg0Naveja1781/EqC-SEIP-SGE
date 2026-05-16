@@ -34,6 +34,16 @@ function formatFecha(iso) {
   }
 }
 
+// Parsea fechas en formato YYYY-MM-DD o DD/MM/YYYY
+function parseDate(str) {
+  if (!str) return new Date(0);
+  const partes = str.split("/");
+  if (partes.length === 3) {
+    return new Date(`${partes[2]}-${partes[1].padStart(2, "0")}-${partes[0].padStart(2, "0")}`);
+  }
+  return new Date(str);
+}
+
 export function ArchiveList() {
   const location = useLocation();
   const selectedFolderId = location.state?.folderId;
@@ -131,18 +141,18 @@ export function ArchiveList() {
 
   // Filtrado por fecha
   const filtradosFecha = archivosFiltrados.filter((f) => {
+    // Las carpetas no tienen fecha de expedición, siempre se muestran
+    if (f.type === "folder") return true;
     // Obtener la fecha del archivo
-    const fechaISO = f.fecha_creacion || null;
+    const fechaISO = f.fecha_expedicion || null;
     let fechaObj = null;
     if (fechaISO) {
       fechaObj = new Date(fechaISO);
-    } else if (f.date) {
-      // Intenta parsear el string formateado
-      const partes = f.date.split("/");
-      if (partes.length === 3) {
-        // El formato esperado es "dd/MM/yyyy", así que la parte[0] es el día, parte[1] es el mes y la parte[2] es el año
-        fechaObj = new Date(`${partes[2]}-${partes[1].padStart(2, "0")}-${partes[0].padStart(2, "0")}`);
-      }
+    }
+
+    // Si no tiene fecha de expedición y hay algún filtro activo, no pasa
+    if (!fechaObj) {
+      return anio === "Cualquier Año" && mes === "Cualquier Mes" && dia === "Cualquier Día";
     }
 
     const fileAnio = fechaObj.getFullYear().toString();
@@ -158,6 +168,9 @@ export function ArchiveList() {
 
   // Ordena los archivos filtrados según el criterio seleccionado en el estado "ordenarPor"
   const showFiles = [...filtradosFecha].sort((a, b) => {
+    // Las carpetas siempre van primero
+    if (a.type === "folder" && b.type !== "folder") return -1;
+    if (a.type !== "folder" && b.type === "folder") return 1;
     // Para ordenar por nombre, usamos localeCompare para comparar los nombres de los archivos
     if (ordenarPor === "Nombre A-Z") {
       return a.name.localeCompare(b.name);
@@ -167,10 +180,10 @@ export function ArchiveList() {
     }
     // Para ordenar por fecha, convertimos las fechas a objetos Date y restamos para obtener el orden correcto
     if (ordenarPor === "Fecha ↑") {
-      return new Date(a.date) - new Date(b.date);
+      return new Date(a.fecha_expedicion) - new Date(b.fecha_expedicion);
     }
     if (ordenarPor === "Fecha ↓") {
-      return new Date(b.date) - new Date(a.date);
+      return new Date(b.fecha_expedicion) - new Date(a.fecha_expedicion);
     }
     return 0;
   });
@@ -220,6 +233,7 @@ export function ArchiveList() {
         fecha_creacion: d.fecha_creacion,
         metadatos: d.metadatos || {},
         descripcion: d.descripcion || "",
+        fecha_expedicion: d.fecha_expedicion || null,
       }));
 
         setFiles([...carpetas, ...docs]);
