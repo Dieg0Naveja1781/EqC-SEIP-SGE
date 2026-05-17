@@ -48,11 +48,13 @@ function parseDate(str) {
 export function ArchiveList() {
   const location = useLocation();
   const selectedFolderId = location.state?.folderId;
+  const selectedFolderName = location.state?.folderName;
   const [anio, setAnio] = useState("Cualquier Año");
   const [mes, setMes] = useState("Cualquier Mes");
   const [dia, setDia] = useState("Cualquier Día");
   const [files, setFiles] = useState([]);
   const [categorias, setCategorias] = useState([]);
+  const [categoriasCustom, setCategoriasCustom] = useState([]);
   const [filtrosAvanzados, setFiltrosAvanzados] = useState(true);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -69,8 +71,10 @@ export function ArchiveList() {
   const [carpetasDestino, setCarpetasDestino] = useState([]);
   const [destinoSeleccionado, setDestinoSeleccionado] = useState("");
   const [moving, setMoving] = useState(false);
-  const [currentFolderId, setCurrentFolderId] = useState(null);
-  const [folderPath, setFolderPath] = useState([]);
+  const [currentFolderId, setCurrentFolderId] = useState(selectedFolderId || null);
+  const [folderPath, setFolderPath] = useState(selectedFolderId && selectedFolderName ? [{ id: selectedFolderId, name: selectedFolderName }] : []);
+  const [deletePrompt, setDeletePrompt] = useState({ open: false, file: null });
+  const deletePromptRef = useRef(null);
 
   const handleVerDocumento = (file) => {
     if (file.type === "folder") {
@@ -87,7 +91,8 @@ export function ArchiveList() {
     ? files
     : files.filter((f) =>
       f.type === "folder" ||
-      tiposSeleccionados.includes(f.categoria)
+      tiposSeleccionados.includes(f.categoria) ||
+      tiposSeleccionados.includes(f.metadatos?._categoria)
     );
 
   // Descargar documento
@@ -115,12 +120,6 @@ export function ArchiveList() {
 
   // Eliminar documento
   const handleDelete = async (id_doc) => {
-    const confirmar = window.confirm(
-      "¿Eliminar este documento?"
-    );
-
-    if (!confirmar) return;
-
     try {
       const res = await documentsService.deleteDocument(id_doc);
 
@@ -140,6 +139,45 @@ export function ArchiveList() {
     }
   };
 
+  const handleOpenDeletePrompt = (e, file) => {
+    e.stopPropagation();
+    setDeletePrompt((prev) =>
+      prev.open && prev.file?.id === file.id
+        ? { open: false, file: null }
+        : { open: true, file }
+    );
+  };
+
+  const handleCancelDelete = (e) => {
+    e.stopPropagation();
+    setDeletePrompt({ open: false, file: null });
+  };
+
+  const handleConfirmDelete = async (e) => {
+    e.stopPropagation();
+    if (!deletePrompt.file?.id_doc) {
+      setDeletePrompt({ open: false, file: null });
+      return;
+    }
+
+    const idDoc = deletePrompt.file.id_doc;
+    setDeletePrompt({ open: false, file: null });
+    await handleDelete(idDoc);
+  };
+
+  useEffect(() => {
+    if (!deletePrompt.open) return;
+
+    const handleClickOutside = (event) => {
+      if (deletePromptRef.current && !deletePromptRef.current.contains(event.target)) {
+        setDeletePrompt({ open: false, file: null });
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [deletePrompt.open]);
+
   // Filtrado por fecha
   const filtradosFecha = archivosFiltrados.filter((f) => {
     // Las carpetas no tienen fecha de expedición, siempre se muestran
@@ -148,7 +186,7 @@ export function ArchiveList() {
     const fechaISO = f.fecha_expedicion || null;
     let fechaObj = null;
     if (fechaISO) {
-      fechaObj = new Date(fechaISO);
+      fechaObj = parseDate(fechaISO);
     }
 
     // Si no tiene fecha de expedición y hay algún filtro activo, no pasa
@@ -181,10 +219,10 @@ export function ArchiveList() {
     }
     // Para ordenar por fecha, convertimos las fechas a objetos Date y restamos para obtener el orden correcto
     if (ordenarPor === "Fecha ↑") {
-      return new Date(a.fecha_expedicion) - new Date(b.fecha_expedicion);
+      return parseDate(a.fecha_expedicion) - parseDate(b.fecha_expedicion);
     }
     if (ordenarPor === "Fecha ↓") {
-      return new Date(b.fecha_expedicion) - new Date(a.fecha_expedicion);
+      return parseDate(b.fecha_expedicion) - parseDate(a.fecha_expedicion);
     }
     return 0;
   });
@@ -210,10 +248,11 @@ export function ArchiveList() {
     setLoading(true);
     setErrorMsg("");
     try {
-      const [carpetasRes, docsRes, catsRes] = await Promise.all([
+      const [carpetasRes, docsRes, catsRes, catsCustomRes] = await Promise.all([
         documentsService.listFolders(currentFolderId).catch(() => ({ carpetas: [] })),
         documentsService.listDocuments(currentFolderId).catch(() => ({ documentos: [] })),
         documentsService.listCategories().catch(() => ({ categorias: [] })),
+        documentsService.listCustomCategories().catch(() => ({ categorias_custom: [] })),
       ]);
 
         const carpetas = (carpetasRes?.carpetas || []).map((c) => ({
@@ -239,6 +278,7 @@ export function ArchiveList() {
 
         setFiles([...carpetas, ...docs]);
         setCategorias(catsRes?.categorias || []);
+        setCategoriasCustom(catsCustomRes?.categorias_custom || []);
     } catch (err) {
       setErrorMsg(
         err?.status === 401
@@ -565,7 +605,7 @@ export function ArchiveList() {
                 <div className="checkbox_label">Categoria del Documento</div>
                 <div className="checkbox_row">
                   {/* Mapea las categorias obtenidas del backend para crear un checkbox para cada una */}
-                  {categorias.map((cat) => (
+                  {categorias.filter((cat) => cat.nombre_categoria !== "Personalizada").map((cat) => (
                     <label key={cat.id_tipo} className="checkbox_item">
                       <input
                         type="checkbox"
@@ -577,6 +617,25 @@ export function ArchiveList() {
                     </label>
                   ))}
                 </div>
+                {/* Categorías personalizadas */}
+                {categoriasCustom.length > 0 && (
+                  <>
+                    <div className="checkbox_label" style={{ marginTop: "10px" }}>Categorías Personalizadas</div>
+                    <div className="checkbox_row">
+                      {categoriasCustom.map((cat) => (
+                        <label key={cat.id} className="checkbox_item">
+                          <input
+                            type="checkbox"
+                            value={cat.nombre}
+                            checked={tiposSeleccionados.includes(cat.nombre)}
+                            onChange={() => handleTipoChange(cat.nombre)}
+                          />
+                          {cat.nombre}
+                        </label>
+                      ))}
+                    </div>
+                  </>
+                )}
               </>
             )}
           </div>
@@ -613,15 +672,33 @@ export function ArchiveList() {
                   >
                     <img src={archivoIcon} alt="" aria-hidden="true" className="btn_icon" />
                   </button>
-                  <button
-                    className="btn_del" aria-label="Eliminar" data-tooltip="Eliminar"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(file.id_doc);
-                    }}
-                  >
-                    <img src={basuraIcon} alt="" aria-hidden="true" className="btn_icon" />
-                  </button>
+                  <div className="delete_action_wrapper" ref={deletePrompt.open && deletePrompt.file?.id === file.id ? deletePromptRef : null}>
+                    <button
+                      className="btn_del" aria-label="Eliminar" data-tooltip="Eliminar"
+                      onClick={(e) => handleOpenDeletePrompt(e, file)}
+                    >
+                      <img src={basuraIcon} alt="" aria-hidden="true" className="btn_icon" />
+                    </button>
+                    {deletePrompt.open && deletePrompt.file?.id === file.id && (
+                      <div className="delete_confirmation_popover" role="dialog" aria-label="Confirmar eliminación">
+                        <span className="delete_confirmation_title">Confirmar</span>
+                        <div className="delete_confirmation_actions">
+                          <button
+                            type="button"
+                            className="delete_confirmation_button delete_confirmation_button_cancel"
+                            onClick={handleCancelDelete}
+                            aria-label="Cancelar eliminación"
+                          />
+                          <button
+                            type="button"
+                            className="delete_confirmation_button delete_confirmation_button_confirm"
+                            onClick={handleConfirmDelete}
+                            aria-label="Confirmar eliminación"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
