@@ -126,7 +126,7 @@ class SubidaDocumentoSerializer(serializers.Serializer):
         """Acepta las 5 categorías fijas O cualquier categoría custom del profesor."""
         if value in self.CATEGORIAS_FIJAS:
             return value
-        # Verificar si es una categoría custom válida del profesor
+        # Verificar si es una categorí­a custom válida del profesor
         # El id_profesor llega en el contexto inyectado por la vista
         id_profesor = self.context.get('id_profesor')
         if id_profesor:
@@ -136,7 +136,7 @@ class SubidaDocumentoSerializer(serializers.Serializer):
             if existe:
                 return value
         raise serializers.ValidationError(
-            f"'{value}' no es una categoría válida."
+            f"'{value}' no es una categorí­a válida."
         )
 
     def validate(self, data):
@@ -150,7 +150,7 @@ class SubidaDocumentoSerializer(serializers.Serializer):
         if not isinstance(meta, dict):
             raise serializers.ValidationError({'metadatos': 'Debe ser un objeto JSON'})
 
-        # Solo aplicar reglas numéricas a las categorías fijas
+        # Solo aplicar reglas numericas a las categorí­as fijas
         rules = self.NUMERIC_RULES.get(data.get('categoria', ''), {})
         for field, rule in rules.items():
             if field not in meta or meta[field] in ('', None):
@@ -188,3 +188,6 @@ class CrearExpedienteSerializer(serializers.Serializer):
     nombre_convocatoria = serializers.CharField(max_length=50)
     descripcion = serializers.CharField(required=False, allow_blank=True)
     fecha_expedicion = serializers.DateField(required=False, allow_null=True)
+
+class MoverElementoSerializer(serializers.Serializer):
+    id_destino = serializers.IntegerField(required=False, allow_null=True)

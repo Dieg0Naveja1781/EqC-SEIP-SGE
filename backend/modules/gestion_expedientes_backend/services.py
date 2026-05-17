@@ -198,6 +198,64 @@ class ServicioExpedientes:
             return {'success': False, 'error': str(e)}
 
     @staticmethod
+    def actualizar_documento(id_doc, id_profesor, titulo_doc, id_tipo, categoria, metadatos=None, fecha_expedicion=None):
+        try:
+            profe = UserProfe.objects.get(id_profesor=id_profesor)
+            doc = DocDocumento.objects.get(id_doc=id_doc, id_profesor=profe)
+
+            if not titulo_doc:
+                return {'success': False, 'error': 'El titulo es requerido'}
+
+            duplicado = DocDocumento.objects.filter(
+                id_profesor=profe,
+                titulo_doc=titulo_doc,
+            ).exclude(id_doc=id_doc).exists()
+            if duplicado:
+                return {'success': False, 'error': 'Ya existe un documento con ese titulo'}
+
+            CATEGORIAS_FIJAS = ['Docencia', 'Gestion', 'Titulacion', 'Produccion', 'Tutoria']
+            if categoria in CATEGORIAS_FIJAS and id_tipo:
+                categoria_obj = CategoriasDoc.objects.get(id_tipo=id_tipo)
+            elif categoria in CATEGORIAS_FIJAS:
+                nombre_map = {
+                    'Docencia': 'Docencia',
+                    'Gestion': 'Gestión Académica',
+                    'Titulacion': 'Gestión Académica (Titulación)',
+                    'Produccion': 'Producción Académica',
+                    'Tutoria': 'Tutoría',
+                }
+                categoria_obj = CategoriasDoc.objects.filter(
+                    nombre_categoria__iexact=nombre_map.get(categoria, categoria)
+                ).first()
+                if not categoria_obj:
+                    return {'success': False, 'error': 'Categoria no valida'}
+            else:
+                categoria_obj, _ = CategoriasDoc.objects.get_or_create(
+                    nombre_categoria='Personalizada',
+                    defaults={'descripcion': 'Categoria comodin para documentos personalizados'},
+                )
+
+            meta = dict(metadatos or {})
+            meta['_categoria'] = categoria
+
+            doc.titulo_doc = titulo_doc
+            doc.id_tipo = categoria_obj
+            doc.fecha_expedicion = fecha_expedicion
+            doc.metadatos = meta
+            doc.save(update_fields=['titulo_doc', 'id_tipo', 'fecha_expedicion', 'metadatos'])
+
+            return {'success': True, 'documento': DocDocumentoSerializer(doc).data}
+        except UserProfe.DoesNotExist:
+            return {'success': False, 'error': 'Profesor no encontrado'}
+        except DocDocumento.DoesNotExist:
+            return {'success': False, 'error': 'Documento no encontrado'}
+        except CategoriasDoc.DoesNotExist:
+            return {'success': False, 'error': 'Categoria no valida'}
+        except Exception as e:
+            logger.error(f"Error al actualizar documento: {str(e)}")
+            return {'success': False, 'error': str(e)}
+
+    @staticmethod
     def descargar_documento(id_doc, id_profesor):
         try:
             doc = DocDocumento.objects.get(id_doc=id_doc, id_profesor=id_profesor)
@@ -248,6 +306,59 @@ class ServicioExpedientes:
             return {'success': True, 'versiones': VersionDocSerializer(versiones, many=True).data}
         except DocDocumento.DoesNotExist:
             return {'success': False, 'error': 'Documento no encontrado'}
+        
+    @staticmethod
+    def mover_documento(id_doc, id_profesor, id_folder_destino):
+        try:
+            profe = UserProfe.objects.get(id_profesor=id_profesor)
+            doc = DocDocumento.objects.get(id_doc=id_doc, id_profesor=profe)
+            
+            destino = None
+            if id_folder_destino:
+                destino = InfCarpeta.objects.get(id_folder=id_folder_destino, id_profesor=profe)
+
+            doc.id_folder = destino
+            doc.save()
+            return {'success': True, 'documento': DocDocumentoSerializer(doc).data}
+        except DocDocumento.DoesNotExist:
+            return {'success': False, 'error': 'Documento no encontrado'}
+        except InfCarpeta.DoesNotExist:
+            return {'success': False, 'error': 'Carpeta destino no encontrada'}
+        except Exception as e:
+            logger.error(f"Error al mover documento: {str(e)}")
+            return {'success': False, 'error': str(e)}
+
+    @staticmethod
+    def eliminar_documento(id_doc, id_profesor):
+        try:
+            doc = DocDocumento.objects.filter(
+                id_doc=id_doc,
+                id_profesor=id_profesor
+            ).first()
+
+            if not doc:
+                return {
+                    "success": False,
+                    "error": "Documento no encontrado"
+                }
+
+            # eliminar archivo físico si existe
+            if doc.ruta_archivo and os.path.exists(doc.ruta_archivo):
+                os.remove(doc.ruta_archivo)
+
+            doc.delete()
+
+            return {
+                "success": True
+            }
+
+        except Exception as e:
+            logger.error(f"Error eliminando documento: {str(e)}")
+
+            return {
+                "success": False,
+                "error": str(e)
+            }
 
     # ---------------- CARPETAS ----------------
     @staticmethod
@@ -281,11 +392,75 @@ class ServicioExpedientes:
     @staticmethod
     def obtener_carpetas(id_profesor, id_padre=None):
         try:
-            qs = InfCarpeta.objects.filter(id_profesor=id_profesor, id_padre=id_padre)
+            if id_padre == 'all':
+                qs = InfCarpeta.objects.filter(id_profesor=id_profesor)
+            else:
+                qs = InfCarpeta.objects.filter(id_profesor=id_profesor, id_padre=id_padre)
             return {'success': True, 'carpetas': InfCarpetaSerializer(qs, many=True).data}
         except Exception as e:
             logger.error(f"Error al obtener carpetas: {str(e)}")
             return {'success': False, 'error': str(e)}
+    
+    @staticmethod
+    def mover_carpeta(id_carpeta, id_profesor, id_padre_destino):
+        try:
+            profe = UserProfe.objects.get(id_profesor=id_profesor)
+            carpeta = InfCarpeta.objects.get(id_folder=id_carpeta, id_profesor=profe)
+            
+            destino = None
+            if id_padre_destino:
+                destino = InfCarpeta.objects.get(id_folder=id_padre_destino, id_profesor=profe)
+                if destino.id_folder == carpeta.id_folder:
+                    return {'success': False, 'error': 'No puede mover una carpeta dentro de sí misma'}
+
+            carpeta.id_padre = destino
+            carpeta.save()
+            return {'success': True, 'carpeta': InfCarpetaSerializer(carpeta).data}
+        except InfCarpeta.DoesNotExist:
+            return {'success': False, 'error': 'Carpeta origen o destino no encontrada'}
+        except Exception as e:
+            logger.error(f"Error al mover carpeta: {str(e)}")
+            return {'success': False, 'error': str(e)}
+        
+    @staticmethod
+    def eliminar_carpeta(id_carpeta, id_profesor):
+        try:
+            carpeta = InfCarpeta.objects.filter(
+                id_folder=id_carpeta,
+                id_profesor=id_profesor
+            ).first()
+            if not carpeta:
+                return {
+                    "success": False,
+                    "error": "Carpeta no encontrada"
+                }
+            # Encontrar y eliminar todos los documentos de esta carpeta (y subcarpetas)
+            def eliminar_recursivo(folder):
+                # Eliminar documentos en esta carpeta
+                docs = DocDocumento.objects.filter(id_folder=folder.id_folder)
+                for doc in docs:
+                    if doc.ruta_archivo and os.path.exists(doc.ruta_archivo):
+                        try:
+                            os.remove(doc.ruta_archivo)
+                        except OSError:
+                            pass
+                    doc.delete()
+                # Recursión para subcarpetas
+                subcarpetas = InfCarpeta.objects.filter(id_padre=folder.id_folder)
+                for sub in subcarpetas:
+                    eliminar_recursivo(sub)
+            eliminar_recursivo(carpeta)
+            # Eliminar las carpetas y subcarpetas
+            carpeta.delete()
+            return {
+                "success": True
+            }
+        except Exception as e:
+            logger.error(f"Error eliminando carpeta: {str(e)}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
 
     # ---------------- CATEGORÍAS ----------------
     @staticmethod

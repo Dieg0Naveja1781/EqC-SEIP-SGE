@@ -147,7 +147,12 @@ export function SubirDoc() {
     }
     setGuardandoCat(true);
     try {
-      const res = await documentsService.createCustomCategory(nuevoNombre.trim(), camposSeleccionados);
+      // Siempre incluir fechaExpedicion en los campos, aunque no esté seleccionada
+      const camposConFecha = camposSeleccionados.includes("fechaExpedicion") 
+        ? camposSeleccionados 
+        : [...camposSeleccionados, "fechaExpedicion"];
+      
+      const res = await documentsService.createCustomCategory(nuevoNombre.trim(), camposConFecha);
       if (res?.success) {
         const nueva = res.categoria;
         setCategoriasCustom((prev) => [...prev, nueva]);
@@ -155,7 +160,7 @@ export function SubirDoc() {
         setCategoria(nueva.nombre);
         setFormData({ nombreNube: nombrePreservado });
         setModalAbierto(false);
-        mostrarAlerta(`✅ Categoría "${nueva.nombre}" creada`, "success");
+        mostrarAlerta(`✅ Categoría "${nueva.nombre}" creada (incluye Fecha de Expedición)`, "success");
       } else {
         mostrarAlerta(res?.error || "❌ No se pudo crear la categoría", "error");
       }
@@ -412,8 +417,11 @@ export function SubirDoc() {
 
             <div className="modal-field">
               <label>Campos a incluir *</label>
+              <p style={{fontSize: "0.85rem", color: "var(--text-s)", marginBottom: "8px", fontStyle: "italic"}}>
+                📅 La Fecha de Expedición se incluirá automáticamente (es obligatoria)
+              </p>
               <div className="campo-checkbox-list">
-                {TODOS_LOS_CAMPOS.map(({ key, label }) => (
+                {TODOS_LOS_CAMPOS.filter(({ key }) => key !== "fechaExpedicion").map(({ key, label }) => (
                   <label key={key} className="campo-checkbox-item">
                     <input
                       type="checkbox"
@@ -425,7 +433,7 @@ export function SubirDoc() {
                 ))}
               </div>
               <p className="campos-seleccionados-count">
-                {camposSeleccionados.length} campo{camposSeleccionados.length !== 1 ? "s" : ""} seleccionado{camposSeleccionados.length !== 1 ? "s" : ""}
+                {camposSeleccionados.length} campo{camposSeleccionados.length !== 1 ? "s" : ""} seleccionado{camposSeleccionados.length !== 1 ? "s" : ""} + Fecha de Expedición
               </p>
             </div>
 

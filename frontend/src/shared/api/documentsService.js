@@ -28,8 +28,17 @@ export const documentsService = {
     return apiClient.upload("/documentos/subir/", formData);
   },
 
-  downloadDocumentUrl: (id_doc) =>
-    `${API_BASE}/documentos/${id_doc}/descargar/`,
+  updateDocument: (id_doc, { titulo_doc, id_tipo, fecha_expedicion, categoria, metadatos }) =>
+    apiClient.put(`/documentos/${id_doc}/editar/`, {
+      titulo_doc,
+      id_tipo,
+      fecha_expedicion,
+      categoria,
+      metadatos,
+    }),
+
+  downloadDocument: (id_doc) =>
+    apiClient.download(`/documentos/${id_doc}/descargar/`),
 
   buscarDocumentos: (query) =>
     apiClient.get(`/documentos/buscar/?q=${encodeURIComponent(query)}`),
@@ -46,4 +55,14 @@ export const documentsService = {
     apiClient.post("/categorias-custom/", { nombre, campos }),
 
   deleteCustomCategory: (id) => apiClient.delete(`/categorias-custom/${id}/`),
+  
+  deleteDocument: (id_doc) => apiClient.delete(`/documentos/${id_doc}/eliminar/`),
+
+  deleteCarpeta: (id_carpeta) => apiClient.delete(`/carpetas/${id_carpeta}/eliminar/`),
+
+  moverDocumento: (id_doc, id_destino) =>
+    apiClient.post(`/documentos/${id_doc}/mover/`, { id_destino }),
+
+  moverCarpeta: (id_carpeta, id_destino) =>
+    apiClient.post(`/carpetas/${id_carpeta}/mover/`, { id_destino }),
 };

@@ -1,22 +1,24 @@
-import { DashboardLayout } from "../../../shared/components/DashboardLayout";
-import LastSessionTable from "../components/LastSessionTable";
-import "../styles/MainPage.css";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { DashboardLayout } from "../../../shared/components/DashboardLayout";
+import LastSessionTable from "../components/LastSessionTable";
 import { documentsService } from "../../../shared/api/documentsService";
+import "../styles/MainPage.css";
+import lupaIcon from "../../../assets/lupa.svg";
 
 const recentFolders = [
-  { id: "folder-1", name: "Planeacion" },
-  { id: "folder-2", name: "Evidencias" },
-  { id: "folder-3", name: "Actas" },
-  { id: "folder-4", name: "Convenios" },
-  { id: "folder-5", name: "Reportes" },
+  { id: "folder-1", name: "Carpeta 1" },
+  { id: "folder-2", name: "Carpeta 2" },
+  { id: "folder-3", name: "Carpeta 3" },
+  { id: "folder-4", name: "Carpeta 4" },
+  { id: "folder-5", name: "Carpeta 5" },
 ];
 
 function SearchBar() {
   const [query, setQuery] = useState("");
   const [history, setHistory] = useState([]);
   const [results, setResults] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -33,6 +35,7 @@ function SearchBar() {
       console.log("Respuesta de API:", response);
       if (response.success) {
         setResults(response.documentos);
+        setShowHistory(false);
         // Guardar en historial
         const newHistory = [searchQuery, ...history.filter(h => h !== searchQuery)].slice(0, 5);
         setHistory(newHistory);
@@ -57,6 +60,12 @@ function SearchBar() {
     navigate(`/archive_view?id=${doc.id_doc}`);
   };
 
+  const handleInputFocus = () => {
+    if (history.length > 0 && query.trim() === "") {
+      setShowHistory(true);
+    }
+  };
+
   return (
     <div className="search-section">
       <form onSubmit={handleSubmit} className="search-form">
@@ -64,28 +73,38 @@ function SearchBar() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Buscar documentos..."
+          onFocus={handleInputFocus}
+          onBlur={() => setTimeout(() => setShowHistory(false), 200)}
+          placeholder="🔍 Buscar documentos por título, categoría..."
           className="search-input"
         />
-        <button type="submit" className="search-button">Buscar</button>
+        <button type="submit" className="search-button" aria-label="Buscar">
+          <img src={lupaIcon} alt="" aria-hidden="true" className="search-button-icon" />
+        </button>
       </form>
-      {history.length > 0 && (
+      {showHistory && history.length > 0 && (
         <div className="search-history">
-          <p>Últimas búsquedas:</p>
-          {history.map((hist, index) => (
-            <button key={index} onClick={() => handleHistoryClick(hist)} className="history-item">
-              {hist}
-            </button>
-          ))}
+          <p>📋 Búsquedas recientes</p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+            {history.map((hist, index) => (
+              <button
+                key={index}
+                onMouseDown={() => handleHistoryClick(hist)}
+                className="history-item"
+              >
+                {hist}
+              </button>
+            ))}
+          </div>
         </div>
       )}
       {results.length > 0 && (
         <div className="search-results">
-          <h3>Resultados:</h3>
+          <h3>📄 Resultados encontrados ({results.length})</h3>
           <ul>
             {results.map((doc) => (
               <li key={doc.id_doc} onClick={() => handleResultClick(doc)} className="result-item">
-                {doc.titulo_doc} ({doc.nombre_categoria})
+                <strong>{doc.titulo_doc}</strong> <span style={{opacity: 0.7}}>({doc.nombre_categoria})</span>
               </li>
             ))}
           </ul>
@@ -93,7 +112,7 @@ function SearchBar() {
       )}
       {results.length === 0 && query.trim() !== "" && (
         <div className="no-results">
-          <p>Sin resultados</p>
+          <p>No se encontraron documentos para "{query}"</p>
         </div>
       )}
     </div>
@@ -133,6 +152,55 @@ c-49 75 -92 140 -93 145 -2 6 440 8 1056 7 l1060 -3 44 -31z" />
 }
 
 function MainPage() {
+  const navigate = useNavigate();
+  const [recentFolders, setRecentFolders] = useState([]);
+  const [documents, setDocuments] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        
+        // Obtener todas las carpetas y ordenarlas por fecha de creación descendente
+        const foldersResponse = await documentsService.listFolders("all");
+        if (foldersResponse?.success && foldersResponse?.carpetas) {
+          const sortedFolders = [...foldersResponse.carpetas]
+            .sort((a, b) => {
+              const dateA = new Date(a.fecha_creacion).getTime();
+              const dateB = new Date(b.fecha_creacion).getTime();
+              return dateB - dateA; // Descendente: más recientes primero
+            })
+            .slice(0, 5); // Tomar los últimos 5
+          setRecentFolders(sortedFolders);
+        }
+
+        // Obtener todos los documentos y ordenarlos por fecha de creación descendente
+        const docsResponse = await documentsService.listDocuments();
+        if (docsResponse?.success && docsResponse?.documentos) {
+          const sortedDocs = [...docsResponse.documentos]
+            .sort((a, b) => {
+              const dateA = new Date(a.fecha_creacion).getTime();
+              const dateB = new Date(b.fecha_creacion).getTime();
+              return dateB - dateA; // Descendente: más recientes primero
+            })
+            .slice(0, 10); // Tomar los últimos 10
+          setDocuments(sortedDocs);
+        }
+      } catch (error) {
+        console.error("Error cargando datos:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const handleFolderClick = (folderId, folderName) => {
+    navigate(`/archive_list`, { state: { folderId, folderName } });
+  };
+
   return (
     <DashboardLayout title="Página Principal">
       <div className="main-page-wrap">
@@ -140,21 +208,32 @@ function MainPage() {
           <SearchBar />
           <section className="main-section">
             <h2 className="section-title">Ultimas carpetas</h2>
-            <div className="folder-grid" role="list">
-              {recentFolders.map((folder) => (
-                <button
-                  key={folder.id}
-                  type="button"
-                  className="folder-card"
-                  role="listitem"
-                >
-                  <FolderIcon className="folder-icon" />
-                  <span className="folder-label">{folder.name}</span>
-                </button>
-              ))}
-            </div>
+            {loading ? (
+              <div className="folder-grid" style={{ textAlign: "center", gridColumn: "1 / -1" }}>
+                Cargando carpetas...
+              </div>
+            ) : recentFolders.length === 0 ? (
+              <div className="folder-grid" style={{ textAlign: "center", gridColumn: "1 / -1" }}>
+                No hay carpetas disponibles
+              </div>
+            ) : (
+              <div className="folder-grid" role="list">
+                {recentFolders.map((folder) => (
+                  <button
+                    key={folder.id_folder}
+                    type="button"
+                    className="folder-card"
+                    role="listitem"
+                    onClick={() => handleFolderClick(folder.id_folder, folder.nombre_carpeta)}
+                  >
+                    <FolderIcon className="folder-icon" />
+                    <span className="folder-label">{folder.nombre_carpeta}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </section>
-          <LastSessionTable />
+          <LastSessionTable records={documents} loading={loading} />
         </main>
       </div>
     </DashboardLayout>
