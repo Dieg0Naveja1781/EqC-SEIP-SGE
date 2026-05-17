@@ -2,6 +2,7 @@ import logging
 import os
 from django.conf import settings as django_settings
 from django.db import transaction
+from django.utils import timezone
 
 from modules.usuarios_backend.models import UserProfe
 from .models import (
@@ -243,6 +244,11 @@ class ServicioExpedientes:
             doc.fecha_expedicion = fecha_expedicion
             doc.metadatos = meta
             doc.save(update_fields=['titulo_doc', 'id_tipo', 'fecha_expedicion', 'metadatos'])
+            
+            ultima_version = VersionDoc.objects.filter(id_doc=doc).order_by('-num_version').first()
+            if ultima_version:
+                ultima_version.fecha_subida = timezone.now()
+                ultima_version.save(update_fields=['fecha_subida'])
 
             return {'success': True, 'documento': DocDocumentoSerializer(doc).data}
         except UserProfe.DoesNotExist:
