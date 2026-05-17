@@ -362,6 +362,25 @@ class CarpetaViewSet(viewsets.ViewSet):
             resultado,
             status=status.HTTP_200_OK if resultado['success'] else status.HTTP_400_BAD_REQUEST
         )
+    
+    @action(detail=True, methods=['delete'])
+    def eliminar(self, request, pk=None):
+        id_profesor = _get_id_profesor(request)
+
+        if not id_profesor:
+            return _no_auth()
+
+        resultado = ServicioExpedientes.eliminar_carpeta(
+            id_carpeta=pk,
+            id_profesor=id_profesor,
+        )
+
+        return Response(
+            resultado,
+            status=status.HTTP_200_OK
+            if resultado['success']
+            else status.HTTP_400_BAD_REQUEST,
+        )
 
 
 @method_decorator(csrf_exempt, name='dispatch')

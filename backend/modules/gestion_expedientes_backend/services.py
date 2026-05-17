@@ -421,6 +421,46 @@ class ServicioExpedientes:
         except Exception as e:
             logger.error(f"Error al mover carpeta: {str(e)}")
             return {'success': False, 'error': str(e)}
+        
+    @staticmethod
+    def eliminar_carpeta(id_carpeta, id_profesor):
+        try:
+            carpeta = InfCarpeta.objects.filter(
+                id_folder=id_carpeta,
+                id_profesor=id_profesor
+            ).first()
+            if not carpeta:
+                return {
+                    "success": False,
+                    "error": "Carpeta no encontrada"
+                }
+            # Encontrar y eliminar todos los documentos de esta carpeta (y subcarpetas)
+            def eliminar_recursivo(folder):
+                # Eliminar documentos en esta carpeta
+                docs = DocDocumento.objects.filter(id_folder=folder.id_folder)
+                for doc in docs:
+                    if doc.ruta_archivo and os.path.exists(doc.ruta_archivo):
+                        try:
+                            os.remove(doc.ruta_archivo)
+                        except OSError:
+                            pass
+                    doc.delete()
+                # Recursión para subcarpetas
+                subcarpetas = InfCarpeta.objects.filter(id_padre=folder.id_folder)
+                for sub in subcarpetas:
+                    eliminar_recursivo(sub)
+            eliminar_recursivo(carpeta)
+            # Eliminar las carpetas y subcarpetas
+            carpeta.delete()
+            return {
+                "success": True
+            }
+        except Exception as e:
+            logger.error(f"Error eliminando carpeta: {str(e)}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
 
     # ---------------- CATEGORÍAS ----------------
     @staticmethod

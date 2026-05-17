@@ -55,8 +55,10 @@ export const documentsService = {
     apiClient.post("/categorias-custom/", { nombre, campos }),
 
   deleteCustomCategory: (id) => apiClient.delete(`/categorias-custom/${id}/`),
-  deleteDocument: (id_doc) =>
-  apiClient.delete(`/documentos/${id_doc}/eliminar/`),
+  
+  deleteDocument: (id_doc) => apiClient.delete(`/documentos/${id_doc}/eliminar/`),
+
+  deleteCarpeta: (id_carpeta) => apiClient.delete(`/carpetas/${id_carpeta}/eliminar/`),
 
   moverDocumento: (id_doc, id_destino) =>
     apiClient.post(`/documentos/${id_doc}/mover/`, { id_destino }),

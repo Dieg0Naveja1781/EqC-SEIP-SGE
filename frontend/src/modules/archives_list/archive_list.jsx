@@ -25,6 +25,9 @@ const MONTHS = [
   "Diciembre",
 ];
 
+const CURRENT_YEAR = new Date().getFullYear();
+const YEARS_ARRAY = Array.from({ length: CURRENT_YEAR - 2000 + 1 }, (_, i) => 2000 + i);
+
 function formatFecha(iso) {
   if (!iso) return "";
   try {
@@ -49,9 +52,13 @@ export function ArchiveList() {
   const location = useLocation();
   const selectedFolderId = location.state?.folderId;
   const selectedFolderName = location.state?.folderName;
-  const [anio, setAnio] = useState("Cualquier Año");
-  const [mes, setMes] = useState("Cualquier Mes");
-  const [dia, setDia] = useState("Cualquier Día");
+  const [tipoFiltroFecha, setTipoFiltroFecha] = useState("Ninguno");
+  const [rangoInicio, setRangoInicio] = useState("");
+  const [rangoFin, setRangoFin] = useState("");
+  const [inicioMes, setInicioMes] = useState("");
+  const [inicioAnio, setInicioAnio] = useState("");
+  const [finMes, setFinMes] = useState("");
+  const [finAnio, setFinAnio] = useState("");
   const [files, setFiles] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [categoriasCustom, setCategoriasCustom] = useState([]);
@@ -116,16 +123,24 @@ export function ArchiveList() {
   };
 
 
-  // Eliminar documento
-  const handleDelete = async (id_doc) => {
+  // Eliminar documento o carpeta
+  const handleDelete = async (file) => {
+    const isFolder = file.type === "folder";
+    const typeName = isFolder ? "esta carpeta y todo su contenido" : "este documento";
     const confirmar = window.confirm(
-      "¿Eliminar este documento?"
+      `¿Eliminar ${typeName}?`
     );
 
     if (!confirmar) return;
 
     try {
-      const res = await documentsService.deleteDocument(id_doc);
+      let res;
+      if (isFolder) {
+        const id_carpeta = file.id.replace("f-", "");
+        res = await documentsService.deleteCarpeta(id_carpeta);
+      } else {
+        res = await documentsService.deleteDocument(file.id_doc);
+      }
 
       if (res?.success) {
         cargarDatos();
@@ -134,11 +149,11 @@ export function ArchiveList() {
       }
 
     } catch (err) {
-      console.error("Error eliminando documento", err);
+      console.error(`Error eliminando ${isFolder ? "carpeta" : "documento"}`, err);
 
       alert(
         err?.response?.data?.error ||
-        "Error eliminando documento"
+        `Error eliminando ${isFolder ? "carpeta" : "documento"}`
       );
     }
   };
@@ -154,18 +169,40 @@ export function ArchiveList() {
       fechaObj = new Date(fechaISO);
     }
 
+    if (tipoFiltroFecha === "Ninguno") return true;
+
     // Si no tiene fecha de expedición y hay algún filtro activo, no pasa
     if (!fechaObj) {
-      return anio === "Cualquier Año" && mes === "Cualquier Mes" && dia === "Cualquier Día";
+      return !rangoInicio && !rangoFin;
     }
 
-    const fileAnio = fechaObj.getFullYear().toString();
-    const fileMes = MONTHS[fechaObj.getMonth()];
-    const fileDia = fechaObj.getDate();
-
-    if (anio !== "Cualquier Año" && fileAnio !== anio) return false;
-    if (mes !== "Cualquier Mes" && fileMes !== mes) return false;
-    if (dia !== "Cualquier Día" && fileDia !== Number(dia)) return false;
+    if (tipoFiltroFecha === "Por Mes") {
+      if (fechaObj.getFullYear() !== CURRENT_YEAR) return false;
+      const fileMes = fechaObj.getMonth() + 1;
+      const ini = parseInt(rangoInicio);
+      const fin = parseInt(rangoFin);
+      if (rangoInicio && fileMes < ini) return false;
+      if (rangoFin && fileMes > fin) return false;
+    }
+    else if (tipoFiltroFecha === "Por Año") {
+      const fileAnio = fechaObj.getFullYear();
+      const ini = parseInt(rangoInicio);
+      const fin = parseInt(rangoFin);
+      if (rangoInicio && fileAnio < ini) return false;
+      if (rangoFin && fileAnio > fin) return false;
+    } 
+    // Para el filtro Por Mes y Año convertimos todo a un valor numérico (año*12 + mes) para comparar fácilmente
+    else if (tipoFiltroFecha === "Por Mes y Año") {
+      const fileVal = fechaObj.getFullYear() * 12 + fechaObj.getMonth();
+      if (inicioAnio && inicioMes) {
+        const iniVal = parseInt(inicioAnio) * 12 + (parseInt(inicioMes) - 1);
+        if (fileVal < iniVal) return false;
+      }
+      if (finAnio && finMes) {
+        const finVal = parseInt(finAnio) * 12 + (parseInt(finMes) - 1);
+        if (fileVal > finVal) return false;
+      }
+    }
 
     return true;
   });
@@ -478,53 +515,128 @@ export function ArchiveList() {
                 <div className="advanced_filters">
                   <div className="filters_row">
                     <div className="filters">
-                      <span className="filter_label">Año</span>
+                      <span className="filter_label">Filtrar por</span>
                       <select
                         className="filter_select"
-                        value={anio}
-                        onChange={(e) => setAnio(e.target.value)}
+                        value={tipoFiltroFecha}
+                        onChange={(e) => {
+                          setTipoFiltroFecha(e.target.value);
+                          setRangoInicio("");
+                          setRangoFin("");
+                          setInicioMes("");
+                          setInicioAnio("");
+                          setFinMes("");
+                          setFinAnio("");
+                        }}
                       >
-                        <option value="Cualquier Año">Cualquier Año</option>
-                        <option value="2024">2024</option>
-                        <option value="2025">2025</option>
-                        <option value="2026">2026</option>
+                        <option value="Ninguno">Ninguno</option>
+                        <option value="Por Mes">Por Mes</option>
+                        <option value="Por Año">Por Año</option>
+                        <option value="Por Mes y Año">Por Mes y Año</option>
                       </select>
                     </div>
 
-                    {/* === DATE FILTERS === */}
-                    <div className="filters">
-                      <h2 className="filter_label">Mes</h2>
-                      <select
-                        className="filter_select"
-                        value={mes}
-                        onChange={(e) => setMes(e.target.value)}
-                      >
-                        <option value="Cualquier Mes">Cualquier Mes</option>
-                        {MONTHS.map((m) => (
-                          <option key={m} value={m}>
-                            {m}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    {tipoFiltroFecha === "Por Mes" && (
+                      <>
+                        <div className="filters">
+                          <h2 className="filter_label">Mes Inicio</h2>
+                          <select className="filter_select" value={rangoInicio} onChange={(e) => setRangoInicio(e.target.value)}>
+                            <option value="">Seleccionar</option>
+                            {MONTHS.map((m, i) => (
+                              (rangoFin && i + 1 > parseInt(rangoFin)) ? null : (
+                                <option key={m} value={i + 1}>{m}</option>
+                              )
+                            ))}
+                          </select>
+                        </div>
 
-                    <div className="filters">
-                      <h2 className="filter_label">Día</h2>
-                      <select
-                        className="filter_select"
-                        value={dia}
-                        onChange={(e) => setDia(e.target.value)}
-                      >
-                        <option value="Cualquier Día">Cualquier Día</option>
-                        {Array.from({ length: 31 }, (_, i) => i + 1).map(
-                          (d) => (
-                            <option key={d} value={d}>
-                              {d}
-                            </option>
-                          ),
-                        )}
-                      </select>
-                    </div>
+                        <div className="filters">
+                          <h2 className="filter_label">Mes Fin</h2>
+                          <select className="filter_select" value={rangoFin} onChange={(e) => setRangoFin(e.target.value)}>
+                            <option value="">Seleccionar</option>
+                            {MONTHS.map((m, i) => (
+                              (rangoInicio && i + 1 < parseInt(rangoInicio)) ? null : (
+                                <option key={m} value={i + 1}>{m}</option>
+                              )
+                            ))}
+                          </select>
+                        </div>
+                      </>
+                    )}
+
+                    {tipoFiltroFecha === "Por Año" && (
+                      <>
+                      <div className="filters">
+                        <h2 className="filter_label">Año Inicio</h2>
+                        <select className="filter_select" value={rangoInicio} onChange={(e)=>setRangoInicio(e.target.value)}>
+                          <option value="">Seleccionar</option>
+                          {YEARS_ARRAY.map((year)=> (
+                            (rangoFin && year > parseInt(rangoFin)) ? null : (<option key={year}>{year}</option>)
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="filters">
+                        <h2 className="filter_label">Año Fin</h2>
+                        <select className="filter_select" value={rangoFin} onChange={(e)=>setRangoFin(e.target.value)}>
+                          <option value="">Seleccionar</option>
+                          {YEARS_ARRAY.map((year)=> (
+                            (rangoInicio && year < parseInt(rangoInicio)) ? null : (<option key={year}>{year}</option>)
+                          ))}
+                        </select>
+                      </div>
+                      </>
+                    )}
+
+                    {tipoFiltroFecha === "Por Mes y Año" && (
+                      <>
+                        <div className="filters">
+                          <h2 className="filter_label">Inicio</h2>
+                          <div style={{ display: "flex", gap: "5px" }}>
+                            
+                            <select className="filter_select" value={inicioMes} onChange={(e) => setInicioMes(e.target.value)}>
+                              <option value="">Mes</option>
+                              {MONTHS.map((m, i) => (
+                                (finAnio && finMes && inicioAnio && parseInt(inicioAnio) === parseInt(finAnio) && i + 1 > parseInt(finMes)) ? null : (
+                                  <option key={m} value={i + 1}>{m}</option>
+                                )
+                              ))}
+                            </select>
+
+                            <select className="filter_select" value={inicioAnio} onChange={(e) => setInicioAnio(e.target.value)}>
+                              <option value="">Año</option>
+                              {YEARS_ARRAY.map((year) => (
+                                (finAnio && (year > parseInt(finAnio) || (year === parseInt(finAnio) && finMes && inicioMes && parseInt(inicioMes) > parseInt(finMes)))) ? null : (
+                                  <option key={year} value={year}>{year}</option>
+                                )
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="filters">
+                          <h2 className="filter_label">Fin</h2>
+                          <div style={{ display: "flex", gap: "5px" }}>
+                            <select className="filter_select" value={finMes} onChange={(e) => setFinMes(e.target.value)}>
+                              <option value="">Mes</option>
+                              {MONTHS.map((m, i) => (
+                                (inicioAnio && inicioMes && finAnio && parseInt(inicioAnio) === parseInt(finAnio) && i + 1 < parseInt(inicioMes)) ? null : (
+                                  <option key={m} value={i + 1}>{m}</option>
+                                )
+                              ))}
+                            </select>
+                            <select className="filter_select" value={finAnio} onChange={(e) => setFinAnio(e.target.value)}>
+                              <option value="">Año</option>
+                              {YEARS_ARRAY.map((year) => (
+                                (inicioAnio && (year < parseInt(inicioAnio) || (year === parseInt(inicioAnio) && finMes && inicioMes && parseInt(inicioMes) > parseInt(finMes)))) ? null : (
+                                  <option key={year} value={year}>{year}</option>
+                                )
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* === SORTING OPTIONS === */}
@@ -641,7 +753,7 @@ export function ArchiveList() {
                     className="btn_del" aria-label="Eliminar" data-tooltip="Eliminar"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDelete(file.id_doc);
+                      handleDelete(file);
                     }}
                   >
                     <img src={basuraIcon} alt="" aria-hidden="true" className="btn_icon" />
@@ -699,6 +811,7 @@ export function ArchiveList() {
                 onChange={(e) => setDestinoSeleccionado(e.target.value)}
               >
                 <option value="">Selecciona una carpeta destino</option>
+                <option value="raiz">Raíz</option>
                 {carpetasDestino.map((c) => (
                   <option key={c.id_folder} value={c.id_folder}>
                     {c.nombre_carpeta}
