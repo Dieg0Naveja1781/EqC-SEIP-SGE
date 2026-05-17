@@ -640,76 +640,79 @@ export function ArchiveList() {
             )}
           </div>
 
-          {/* === FILE LIST === */}
-          <div className="files_list">
-            {loading && <p>Cargando…</p>}
-            {errorMsg && <p style={{ color: "#ff6b6b" }}>{errorMsg}</p>}
-            {!loading && !errorMsg && files.length === 0 && (
-              <p>No hay archivos. Crea una carpeta o sube un documento.</p>
-            )}
-            {showFiles.map((file) => (
-              <div key={file.id} className="file_row" onClick={() => handleVerDocumento(file)} style={{ cursor: file.type === "pdf" ? "pointer" : "default" }}>
-                <span>{file.type === "folder" ? "📁" : "📄"}</span>
-                <span className="file_name">{file.name}</span>
-                <span className="file_date">{file.date}</span>
-                <div className="file_actions">
-                  {file.type !== "folder" && file.id_doc && (
-                    <button
-                      className="btn_upd"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDownload(file.id_doc);
-                      }}
-                      aria-label="Descargar"
-                      data-tooltip="Descargar"
-                    >
-                      <img src={descargasIcon} alt="" aria-hidden="true" className="btn_icon" />
-                    </button>
-                  )}
-                  <button
-                    className="btn_mov" aria-label="Mover" data-tooltip="Mover"
-                    onClick={(e) => handleMover(e, file)}
-                  >
-                    <img src={archivoIcon} alt="" aria-hidden="true" className="btn_icon" />
-                  </button>
-                  <div className="delete_action_wrapper" ref={deletePrompt.open && deletePrompt.file?.id === file.id ? deletePromptRef : null}>
-                    <button
-                      className="btn_del" aria-label="Eliminar" data-tooltip="Eliminar"
-                      onClick={(e) => handleOpenDeletePrompt(e, file)}
-                    >
-                      <img src={basuraIcon} alt="" aria-hidden="true" className="btn_icon" />
-                    </button>
-                    {deletePrompt.open && deletePrompt.file?.id === file.id && (
-                      <div className="delete_confirmation_popover" role="dialog" aria-label="Confirmar eliminación">
-                        <span className="delete_confirmation_title">Confirmar</span>
-                        <div className="delete_confirmation_actions">
-                          <button
-                            type="button"
-                            className="delete_confirmation_button delete_confirmation_button_cancel"
-                            onClick={handleCancelDelete}
-                            aria-label="Cancelar eliminación"
-                          />
-                          <button
-                            type="button"
-                            className="delete_confirmation_button delete_confirmation_button_confirm"
-                            onClick={handleConfirmDelete}
-                            aria-label="Confirmar eliminación"
-                          />
-                        </div>
-                      </div>
+          {/* === SCROLLABLE FILES CONTAINER === */}
+          <div className="files_scroll_container">
+            {/* === FILE LIST === */}
+            <div className="files_list">
+              {loading && <p>Cargando…</p>}
+              {errorMsg && <p style={{ color: "#ff6b6b" }}>{errorMsg}</p>}
+              {!loading && !errorMsg && files.length === 0 && (
+                <p>No hay archivos. Crea una carpeta o sube un documento.</p>
+              )}
+              {showFiles.map((file) => (
+                <div key={file.id} className="file_row" onClick={() => handleVerDocumento(file)} style={{ cursor: file.type === "pdf" ? "pointer" : "default" }}>
+                  <span>{file.type === "folder" ? "📁" : "📄"}</span>
+                  <span className="file_name">{file.name}</span>
+                  <span className="file_date">{file.date}</span>
+                  <div className="file_actions">
+                    {file.type !== "folder" && file.id_doc && (
+                      <button
+                        className="btn_upd"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownload(file.id_doc);
+                        }}
+                        aria-label="Descargar"
+                        data-tooltip="Descargar"
+                      >
+                        <img src={descargasIcon} alt="" aria-hidden="true" className="btn_icon" />
+                      </button>
                     )}
+                    <button
+                      className="btn_mov" aria-label="Mover" data-tooltip="Mover"
+                      onClick={(e) => handleMover(e, file)}
+                    >
+                      <img src={archivoIcon} alt="" aria-hidden="true" className="btn_icon" />
+                    </button>
+                    <div className="delete_action_wrapper" ref={deletePrompt.open && deletePrompt.file?.id === file.id ? deletePromptRef : null}>
+                      <button
+                        className="btn_del" aria-label="Eliminar" data-tooltip="Eliminar"
+                        onClick={(e) => handleOpenDeletePrompt(e, file)}
+                      >
+                        <img src={basuraIcon} alt="" aria-hidden="true" className="btn_icon" />
+                      </button>
+                      {deletePrompt.open && deletePrompt.file?.id === file.id && (
+                        <div className="delete_confirmation_popover" role="dialog" aria-label="Confirmar eliminación">
+                          <span className="delete_confirmation_title">Confirmar</span>
+                          <div className="delete_confirmation_actions">
+                            <button
+                              type="button"
+                              className="delete_confirmation_button delete_confirmation_button_cancel"
+                              onClick={handleCancelDelete}
+                              aria-label="Cancelar eliminación"
+                            />
+                            <button
+                              type="button"
+                              className="delete_confirmation_button delete_confirmation_button_confirm"
+                              onClick={handleConfirmDelete}
+                              aria-label="Confirmar eliminación"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
+              ))}
+            </div>
 
-        {/* === BOTTOM BAR === */}
-        <div className="bottom_bar">
-          <button className="btn_new_folder" onClick={handleNuevaCarpeta} aria-label="Nueva Carpeta" data-tooltip="Nueva Carpeta">
-            <img src={nuevaCarpetaIcon} alt="" aria-hidden="true" className="btn_folder_icon" />
-          </button>
+            {/* === BOTTOM BAR === */}
+            <div className="bottom_bar">
+              <button className="btn_new_folder" onClick={handleNuevaCarpeta} aria-label="Nueva Carpeta" data-tooltip="Nueva Carpeta">
+                <img src={nuevaCarpetaIcon} alt="" aria-hidden="true" className="btn_folder_icon" />
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* === MODAL NUEVA CARPETA === */}

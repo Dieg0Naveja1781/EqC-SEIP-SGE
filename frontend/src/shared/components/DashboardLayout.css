@@ -2,6 +2,8 @@
   display: flex;
   flex: 1;
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
   background-color: var(--bg-body);
   color: var(--text-primary);
   transition: all 0.3s ease;
@@ -84,7 +86,8 @@
 /* Main Content & Header */
 .main-content {
   flex: 1;
-  overflow-y: auto;
+  min-height: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -133,6 +136,10 @@
 .page-content {
   padding: 2rem;
   flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Theme Switcher Styles (Shared) */
