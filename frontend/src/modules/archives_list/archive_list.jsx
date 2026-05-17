@@ -78,8 +78,10 @@ export function ArchiveList() {
   const [carpetasDestino, setCarpetasDestino] = useState([]);
   const [destinoSeleccionado, setDestinoSeleccionado] = useState("");
   const [moving, setMoving] = useState(false);
-  const [currentFolderId, setCurrentFolderId] = useState(selectedFolderId || null);
-  const [folderPath, setFolderPath] = useState(selectedFolderId && selectedFolderName ? [{ id: selectedFolderId, name: selectedFolderName }] : []);
+  const [currentFolderId, setCurrentFolderId] = useState(selectedFolderId || selectedFolderId || null);
+  const [folderPath, setFolderPath] = useState(selectedFolderId && selectedFolderName ? [{ id: selectedFolderId, name: selectedFolderName }] : selectedFolderId && selectedFolderName ? [{ id: selectedFolderId, name: selectedFolderName }] : []);
+  const [deletePrompt, setDeletePrompt] = useState({ open: false, file: null });
+  const deletePromptRef = useRef(null);
 
   const handleVerDocumento = (file) => {
     if (file.type === "folder") {
@@ -126,12 +128,6 @@ export function ArchiveList() {
   // Eliminar documento o carpeta
   const handleDelete = async (file) => {
     const isFolder = file.type === "folder";
-    const typeName = isFolder ? "esta carpeta y todo su contenido" : "este documento";
-    const confirmar = window.confirm(
-      `¿Eliminar ${typeName}?`
-    );
-
-    if (!confirmar) return;
 
     try {
       let res;
@@ -158,6 +154,45 @@ export function ArchiveList() {
     }
   };
 
+  const handleOpenDeletePrompt = (e, file) => {
+    e.stopPropagation();
+    setDeletePrompt((prev) =>
+      prev.open && prev.file?.id === file.id
+        ? { open: false, file: null }
+        : { open: true, file }
+    );
+  };
+
+  const handleCancelDelete = (e) => {
+    e.stopPropagation();
+    setDeletePrompt({ open: false, file: null });
+  };
+
+  const handleConfirmDelete = async (e) => {
+    e.stopPropagation();
+    const fileToDelete = deletePrompt.file;
+    if (!fileToDelete) {
+      setDeletePrompt({ open: false, file: null });
+      return;
+    }
+
+    setDeletePrompt({ open: false, file: null });
+    await handleDelete(fileToDelete);
+  };
+
+  useEffect(() => {
+    if (!deletePrompt.open) return;
+
+    const handleClickOutside = (event) => {
+      if (deletePromptRef.current && !deletePromptRef.current.contains(event.target)) {
+        setDeletePrompt({ open: false, file: null });
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [deletePrompt.open]);
+
   // Filtrado por fecha
   const filtradosFecha = archivosFiltrados.filter((f) => {
     // Las carpetas no tienen fecha de expedición, siempre se muestran
@@ -166,7 +201,7 @@ export function ArchiveList() {
     const fechaISO = f.fecha_expedicion || null;
     let fechaObj = null;
     if (fechaISO) {
-      fechaObj = new Date(fechaISO);
+      fechaObj = parseDate(fechaISO);
     }
 
     if (tipoFiltroFecha === "Ninguno") return true;
@@ -190,7 +225,7 @@ export function ArchiveList() {
       const fin = parseInt(rangoFin);
       if (rangoInicio && fileAnio < ini) return false;
       if (rangoFin && fileAnio > fin) return false;
-    } 
+    }
     // Para el filtro Por Mes y Año convertimos todo a un valor numérico (año*12 + mes) para comparar fácilmente
     else if (tipoFiltroFecha === "Por Mes y Año") {
       const fileVal = fechaObj.getFullYear() * 12 + fechaObj.getMonth();
@@ -221,10 +256,10 @@ export function ArchiveList() {
     }
     // Para ordenar por fecha, convertimos las fechas a objetos Date y restamos para obtener el orden correcto
     if (ordenarPor === "Fecha ↑") {
-      return new Date(a.fecha_expedicion) - new Date(b.fecha_expedicion);
+      return parseDate(a.fecha_expedicion) - parseDate(b.fecha_expedicion);
     }
     if (ordenarPor === "Fecha ↓") {
-      return new Date(b.fecha_expedicion) - new Date(a.fecha_expedicion);
+      return parseDate(b.fecha_expedicion) - parseDate(a.fecha_expedicion);
     }
     return 0;
   });
@@ -255,14 +290,15 @@ export function ArchiveList() {
         documentsService.listDocuments(currentFolderId).catch(() => ({ documentos: [] })),
         documentsService.listCategories().catch(() => ({ categorias: [] })),
         documentsService.listCustomCategories().catch(() => ({ categorias_custom: [] })),
+        documentsService.listCustomCategories().catch(() => ({ categorias_custom: [] })),
       ]);
 
-        const carpetas = (carpetasRes?.carpetas || []).map((c) => ({
-          id: `f-${c.id_folder}`,
-          type: "folder",
-          name: c.nombre_carpeta,
-          date: formatFecha(c.fecha_creacion),
-        }));
+      const carpetas = (carpetasRes?.carpetas || []).map((c) => ({
+        id: `f-${c.id_folder}`,
+        type: "folder",
+        name: c.nombre_carpeta,
+        date: formatFecha(c.fecha_creacion),
+      }));
 
       const docs = (docsRes?.documentos || []).map((d) => ({
         id: `d-${d.id_doc}`,
@@ -278,9 +314,9 @@ export function ArchiveList() {
         fecha_expedicion: d.fecha_expedicion || null,
       }));
 
-        setFiles([...carpetas, ...docs]);
-        setCategorias(catsRes?.categorias || []);
-        setCategoriasCustom(catsCustomRes?.categorias_custom || []);
+      setFiles([...carpetas, ...docs]);
+      setCategorias(catsRes?.categorias || []);
+      setCategoriasCustom(catsCustomRes?.categorias_custom || []);
     } catch (err) {
       setErrorMsg(
         err?.status === 401
@@ -330,7 +366,7 @@ export function ArchiveList() {
       if (res?.success) {
         setCarpetasDestino(res.carpetas);
       }
-    } catch(err) {
+    } catch (err) {
       console.error("Error al cargar carpetas destino", err);
     }
     setShowMoveModal(true);
@@ -438,7 +474,7 @@ export function ArchiveList() {
 
         {/* === CONTENT === */}
         <div className="content">
-         
+
           {/* === BREADCRUMBS === */}
           <div className="breadcrumbs" style={{ padding: "10px 0", fontSize: "16px", color: "#ccc" }}>
             <span
@@ -566,25 +602,25 @@ export function ArchiveList() {
 
                     {tipoFiltroFecha === "Por Año" && (
                       <>
-                      <div className="filters">
-                        <h2 className="filter_label">Año Inicio</h2>
-                        <select className="filter_select" value={rangoInicio} onChange={(e)=>setRangoInicio(e.target.value)}>
-                          <option value="">Seleccionar</option>
-                          {YEARS_ARRAY.map((year)=> (
-                            (rangoFin && year > parseInt(rangoFin)) ? null : (<option key={year}>{year}</option>)
-                          ))}
-                        </select>
-                      </div>
+                        <div className="filters">
+                          <h2 className="filter_label">Año Inicio</h2>
+                          <select className="filter_select" value={rangoInicio} onChange={(e) => setRangoInicio(e.target.value)}>
+                            <option value="">Seleccionar</option>
+                            {YEARS_ARRAY.map((year) => (
+                              (rangoFin && year > parseInt(rangoFin)) ? null : (<option key={year}>{year}</option>)
+                            ))}
+                          </select>
+                        </div>
 
-                      <div className="filters">
-                        <h2 className="filter_label">Año Fin</h2>
-                        <select className="filter_select" value={rangoFin} onChange={(e)=>setRangoFin(e.target.value)}>
-                          <option value="">Seleccionar</option>
-                          {YEARS_ARRAY.map((year)=> (
-                            (rangoInicio && year < parseInt(rangoInicio)) ? null : (<option key={year}>{year}</option>)
-                          ))}
-                        </select>
-                      </div>
+                        <div className="filters">
+                          <h2 className="filter_label">Año Fin</h2>
+                          <select className="filter_select" value={rangoFin} onChange={(e) => setRangoFin(e.target.value)}>
+                            <option value="">Seleccionar</option>
+                            {YEARS_ARRAY.map((year) => (
+                              (rangoInicio && year < parseInt(rangoInicio)) ? null : (<option key={year}>{year}</option>)
+                            ))}
+                          </select>
+                        </div>
                       </>
                     )}
 
@@ -593,7 +629,7 @@ export function ArchiveList() {
                         <div className="filters">
                           <h2 className="filter_label">Inicio</h2>
                           <div style={{ display: "flex", gap: "5px" }}>
-                            
+
                             <select className="filter_select" value={inicioMes} onChange={(e) => setInicioMes(e.target.value)}>
                               <option value="">Mes</option>
                               {MONTHS.map((m, i) => (
@@ -717,58 +753,79 @@ export function ArchiveList() {
             )}
           </div>
 
-          {/* === FILE LIST === */}
-          <div className="files_list">
-            {loading && <p>Cargando…</p>}
-            {errorMsg && <p style={{ color: "#ff6b6b" }}>{errorMsg}</p>}
-            {!loading && !errorMsg && files.length === 0 && (
-              <p>No hay archivos. Crea una carpeta o sube un documento.</p>
-            )}
-            {showFiles.map((file) => (
-              <div key={file.id} className="file_row" onClick={() => handleVerDocumento(file)} style={{ cursor: file.type === "pdf" ? "pointer" : "default" }}>
-                <span>{file.type === "folder" ? "📁" : "📄"}</span>
-                <span className="file_name">{file.name}</span>
-                <span className="file_date">{file.date}</span>
-                <div className="file_actions">
-                  {file.type !== "folder" && file.id_doc && (
+          {/* === SCROLLABLE FILES CONTAINER === */}
+          <div className="files_scroll_container">
+            {/* === FILE LIST === */}
+            <div className="files_list">
+              {loading && <p>Cargando…</p>}
+              {errorMsg && <p style={{ color: "#ff6b6b" }}>{errorMsg}</p>}
+              {!loading && !errorMsg && files.length === 0 && (
+                <p>No hay archivos. Crea una carpeta o sube un documento.</p>
+              )}
+              {showFiles.map((file) => (
+                <div key={file.id} className="file_row" onClick={() => handleVerDocumento(file)} style={{ cursor: file.type === "pdf" ? "pointer" : "default" }}>
+                  <span>{file.type === "folder" ? "📁" : "📄"}</span>
+                  <span className="file_name">{file.name}</span>
+                  <span className="file_date">{file.date}</span>
+                  <div className="file_actions">
+                    {file.type !== "folder" && file.id_doc && (
+                      <button
+                        className="btn_upd"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownload(file.id_doc);
+                        }}
+                        aria-label="Descargar"
+                        data-tooltip="Descargar"
+                      >
+                        <img src={descargasIcon} alt="" aria-hidden="true" className="btn_icon" />
+                      </button>
+                    )}
                     <button
-                      className="btn_upd"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDownload(file.id_doc);
-                      }}
-                      aria-label="Descargar"
-                      data-tooltip="Descargar"
+                      className="btn_mov" aria-label="Mover" data-tooltip="Mover"
+                      onClick={(e) => handleMover(e, file)}
                     >
-                      <img src={descargasIcon} alt="" aria-hidden="true" className="btn_icon" />
+                      <img src={archivoIcon} alt="" aria-hidden="true" className="btn_icon" />
                     </button>
-                  )}
-                  <button
-                    className="btn_mov" aria-label="Mover" data-tooltip="Mover"
-                    onClick={(e) => handleMover(e, file)}
-                  >
-                    <img src={archivoIcon} alt="" aria-hidden="true" className="btn_icon" />
-                  </button>
-                  <button
-                    className="btn_del" aria-label="Eliminar" data-tooltip="Eliminar"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(file);
-                    }}
-                  >
-                    <img src={basuraIcon} alt="" aria-hidden="true" className="btn_icon" />
-                  </button>
+                    <div className="delete_action_wrapper" ref={deletePrompt.open && deletePrompt.file?.id === file.id ? deletePromptRef : null}>
+                      <button
+                        className="btn_del" aria-label="Eliminar" data-tooltip="Eliminar"
+                        onClick={(e) => handleOpenDeletePrompt(e, file)}
+                      >
+                        <img src={basuraIcon} alt="" aria-hidden="true" className="btn_icon" />
+                      </button>
+                      {deletePrompt.open && deletePrompt.file?.id === file.id && (
+                        <div className="delete_confirmation_popover" role="dialog" aria-label="Confirmar eliminación">
+                          <span className="delete_confirmation_title">Confirmar</span>
+                          <div className="delete_confirmation_actions">
+                            <button
+                              type="button"
+                              className="delete_confirmation_button delete_confirmation_button_cancel"
+                              onClick={handleCancelDelete}
+                              aria-label="Cancelar eliminación"
+                            />
+                            <button
+                              type="button"
+                              className="delete_confirmation_button delete_confirmation_button_confirm"
+                              onClick={handleConfirmDelete}
+                              aria-label="Confirmar eliminación"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
+              ))}
+            </div>
 
-        {/* === BOTTOM BAR === */}
-        <div className="bottom_bar">
-          <button className="btn_new_folder" onClick={handleNuevaCarpeta} aria-label="Nueva Carpeta" data-tooltip="Nueva Carpeta">
-            <img src={nuevaCarpetaIcon} alt="" aria-hidden="true" className="btn_folder_icon" />
-          </button>
+            {/* === BOTTOM BAR === */}
+            <div className="bottom_bar">
+              <button className="btn_new_folder" onClick={handleNuevaCarpeta} aria-label="Nueva Carpeta" data-tooltip="Nueva Carpeta">
+                <img src={nuevaCarpetaIcon} alt="" aria-hidden="true" className="btn_folder_icon" />
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* === MODAL NUEVA CARPETA === */}
