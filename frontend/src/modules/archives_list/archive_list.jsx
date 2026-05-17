@@ -9,6 +9,7 @@ import descargasIcon from "../../assets/descargas.svg";
 import basuraIcon from "../../assets/basura.svg";
 import archivoIcon from "../../assets/archivo.svg";
 import nuevaCarpetaIcon from "../../assets/nueva-carpeta.svg";
+import volverIcon from "../../assets/volver.svg";
 
 const MONTHS = [
   "Enero",
@@ -334,6 +335,14 @@ export function ArchiveList() {
 
   const handleNuevaCarpeta = () => {
     setShowModal(true);
+  };
+
+  const handleBack = () => {
+    if (folderPath.length === 0) return;
+
+    const newPath = folderPath.slice(0, -1);
+    setFolderPath(newPath);
+    setCurrentFolderId(newPath.length ? newPath[newPath.length - 1].id : null);
   };
 
   const handleConfirmFolder = async () => {
@@ -821,6 +830,10 @@ export function ArchiveList() {
 
             {/* === BOTTOM BAR === */}
             <div className="bottom_bar">
+              <button className="btn_back" onClick={handleBack} disabled={folderPath.length === 0} aria-label="Volver" data-tooltip="Volver">
+                <img src={volverIcon} alt="" aria-hidden="true" className="btn_folder_icon" />
+              </button>
+
               <button className="btn_new_folder" onClick={handleNuevaCarpeta} aria-label="Nueva Carpeta" data-tooltip="Nueva Carpeta">
                 <img src={nuevaCarpetaIcon} alt="" aria-hidden="true" className="btn_folder_icon" />
               </button>

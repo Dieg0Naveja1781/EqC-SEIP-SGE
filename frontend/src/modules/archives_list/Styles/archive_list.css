@@ -1,4 +1,3 @@
-
 .archive_list_container_inner,
 .archive_list_container_inner *,
 .archive_list_container_inner *::before,
@@ -685,7 +684,7 @@
   border-top-color: #fff;
 }
 
-.btn_new_folder {
+.btn_new_folder .btn_back {
   background-color: var(--new-archive-bg);
   color: var(--text-primary);
   border: none;
@@ -706,7 +705,7 @@
   transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.12s ease, box-shadow 0.18s ease;
 }
 
-.btn_new_folder::after {
+.btn_new_folder::after .btn_back::after {
   content: attr(data-tooltip);
   position: absolute;
   bottom: calc(100% + 12px);
@@ -733,7 +732,7 @@
 .btn_new_folder:hover {
   filter: brightness(1.05);
   transform: scale(1.08);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
 }
 
 .btn_folder_icon {
@@ -1027,7 +1026,8 @@
   transform: scale(1.05);
 }
 
-.archive_list_container_inner .btn_new_folder {
+.archive_list_container_inner .btn_new_folder,
+.btn_back {
   background-color: var(--new-archive-bg);
   color: var(--text-primary);
   border: none;
@@ -1047,7 +1047,8 @@
   transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.12s ease, box-shadow 0.18s ease;
 }
 
-.archive_list_container_inner .btn_new_folder::after {
+.archive_list_container_inner .btn_new_folder::after,
+.btn_back::after {
   content: attr(data-tooltip);
   position: absolute;
   bottom: 100%;
@@ -1067,15 +1068,21 @@
   z-index: 10;
 }
 
-.archive_list_container_inner .btn_new_folder:hover::after {
+.archive_list_container_inner .btn_new_folder:hover::after,
+.btn_back:hover::after {
   opacity: 1;
 }
 
-.archive_list_container_inner .btn_new_folder:hover {
+.archive_list_container_inner .btn_new_folder:hover,
+.btn_back:hover {
   filter: brightness(1.05);
   transform: scale(1.08);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
   background-color: var(--new-archive-bg);
+}
+
+.archive_list_container_inner .btn_back {
+  margin-right: auto;
 }
 
 /* --- Filtros (select) --- */
