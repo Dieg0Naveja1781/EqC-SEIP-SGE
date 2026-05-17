@@ -87,9 +87,9 @@ function SearchBar() {
           <p>📋 Búsquedas recientes</p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
             {history.map((hist, index) => (
-              <button 
-                key={index} 
-                onMouseDown={() => handleHistoryClick(hist)} 
+              <button
+                key={index}
+                onMouseDown={() => handleHistoryClick(hist)}
                 className="history-item"
               >
                 {hist}
@@ -163,7 +163,7 @@ function MainPage() {
         setLoading(true);
         
         // Obtener todas las carpetas y ordenarlas por fecha de creación descendente
-        const foldersResponse = await documentsService.listFolders();
+        const foldersResponse = await documentsService.listFolders("all");
         if (foldersResponse?.success && foldersResponse?.carpetas) {
           const sortedFolders = [...foldersResponse.carpetas]
             .sort((a, b) => {
@@ -197,8 +197,8 @@ function MainPage() {
     loadData();
   }, []);
 
-  const handleFolderClick = (folderId) => {
-    navigate(`/archive_list`, { state: { folderId } });
+  const handleFolderClick = (folderId, folderName) => {
+    navigate(`/archive_list`, { state: { folderId, folderName } });
   };
 
   return (
@@ -224,7 +224,7 @@ function MainPage() {
                     type="button"
                     className="folder-card"
                     role="listitem"
-                    onClick={() => handleFolderClick(folder.id_folder)}
+                    onClick={() => handleFolderClick(folder.id_folder, folder.nombre_carpeta)}
                   >
                     <FolderIcon className="folder-icon" />
                     <span className="folder-label">{folder.nombre_carpeta}</span>

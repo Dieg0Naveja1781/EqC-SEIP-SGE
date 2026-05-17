@@ -25,6 +25,9 @@ const MONTHS = [
   "Diciembre",
 ];
 
+const CURRENT_YEAR = new Date().getFullYear();
+const YEARS_ARRAY = Array.from({ length: CURRENT_YEAR - 2000 + 1 }, (_, i) => 2000 + i);
+
 function formatFecha(iso) {
   if (!iso) return "";
   try {
@@ -48,9 +51,14 @@ function parseDate(str) {
 export function ArchiveList() {
   const location = useLocation();
   const selectedFolderId = location.state?.folderId;
-  const [anio, setAnio] = useState("Cualquier Año");
-  const [mes, setMes] = useState("Cualquier Mes");
-  const [dia, setDia] = useState("Cualquier Día");
+  const selectedFolderName = location.state?.folderName;
+  const [tipoFiltroFecha, setTipoFiltroFecha] = useState("Ninguno");
+  const [rangoInicio, setRangoInicio] = useState("");
+  const [rangoFin, setRangoFin] = useState("");
+  const [inicioMes, setInicioMes] = useState("");
+  const [inicioAnio, setInicioAnio] = useState("");
+  const [finMes, setFinMes] = useState("");
+  const [finAnio, setFinAnio] = useState("");
   const [files, setFiles] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [categoriasCustom, setCategoriasCustom] = useState([]);
@@ -70,8 +78,10 @@ export function ArchiveList() {
   const [carpetasDestino, setCarpetasDestino] = useState([]);
   const [destinoSeleccionado, setDestinoSeleccionado] = useState("");
   const [moving, setMoving] = useState(false);
-  const [currentFolderId, setCurrentFolderId] = useState(null);
-  const [folderPath, setFolderPath] = useState([]);
+  const [currentFolderId, setCurrentFolderId] = useState(selectedFolderId || selectedFolderId || null);
+  const [folderPath, setFolderPath] = useState(selectedFolderId && selectedFolderName ? [{ id: selectedFolderId, name: selectedFolderName }] : selectedFolderId && selectedFolderName ? [{ id: selectedFolderId, name: selectedFolderName }] : []);
+  const [deletePrompt, setDeletePrompt] = useState({ open: false, file: null });
+  const deletePromptRef = useRef(null);
 
   const handleVerDocumento = (file) => {
     if (file.type === "folder") {
@@ -115,16 +125,18 @@ export function ArchiveList() {
   };
 
 
-  // Eliminar documento
-  const handleDelete = async (id_doc) => {
-    const confirmar = window.confirm(
-      "¿Eliminar este documento?"
-    );
-
-    if (!confirmar) return;
+  // Eliminar documento o carpeta
+  const handleDelete = async (file) => {
+    const isFolder = file.type === "folder";
 
     try {
-      const res = await documentsService.deleteDocument(id_doc);
+      let res;
+      if (isFolder) {
+        const id_carpeta = file.id.replace("f-", "");
+        res = await documentsService.deleteCarpeta(id_carpeta);
+      } else {
+        res = await documentsService.deleteDocument(file.id_doc);
+      }
 
       if (res?.success) {
         cargarDatos();
@@ -133,14 +145,53 @@ export function ArchiveList() {
       }
 
     } catch (err) {
-      console.error("Error eliminando documento", err);
+      console.error(`Error eliminando ${isFolder ? "carpeta" : "documento"}`, err);
 
       alert(
         err?.response?.data?.error ||
-        "Error eliminando documento"
+        `Error eliminando ${isFolder ? "carpeta" : "documento"}`
       );
     }
   };
+
+  const handleOpenDeletePrompt = (e, file) => {
+    e.stopPropagation();
+    setDeletePrompt((prev) =>
+      prev.open && prev.file?.id === file.id
+        ? { open: false, file: null }
+        : { open: true, file }
+    );
+  };
+
+  const handleCancelDelete = (e) => {
+    e.stopPropagation();
+    setDeletePrompt({ open: false, file: null });
+  };
+
+  const handleConfirmDelete = async (e) => {
+    e.stopPropagation();
+    const fileToDelete = deletePrompt.file;
+    if (!fileToDelete) {
+      setDeletePrompt({ open: false, file: null });
+      return;
+    }
+
+    setDeletePrompt({ open: false, file: null });
+    await handleDelete(fileToDelete);
+  };
+
+  useEffect(() => {
+    if (!deletePrompt.open) return;
+
+    const handleClickOutside = (event) => {
+      if (deletePromptRef.current && !deletePromptRef.current.contains(event.target)) {
+        setDeletePrompt({ open: false, file: null });
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [deletePrompt.open]);
 
   // Filtrado por fecha
   const filtradosFecha = archivosFiltrados.filter((f) => {
@@ -150,21 +201,43 @@ export function ArchiveList() {
     const fechaISO = f.fecha_expedicion || null;
     let fechaObj = null;
     if (fechaISO) {
-      fechaObj = new Date(fechaISO);
+      fechaObj = parseDate(fechaISO);
     }
+
+    if (tipoFiltroFecha === "Ninguno") return true;
 
     // Si no tiene fecha de expedición y hay algún filtro activo, no pasa
     if (!fechaObj) {
-      return anio === "Cualquier Año" && mes === "Cualquier Mes" && dia === "Cualquier Día";
+      return !rangoInicio && !rangoFin;
     }
 
-    const fileAnio = fechaObj.getFullYear().toString();
-    const fileMes = MONTHS[fechaObj.getMonth()];
-    const fileDia = fechaObj.getDate();
-
-    if (anio !== "Cualquier Año" && fileAnio !== anio) return false;
-    if (mes !== "Cualquier Mes" && fileMes !== mes) return false;
-    if (dia !== "Cualquier Día" && fileDia !== Number(dia)) return false;
+    if (tipoFiltroFecha === "Por Mes") {
+      if (fechaObj.getFullYear() !== CURRENT_YEAR) return false;
+      const fileMes = fechaObj.getMonth() + 1;
+      const ini = parseInt(rangoInicio);
+      const fin = parseInt(rangoFin);
+      if (rangoInicio && fileMes < ini) return false;
+      if (rangoFin && fileMes > fin) return false;
+    }
+    else if (tipoFiltroFecha === "Por Año") {
+      const fileAnio = fechaObj.getFullYear();
+      const ini = parseInt(rangoInicio);
+      const fin = parseInt(rangoFin);
+      if (rangoInicio && fileAnio < ini) return false;
+      if (rangoFin && fileAnio > fin) return false;
+    }
+    // Para el filtro Por Mes y Año convertimos todo a un valor numérico (año*12 + mes) para comparar fácilmente
+    else if (tipoFiltroFecha === "Por Mes y Año") {
+      const fileVal = fechaObj.getFullYear() * 12 + fechaObj.getMonth();
+      if (inicioAnio && inicioMes) {
+        const iniVal = parseInt(inicioAnio) * 12 + (parseInt(inicioMes) - 1);
+        if (fileVal < iniVal) return false;
+      }
+      if (finAnio && finMes) {
+        const finVal = parseInt(finAnio) * 12 + (parseInt(finMes) - 1);
+        if (fileVal > finVal) return false;
+      }
+    }
 
     return true;
   });
@@ -183,10 +256,10 @@ export function ArchiveList() {
     }
     // Para ordenar por fecha, convertimos las fechas a objetos Date y restamos para obtener el orden correcto
     if (ordenarPor === "Fecha ↑") {
-      return new Date(a.fecha_expedicion) - new Date(b.fecha_expedicion);
+      return parseDate(a.fecha_expedicion) - parseDate(b.fecha_expedicion);
     }
     if (ordenarPor === "Fecha ↓") {
-      return new Date(b.fecha_expedicion) - new Date(a.fecha_expedicion);
+      return parseDate(b.fecha_expedicion) - parseDate(a.fecha_expedicion);
     }
     return 0;
   });
@@ -217,14 +290,15 @@ export function ArchiveList() {
         documentsService.listDocuments(currentFolderId).catch(() => ({ documentos: [] })),
         documentsService.listCategories().catch(() => ({ categorias: [] })),
         documentsService.listCustomCategories().catch(() => ({ categorias_custom: [] })),
+        documentsService.listCustomCategories().catch(() => ({ categorias_custom: [] })),
       ]);
 
-        const carpetas = (carpetasRes?.carpetas || []).map((c) => ({
-          id: `f-${c.id_folder}`,
-          type: "folder",
-          name: c.nombre_carpeta,
-          date: formatFecha(c.fecha_creacion),
-        }));
+      const carpetas = (carpetasRes?.carpetas || []).map((c) => ({
+        id: `f-${c.id_folder}`,
+        type: "folder",
+        name: c.nombre_carpeta,
+        date: formatFecha(c.fecha_creacion),
+      }));
 
       const docs = (docsRes?.documentos || []).map((d) => ({
         id: `d-${d.id_doc}`,
@@ -240,9 +314,9 @@ export function ArchiveList() {
         fecha_expedicion: d.fecha_expedicion || null,
       }));
 
-        setFiles([...carpetas, ...docs]);
-        setCategorias(catsRes?.categorias || []);
-        setCategoriasCustom(catsCustomRes?.categorias_custom || []);
+      setFiles([...carpetas, ...docs]);
+      setCategorias(catsRes?.categorias || []);
+      setCategoriasCustom(catsCustomRes?.categorias_custom || []);
     } catch (err) {
       setErrorMsg(
         err?.status === 401
@@ -292,7 +366,7 @@ export function ArchiveList() {
       if (res?.success) {
         setCarpetasDestino(res.carpetas);
       }
-    } catch(err) {
+    } catch (err) {
       console.error("Error al cargar carpetas destino", err);
     }
     setShowMoveModal(true);
@@ -400,7 +474,7 @@ export function ArchiveList() {
 
         {/* === CONTENT === */}
         <div className="content">
-         
+
           {/* === BREADCRUMBS === */}
           <div className="breadcrumbs" style={{ padding: "10px 0", fontSize: "16px", color: "#ccc" }}>
             <span
@@ -477,53 +551,128 @@ export function ArchiveList() {
                 <div className="advanced_filters">
                   <div className="filters_row">
                     <div className="filters">
-                      <span className="filter_label">Año</span>
+                      <span className="filter_label">Filtrar por</span>
                       <select
                         className="filter_select"
-                        value={anio}
-                        onChange={(e) => setAnio(e.target.value)}
+                        value={tipoFiltroFecha}
+                        onChange={(e) => {
+                          setTipoFiltroFecha(e.target.value);
+                          setRangoInicio("");
+                          setRangoFin("");
+                          setInicioMes("");
+                          setInicioAnio("");
+                          setFinMes("");
+                          setFinAnio("");
+                        }}
                       >
-                        <option value="Cualquier Año">Cualquier Año</option>
-                        <option value="2024">2024</option>
-                        <option value="2025">2025</option>
-                        <option value="2026">2026</option>
+                        <option value="Ninguno">Ninguno</option>
+                        <option value="Por Mes">Por Mes</option>
+                        <option value="Por Año">Por Año</option>
+                        <option value="Por Mes y Año">Por Mes y Año</option>
                       </select>
                     </div>
 
-                    {/* === DATE FILTERS === */}
-                    <div className="filters">
-                      <h2 className="filter_label">Mes</h2>
-                      <select
-                        className="filter_select"
-                        value={mes}
-                        onChange={(e) => setMes(e.target.value)}
-                      >
-                        <option value="Cualquier Mes">Cualquier Mes</option>
-                        {MONTHS.map((m) => (
-                          <option key={m} value={m}>
-                            {m}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    {tipoFiltroFecha === "Por Mes" && (
+                      <>
+                        <div className="filters">
+                          <h2 className="filter_label">Mes Inicio</h2>
+                          <select className="filter_select" value={rangoInicio} onChange={(e) => setRangoInicio(e.target.value)}>
+                            <option value="">Seleccionar</option>
+                            {MONTHS.map((m, i) => (
+                              (rangoFin && i + 1 > parseInt(rangoFin)) ? null : (
+                                <option key={m} value={i + 1}>{m}</option>
+                              )
+                            ))}
+                          </select>
+                        </div>
 
-                    <div className="filters">
-                      <h2 className="filter_label">Día</h2>
-                      <select
-                        className="filter_select"
-                        value={dia}
-                        onChange={(e) => setDia(e.target.value)}
-                      >
-                        <option value="Cualquier Día">Cualquier Día</option>
-                        {Array.from({ length: 31 }, (_, i) => i + 1).map(
-                          (d) => (
-                            <option key={d} value={d}>
-                              {d}
-                            </option>
-                          ),
-                        )}
-                      </select>
-                    </div>
+                        <div className="filters">
+                          <h2 className="filter_label">Mes Fin</h2>
+                          <select className="filter_select" value={rangoFin} onChange={(e) => setRangoFin(e.target.value)}>
+                            <option value="">Seleccionar</option>
+                            {MONTHS.map((m, i) => (
+                              (rangoInicio && i + 1 < parseInt(rangoInicio)) ? null : (
+                                <option key={m} value={i + 1}>{m}</option>
+                              )
+                            ))}
+                          </select>
+                        </div>
+                      </>
+                    )}
+
+                    {tipoFiltroFecha === "Por Año" && (
+                      <>
+                        <div className="filters">
+                          <h2 className="filter_label">Año Inicio</h2>
+                          <select className="filter_select" value={rangoInicio} onChange={(e) => setRangoInicio(e.target.value)}>
+                            <option value="">Seleccionar</option>
+                            {YEARS_ARRAY.map((year) => (
+                              (rangoFin && year > parseInt(rangoFin)) ? null : (<option key={year}>{year}</option>)
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="filters">
+                          <h2 className="filter_label">Año Fin</h2>
+                          <select className="filter_select" value={rangoFin} onChange={(e) => setRangoFin(e.target.value)}>
+                            <option value="">Seleccionar</option>
+                            {YEARS_ARRAY.map((year) => (
+                              (rangoInicio && year < parseInt(rangoInicio)) ? null : (<option key={year}>{year}</option>)
+                            ))}
+                          </select>
+                        </div>
+                      </>
+                    )}
+
+                    {tipoFiltroFecha === "Por Mes y Año" && (
+                      <>
+                        <div className="filters">
+                          <h2 className="filter_label">Inicio</h2>
+                          <div style={{ display: "flex", gap: "5px" }}>
+
+                            <select className="filter_select" value={inicioMes} onChange={(e) => setInicioMes(e.target.value)}>
+                              <option value="">Mes</option>
+                              {MONTHS.map((m, i) => (
+                                (finAnio && finMes && inicioAnio && parseInt(inicioAnio) === parseInt(finAnio) && i + 1 > parseInt(finMes)) ? null : (
+                                  <option key={m} value={i + 1}>{m}</option>
+                                )
+                              ))}
+                            </select>
+
+                            <select className="filter_select" value={inicioAnio} onChange={(e) => setInicioAnio(e.target.value)}>
+                              <option value="">Año</option>
+                              {YEARS_ARRAY.map((year) => (
+                                (finAnio && (year > parseInt(finAnio) || (year === parseInt(finAnio) && finMes && inicioMes && parseInt(inicioMes) > parseInt(finMes)))) ? null : (
+                                  <option key={year} value={year}>{year}</option>
+                                )
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="filters">
+                          <h2 className="filter_label">Fin</h2>
+                          <div style={{ display: "flex", gap: "5px" }}>
+                            <select className="filter_select" value={finMes} onChange={(e) => setFinMes(e.target.value)}>
+                              <option value="">Mes</option>
+                              {MONTHS.map((m, i) => (
+                                (inicioAnio && inicioMes && finAnio && parseInt(inicioAnio) === parseInt(finAnio) && i + 1 < parseInt(inicioMes)) ? null : (
+                                  <option key={m} value={i + 1}>{m}</option>
+                                )
+                              ))}
+                            </select>
+                            <select className="filter_select" value={finAnio} onChange={(e) => setFinAnio(e.target.value)}>
+                              <option value="">Año</option>
+                              {YEARS_ARRAY.map((year) => (
+                                (inicioAnio && (year < parseInt(inicioAnio) || (year === parseInt(inicioAnio) && finMes && inicioMes && parseInt(inicioMes) > parseInt(finMes)))) ? null : (
+                                  <option key={year} value={year}>{year}</option>
+                                )
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* === SORTING OPTIONS === */}
@@ -604,58 +753,79 @@ export function ArchiveList() {
             )}
           </div>
 
-          {/* === FILE LIST === */}
-          <div className="files_list">
-            {loading && <p>Cargando…</p>}
-            {errorMsg && <p style={{ color: "#ff6b6b" }}>{errorMsg}</p>}
-            {!loading && !errorMsg && files.length === 0 && (
-              <p>No hay archivos. Crea una carpeta o sube un documento.</p>
-            )}
-            {showFiles.map((file) => (
-              <div key={file.id} className="file_row" onClick={() => handleVerDocumento(file)} style={{ cursor: file.type === "pdf" ? "pointer" : "default" }}>
-                <span>{file.type === "folder" ? "📁" : "📄"}</span>
-                <span className="file_name">{file.name}</span>
-                <span className="file_date">{file.date}</span>
-                <div className="file_actions">
-                  {file.type !== "folder" && file.id_doc && (
+          {/* === SCROLLABLE FILES CONTAINER === */}
+          <div className="files_scroll_container">
+            {/* === FILE LIST === */}
+            <div className="files_list">
+              {loading && <p>Cargando…</p>}
+              {errorMsg && <p style={{ color: "#ff6b6b" }}>{errorMsg}</p>}
+              {!loading && !errorMsg && files.length === 0 && (
+                <p>No hay archivos. Crea una carpeta o sube un documento.</p>
+              )}
+              {showFiles.map((file) => (
+                <div key={file.id} className="file_row" onClick={() => handleVerDocumento(file)} style={{ cursor: file.type === "pdf" ? "pointer" : "default" }}>
+                  <span>{file.type === "folder" ? "📁" : "📄"}</span>
+                  <span className="file_name">{file.name}</span>
+                  <span className="file_date">{file.date}</span>
+                  <div className="file_actions">
+                    {file.type !== "folder" && file.id_doc && (
+                      <button
+                        className="btn_upd"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownload(file.id_doc);
+                        }}
+                        aria-label="Descargar"
+                        data-tooltip="Descargar"
+                      >
+                        <img src={descargasIcon} alt="" aria-hidden="true" className="btn_icon" />
+                      </button>
+                    )}
                     <button
-                      className="btn_upd"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDownload(file.id_doc);
-                      }}
-                      aria-label="Descargar"
-                      data-tooltip="Descargar"
+                      className="btn_mov" aria-label="Mover" data-tooltip="Mover"
+                      onClick={(e) => handleMover(e, file)}
                     >
-                      <img src={descargasIcon} alt="" aria-hidden="true" className="btn_icon" />
+                      <img src={archivoIcon} alt="" aria-hidden="true" className="btn_icon" />
                     </button>
-                  )}
-                  <button
-                    className="btn_mov" aria-label="Mover" data-tooltip="Mover"
-                    onClick={(e) => handleMover(e, file)}
-                  >
-                    <img src={archivoIcon} alt="" aria-hidden="true" className="btn_icon" />
-                  </button>
-                  <button
-                    className="btn_del" aria-label="Eliminar" data-tooltip="Eliminar"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(file.id_doc);
-                    }}
-                  >
-                    <img src={basuraIcon} alt="" aria-hidden="true" className="btn_icon" />
-                  </button>
+                    <div className="delete_action_wrapper" ref={deletePrompt.open && deletePrompt.file?.id === file.id ? deletePromptRef : null}>
+                      <button
+                        className="btn_del" aria-label="Eliminar" data-tooltip="Eliminar"
+                        onClick={(e) => handleOpenDeletePrompt(e, file)}
+                      >
+                        <img src={basuraIcon} alt="" aria-hidden="true" className="btn_icon" />
+                      </button>
+                      {deletePrompt.open && deletePrompt.file?.id === file.id && (
+                        <div className="delete_confirmation_popover" role="dialog" aria-label="Confirmar eliminación">
+                          <span className="delete_confirmation_title">Confirmar</span>
+                          <div className="delete_confirmation_actions">
+                            <button
+                              type="button"
+                              className="delete_confirmation_button delete_confirmation_button_cancel"
+                              onClick={handleCancelDelete}
+                              aria-label="Cancelar eliminación"
+                            />
+                            <button
+                              type="button"
+                              className="delete_confirmation_button delete_confirmation_button_confirm"
+                              onClick={handleConfirmDelete}
+                              aria-label="Confirmar eliminación"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
+              ))}
+            </div>
 
-        {/* === BOTTOM BAR === */}
-        <div className="bottom_bar">
-          <button className="btn_new_folder" onClick={handleNuevaCarpeta} aria-label="Nueva Carpeta" data-tooltip="Nueva Carpeta">
-            <img src={nuevaCarpetaIcon} alt="" aria-hidden="true" className="btn_folder_icon" />
-          </button>
+            {/* === BOTTOM BAR === */}
+            <div className="bottom_bar">
+              <button className="btn_new_folder" onClick={handleNuevaCarpeta} aria-label="Nueva Carpeta" data-tooltip="Nueva Carpeta">
+                <img src={nuevaCarpetaIcon} alt="" aria-hidden="true" className="btn_folder_icon" />
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* === MODAL NUEVA CARPETA === */}
@@ -698,6 +868,7 @@ export function ArchiveList() {
                 onChange={(e) => setDestinoSeleccionado(e.target.value)}
               >
                 <option value="">Selecciona una carpeta destino</option>
+                <option value="raiz">Raíz</option>
                 {carpetasDestino.map((c) => (
                   <option key={c.id_folder} value={c.id_folder}>
                     {c.nombre_carpeta}
