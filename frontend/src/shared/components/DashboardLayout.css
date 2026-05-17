@@ -3,6 +3,7 @@
   flex: 1;
   min-width: 0;
   min-height: 0;
+  height: 100%;
   overflow: hidden;
   background-color: var(--bg-body);
   color: var(--text-primary);
@@ -137,7 +138,7 @@
   padding: 2rem;
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
 }
