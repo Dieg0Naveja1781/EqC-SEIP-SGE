@@ -8,7 +8,7 @@ from django.http import FileResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from .serializers import (
-    SubidaDocumentoSerializer, CrearCarpetaSerializer, CrearExpedienteSerializer,
+    RenombrarCarpetaSerializer, SubidaDocumentoSerializer, CrearCarpetaSerializer, CrearExpedienteSerializer,
     DocDocumentoSerializer,
     CrearCategoriaCustomSerializer, MoverElementoSerializer,
 )
@@ -380,6 +380,26 @@ class CarpetaViewSet(viewsets.ViewSet):
             status=status.HTTP_200_OK
             if resultado['success']
             else status.HTTP_400_BAD_REQUEST,
+        )
+    
+    @action(detail=True, methods=['put'])
+    def renombrar(self, request, pk=None):
+        id_profesor = _get_id_profesor(request)
+        if not id_profesor:
+            return _no_auth()
+
+        serializer = RenombrarCarpetaSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        resultado = ServicioExpedientes.renombrar_carpeta(
+            id_carpeta=pk,
+            id_profesor=id_profesor,
+            nuevo_nombre=serializer.validated_data['nombre_carpeta'],
+        )
+        return Response(
+            resultado,
+            status=status.HTTP_200_OK if resultado['success'] else status.HTTP_400_BAD_REQUEST
         )
 
 

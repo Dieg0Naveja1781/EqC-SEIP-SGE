@@ -48,19 +48,23 @@ class DocDocumentoSerializer(serializers.ModelSerializer):
         source='id_folder.nombre_carpeta', read_only=True, allow_null=True,
     )
     fecha_expedicion = SafeDateField(allow_null=True)
+    fecha_subida = serializers.SerializerMethodField()
 
     class Meta:
         model = DocDocumento
         fields = [
             'id_doc', 'id_profesor', 'id_tipo', 'id_folder',
-            'titulo_doc', 'fecha_creacion', 'fecha_expedicion',
+            'titulo_doc', 'fecha_creacion', 'fecha_subida', 'fecha_expedicion',
             'ruta_archivo', 'tamano_bytes', 'extension_archivo', 'metadatos',
             'nombre_categoria', 'nombre_carpeta',
         ]
         read_only_fields = [
-            'id_doc', 'fecha_creacion', 'ruta_archivo',
+            'id_doc', 'fecha_creacion', 'fecha_subida', 'ruta_archivo',
             'tamano_bytes', 'extension_archivo', 'id_profesor', 'id_tipo', 'id_folder',
         ]
+    def get_fecha_subida(self, obj):
+        version = obj.versiones.order_by('-num_version').first()
+        return version.fecha_subida if version else obj.fecha_creacion
 
 
 class VersionDocSerializer(serializers.ModelSerializer):
@@ -203,3 +207,6 @@ class CrearExpedienteSerializer(serializers.Serializer):
 
 class MoverElementoSerializer(serializers.Serializer):
     id_destino = serializers.IntegerField(required=False, allow_null=True)
+
+class RenombrarCarpetaSerializer(serializers.Serializer):
+    nombre_carpeta = serializers.CharField(max_length=50)

@@ -5,6 +5,8 @@ import descargasIcon from "../../assets/descargas.svg";
 import basuraIcon from "../../assets/basura.svg";
 import archivoIcon from "../../assets/archivo.svg";
 import nuevaCarpetaIcon from "../../assets/nueva-carpeta.svg";
+import renombrarArchivoIcon from "../../assets/renombrar-archivo.svg";
+import volverIcon from "../../assets/volver.svg";
 
 export function ArchiveListCore({
   archiveData,
@@ -33,6 +35,10 @@ export function ArchiveListCore({
     carpetasDestino,
     destinoSeleccionado, setDestinoSeleccionado,
     moving,
+    showRenameModal,
+    renameTarget,
+    renameValue, setRenameValue,
+    highlightedRowId,
     deletePrompt,
     deletePromptRef,
     fileInputRef,
@@ -47,10 +53,14 @@ export function ArchiveListCore({
     handleMover,
     handleConfirmMove,
     handleCancelMove,
+    handleOpenRename,
+    handleCancelRename,
+    handleConfirmRename,
     handleArchivoSeleccionado,
     handleTipoChange,
     toggleSortNombre,
     toggleSortFecha,
+    handleBack,
   } = archiveData;
 
   const handleRowClick = (file) => {
@@ -329,7 +339,7 @@ export function ArchiveListCore({
             {showFiles.map((file) => (
               <div
                 key={file.id}
-                className={`file_row${pickerMode && file.type !== "folder" && selectedFiles?.has(file.id) ? " file_row--selected" : ""}`}
+                className={`file_row${highlightedRowId === file.id ? " is-highlighted" : ""}${pickerMode && file.type !== "folder" && selectedFiles?.has(file.id) ? " file_row--selected" : ""}`}
                 onClick={() => handleRowClick(file)}
                 style={{ cursor: "pointer" }}
               >
@@ -348,6 +358,16 @@ export function ArchiveListCore({
                     )
                   ) : (
                     <>
+                      {file.type === "folder" && (
+                        <button
+                          className="btn_ren"
+                          onClick={(e) => handleOpenRename(e, file)}
+                          aria-label="Renombrar"
+                          data-tooltip="Renombrar"
+                        >
+                          <img src={renombrarArchivoIcon} alt="" aria-hidden="true" className="btn_icon" />
+                        </button>
+                      )}
                       {file.type !== "folder" && file.id_doc && (
                         <button
                           className="btn_upd"
@@ -407,6 +427,14 @@ export function ArchiveListCore({
 
           {!pickerMode && (
             <div className="bottom_bar">
+              <button
+                className="btn_back"
+                onClick={handleBack}
+                aria-label="Volver"
+                data-tooltip="Volver"
+              >
+                <img src={volverIcon} alt="" aria-hidden="true" className="btn_folder_icon" />
+              </button>
               <button
                 className="btn_new_folder"
                 onClick={handleNuevaCarpeta}
@@ -474,6 +502,37 @@ export function ArchiveListCore({
                 </svg>
               </button>
               <button className="btn_confirm" onClick={handleConfirmMove} disabled={moving || !destinoSeleccionado}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* === MODAL RENOMBRAR === */}
+      {showRenameModal && (
+        <div className="modal_overlay" onClick={handleCancelRename}>
+          <div className="modal_content" onClick={(e) => e.stopPropagation()}>
+            <h3>Renombrar Carpeta</h3>
+            <div className="modal_label_current">Nombre actual</div>
+            <div className="modal_current_name">{renameTarget?.name || ""}</div>
+            <input
+              type="text"
+              placeholder="Nuevo nombre"
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              className="modal_input"
+              autoFocus
+            />
+            <div className="modal_buttons">
+              <button className="btn_cancel" onClick={handleCancelRename}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              <button className="btn_confirm" onClick={handleConfirmRename}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>

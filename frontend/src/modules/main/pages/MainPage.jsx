@@ -14,6 +14,8 @@ const recentFolders = [
   { id: "folder-5", name: "Carpeta 5" },
 ];
 
+const getDocumentActivityDate = (documento) => documento.fecha_subida || documento.fecha_creacion;
+
 function SearchBar() {
   const [query, setQuery] = useState("");
   const [history, setHistory] = useState([]);
@@ -244,8 +246,8 @@ function MainPage() {
         if (docsResponse?.success && docsResponse?.documentos) {
           const sortedDocs = [...docsResponse.documentos]
             .sort((a, b) => {
-              const dateA = new Date(a.fecha_creacion).getTime();
-              const dateB = new Date(b.fecha_creacion).getTime();
+              const dateA = new Date(getDocumentActivityDate(a)).getTime();
+              const dateB = new Date(getDocumentActivityDate(b)).getTime();
               return dateB - dateA; // Descendente: más recientes primero
             })
             .slice(0, 10); // Tomar los últimos 10

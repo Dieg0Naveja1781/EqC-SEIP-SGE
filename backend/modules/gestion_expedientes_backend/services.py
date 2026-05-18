@@ -2,6 +2,7 @@ import logging
 import os
 from django.conf import settings as django_settings
 from django.db import transaction
+from django.utils import timezone
 
 from modules.usuarios_backend.models import UserProfe
 from .models import (
@@ -243,6 +244,11 @@ class ServicioExpedientes:
             doc.fecha_expedicion = fecha_expedicion
             doc.metadatos = meta
             doc.save(update_fields=['titulo_doc', 'id_tipo', 'fecha_expedicion', 'metadatos'])
+            
+            ultima_version = VersionDoc.objects.filter(id_doc=doc).order_by('-num_version').first()
+            if ultima_version:
+                ultima_version.fecha_subida = timezone.now()
+                ultima_version.save(update_fields=['fecha_subida'])
 
             return {'success': True, 'documento': DocDocumentoSerializer(doc).data}
         except UserProfe.DoesNotExist:
@@ -461,6 +467,32 @@ class ServicioExpedientes:
                 "success": False,
                 "error": str(e)
             }
+        
+    @staticmethod
+    def renombrar_carpeta(id_carpeta, id_profesor, nuevo_nombre):
+        try:
+            profe = UserProfe.objects.get(id_profesor=id_profesor)
+            carpeta = InfCarpeta.objects.get(id_folder=id_carpeta, id_profesor=profe)
+            nombre_carpeta = nuevo_nombre.strip()
+            if not nuevo_nombre:
+                return {'success': False, 'error': 'El nuevo nombre no puede estar vacío'}
+            duplicado = InfCarpeta.objects.filter(
+                id_profesor=profe,
+                nombre_carpeta=nombre_carpeta,
+                id_padre=carpeta.id_padre,
+            ).exclude(id_folder=id_carpeta).exists()
+            if duplicado:
+                return {'success': False, 'error': 'Ya existe una carpeta con ese nombre en esta ubicación'}
+            carpeta.nombre_carpeta = nombre_carpeta
+            carpeta.save(update_fields=['nombre_carpeta'])
+            return {'success': True, 'carpeta': InfCarpetaSerializer(carpeta).data}
+        except UserProfe.DoesNotExist:
+            return {'success': False, 'error': 'Profesor no encontrado'}
+        except InfCarpeta.DoesNotExist:
+            return {'success': False, 'error': 'Carpeta no encontrada'}
+        except Exception as e:
+            logger.error(f"Error al renombrar carpeta: {str(e)}")
+            return {'success': False, 'error': str(e)}
 
     # ---------------- CATEGORÍAS ----------------
     @staticmethod
