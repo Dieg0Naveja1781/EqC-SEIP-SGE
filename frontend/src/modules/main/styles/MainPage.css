@@ -290,13 +290,6 @@
   border: none;
 }
 
-.search-form {
-  display: flex;
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
-  align-items: center;
-}
-
 .search-input {
   flex: 1;
   padding: 0.75rem 1.25rem;
@@ -317,6 +310,14 @@
 
 .search-input::placeholder {
   color: var(--main-text-muted);
+}
+
+/* Input wrapper con el botón clear */
+.search-input-wrapper {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .search-button {
@@ -640,4 +641,61 @@
 .main-page-wrap .main-theme-toggle:focus-visible {
   outline: 3px solid var(--color-300);
   outline-offset: 2px;
+}
+
+/* Search Clear Button */
+.search-clear-button {
+  position: absolute;
+  right: 1rem;
+  background: transparent;
+  border: none;
+  color: var(--main-text-secondary);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.5rem 0.5rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  line-height: 1;
+  z-index: 2;
+}
+
+.search-clear-button:hover {
+  color: var(--main-accent-primary);
+  background: rgba(29, 154, 226, 0.1);
+  transform: scale(1.15);
+}
+
+.search-form {
+  position: relative;
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  align-items: center;
+}
+
+/* History Item Wrapper */
+.history-item-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* History Delete Button */
+.history-delete-btn {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.history-delete-btn:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
 }
