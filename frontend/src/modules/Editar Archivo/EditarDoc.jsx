@@ -3,6 +3,7 @@ import "./EditarDoc.css";
 import { useNavigate, useLocation } from 'react-router-dom';
 import { DashboardLayout } from "../../shared/components/DashboardLayout";
 import { documentsService } from "../../shared/api/documentsService";
+import DeleteCategoryModal from "../../shared/components/DeleteCategoryModal";
 
 const CATEGORIAS_FIJAS = ["Docencia", "Gestion", "Titulacion", "Produccion", "Tutoria"];
 
@@ -89,6 +90,11 @@ export function EditarDoc() {
   const [nuevoNombre, setNuevoNombre]           = useState("");
   const [camposSeleccionados, setCamposSeleccionados] = useState([]);
   const [guardandoCat, setGuardandoCat]         = useState(false);
+
+  // Modal de eliminación de categoría
+  const [deleteModalOpen, setDeleteModalOpen]   = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState(null);
+  const [deletingCategory, setDeletingCategory] = useState(false);
 
   const [alertMsg, setAlertMsg] = useState({ visible: false, text: "", type: "" });
   const timerRef = useRef(null);
@@ -208,27 +214,39 @@ export function EditarDoc() {
     }
   };
   
-    const handleEliminarCategoria = async (cat) => {
-      const confirmed = window.confirm(
-        `¿Estás seguro de que deseas eliminar la categoría "${cat.nombre}"?\n\nEsta acción no se puede deshacer.`
-      );
-      if (!confirmed) return;
-      
-      try {
-        const res = await documentsService.deleteCustomCategory(cat.id_cat_custom);
-        if (res?.success) {
-          setCategoriasCustom((prev) => prev.filter((c) => c.id_cat_custom !== cat.id_cat_custom));
-          if (categoria === cat.nombre) {
-            setCategoria("Docencia");
-            setFormData({ nombreNube: formData.nombreNube });
-          }
-          mostrarAlerta(`🗑️ Categoría "${cat.nombre}" eliminada correctamente`, "success");
-        } else {
-          mostrarAlerta(res?.error || "❌ No se pudo eliminar la categoría", "error");
+const handleEliminarCategoria = (cat) => {
+    setCategoryToDelete(cat);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!categoryToDelete) return;
+    setDeletingCategory(true);
+    
+    try {
+      const res = await documentsService.deleteCustomCategory(categoryToDelete.id_cat_custom);
+      if (res?.success) {
+        setCategoriasCustom((prev) => prev.filter((c) => c.id_cat_custom !== categoryToDelete.id_cat_custom));
+        if (categoria === categoryToDelete.nombre) {
+          setCategoria("Docencia");
+          setFormData({ nombreNube: formData.nombreNube });
         }
-      } catch {
-        mostrarAlerta("❌ Error al eliminar la categoría", "error");
+        mostrarAlerta(`🗑️ Categoría "${categoryToDelete.nombre}" eliminada correctamente`, "success");
+        setDeleteModalOpen(false);
+        setCategoryToDelete(null);
+      } else {
+        mostrarAlerta(res?.error || "❌ No se pudo eliminar la categoría", "error");
       }
+    } catch {
+      mostrarAlerta("❌ Error al eliminar la categoría", "error");
+    } finally {
+      setDeletingCategory(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteModalOpen(false);
+    setCategoryToDelete(null);
     };
   
     // ---- Validación numérica ----
@@ -582,6 +600,15 @@ export function EditarDoc() {
           </form>
         </div>
       </div>
+
+      {/* Modal de eliminación de categoría */}
+      <DeleteCategoryModal
+        isOpen={deleteModalOpen}
+        categoryName={categoryToDelete?.nombre}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        isLoading={deletingCategory}
+      />
     </DashboardLayout>
   );
 }
