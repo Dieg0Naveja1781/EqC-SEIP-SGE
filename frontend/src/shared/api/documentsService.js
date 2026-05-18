@@ -68,4 +68,7 @@ export const documentsService = {
 
   moverCarpeta: (id_carpeta, id_destino) =>
     apiClient.post(`/carpetas/${id_carpeta}/mover/`, { id_destino }),
+  
+  renombrarCarpeta: (id_carpeta, nombre_carpeta) =>
+    apiClient.put(`/carpetas/${id_carpeta}/renombrar/`, { nombre_carpeta }),
 };

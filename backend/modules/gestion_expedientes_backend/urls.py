@@ -57,6 +57,9 @@ urlpatterns = [
      path('carpetas/<int:pk>/eliminar/',
          CarpetaViewSet.as_view({'delete': 'eliminar'}),
          name='carpeta-eliminar'),
+     path('carpetas/<int:pk>/renombrar/',
+         CarpetaViewSet.as_view({'put': 'renombrar'}),
+         name='carpeta-renombrar'),
 
     # Categorías
     path('categorias/',

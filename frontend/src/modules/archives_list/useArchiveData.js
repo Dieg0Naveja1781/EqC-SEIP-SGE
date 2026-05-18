@@ -277,8 +277,27 @@ export function useArchiveData({ initialFolderId = null, initialFolderPath = [] 
     setRenameValue("");
   };
 
-  const handleConfirmRename = () => {
+  const handleConfirmRename = async () => {
     if (!renameTarget) return;
+    const nuevoNombre = renameValue.trim();
+    if (!nuevoNombre) {
+      alert("El nombre no puede estar vacío");
+      return;
+    }
+
+    try {
+      const res = await documentsService.renombrarCarpeta(
+        renameTarget.id.replace("f-", ""),
+        nuevoNombre
+      );
+      if (res?.success) {
+        cargarDatos();
+      } else {
+        alert(res?.error || "Error al renombrar la carpeta");
+      }
+    } catch (err) {
+      alert(err?.data?.error || "Error al renombrar la carpeta");
+    } 
 
     setHighlightedRowId(renameTarget.id);
     if (renameHighlightTimeoutRef.current) {

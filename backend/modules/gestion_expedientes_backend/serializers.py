@@ -207,3 +207,6 @@ class CrearExpedienteSerializer(serializers.Serializer):
 
 class MoverElementoSerializer(serializers.Serializer):
     id_destino = serializers.IntegerField(required=False, allow_null=True)
+
+class RenombrarCarpetaSerializer(serializers.Serializer):
+    nombre_carpeta = serializers.CharField(max_length=50)
