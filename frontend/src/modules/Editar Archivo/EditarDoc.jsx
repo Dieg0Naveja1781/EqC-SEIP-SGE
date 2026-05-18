@@ -429,7 +429,13 @@ export function EditarDoc() {
   const categoriaCustomActual = categoriasCustom.find((c) => c.nombre === categoria);
 
   return (
+    <>
     <DashboardLayout title="Editar Documento">
+      <button className="regreso" onClick={() => navigate(-1)}>
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M15 18L9 12L15 6" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                        </button>
       {/* NOTIFICACIÓN FLOTANTE (TOAST) */}
       {alertMsg.visible && (
         <div
@@ -583,7 +589,8 @@ export function EditarDoc() {
         </div>
       </div>
     </DashboardLayout>
-  );
+    </>
+  )
 }
 
 // ReactDOM.createRoot(document.getElementById('root')).render(<SubirDocumento />);
