@@ -67,7 +67,14 @@ class ServicioUsuarios:
     def actualizar_perfil(id_profesor, data):
         try:
             profe = UserProfe.objects.get(id_profesor=id_profesor)
-            for campo in ('numero_profe', 'full_name'):
+            campos_permitidos = (
+                'numero_profe', 'full_name',
+                'rfc', 'curp',
+                'profesion', 'nivel_estudios', 'universidad',
+                'empresa', 'puesto', 'ubicacion',
+                'descripcion',
+            )
+            for campo in campos_permitidos:
                 if campo in data:
                     setattr(profe, campo, data[campo])
             profe.save()
