@@ -53,6 +53,11 @@ export function useArchiveData({ initialFolderId = null, initialFolderPath = [] 
   const [carpetasDestino, setCarpetasDestino] = useState([]);
   const [destinoSeleccionado, setDestinoSeleccionado] = useState("");
   const [moving, setMoving] = useState(false);
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [renameTarget, setRenameTarget] = useState(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [highlightedRowId, setHighlightedRowId] = useState(null);
+  const renameHighlightTimeoutRef = useRef(null);
   const [currentFolderId, setCurrentFolderId] = useState(initialFolderId);
   const [folderPath, setFolderPath] = useState(initialFolderPath);
   const [deletePrompt, setDeletePrompt] = useState({ open: false, file: null });
@@ -178,6 +183,12 @@ export function useArchiveData({ initialFolderId = null, initialFolderPath = [] 
     cargarDatos();
   }, [currentFolderId]);
 
+  useEffect(() => () => {
+    if (renameHighlightTimeoutRef.current) {
+      clearTimeout(renameHighlightTimeoutRef.current);
+    }
+  }, []);
+
   const handleNuevaCarpeta = () => setShowModal(true);
 
   const handleConfirmFolder = async () => {
@@ -243,6 +254,34 @@ export function useArchiveData({ initialFolderId = null, initialFolderPath = [] 
     setShowMoveModal(false);
     setElementoAMover(null);
     setDestinoSeleccionado("");
+  };
+
+  const handleOpenRename = (e, file) => {
+    e.stopPropagation();
+    setRenameTarget(file);
+    setRenameValue(file?.name || "");
+    setShowRenameModal(true);
+  };
+
+  const handleCancelRename = () => {
+    setShowRenameModal(false);
+    setRenameTarget(null);
+    setRenameValue("");
+  };
+
+  const handleConfirmRename = () => {
+    if (!renameTarget) return;
+
+    setHighlightedRowId(renameTarget.id);
+    if (renameHighlightTimeoutRef.current) {
+      clearTimeout(renameHighlightTimeoutRef.current);
+    }
+    renameHighlightTimeoutRef.current = setTimeout(() => {
+      setHighlightedRowId(null);
+      renameHighlightTimeoutRef.current = null;
+    }, 1000);
+
+    handleCancelRename();
   };
 
   const handleSubirArchivoClick = () => {
@@ -372,6 +411,10 @@ export function useArchiveData({ initialFolderId = null, initialFolderPath = [] 
     carpetasDestino,
     destinoSeleccionado, setDestinoSeleccionado,
     moving,
+    showRenameModal,
+    renameTarget,
+    renameValue, setRenameValue,
+    highlightedRowId,
     deletePrompt, setDeletePrompt,
     deletePromptRef,
     fileInputRef,
@@ -388,6 +431,9 @@ export function useArchiveData({ initialFolderId = null, initialFolderPath = [] 
     handleMover,
     handleConfirmMove,
     handleCancelMove,
+    handleOpenRename,
+    handleCancelRename,
+    handleConfirmRename,
     handleSubirArchivoClick,
     handleArchivoSeleccionado,
     handleTipoChange,
