@@ -172,7 +172,11 @@ export function SubirDoc() {
   };
 
   const handleEliminarCategoria = async (cat) => {
-    if (!window.confirm(`¿Eliminar la categoría "${cat.nombre}"?`)) return;
+    const confirmed = window.confirm(
+      `¿Estás seguro de que deseas eliminar la categoría "${cat.nombre}"?\n\nEsta acción no se puede deshacer.`
+    );
+    if (!confirmed) return;
+    
     try {
       const res = await documentsService.deleteCustomCategory(cat.id_cat_custom);
       if (res?.success) {
@@ -181,9 +185,9 @@ export function SubirDoc() {
           setCategoria("Docencia");
           setFormData({ nombreNube: formData.nombreNube });
         }
-        mostrarAlerta(`🗑️ Categoría "${cat.nombre}" eliminada`, "success");
+        mostrarAlerta(`🗑️ Categoría "${cat.nombre}" eliminada correctamente`, "success");
       } else {
-        mostrarAlerta(res?.error || "❌ No se pudo eliminar", "error");
+        mostrarAlerta(res?.error || "❌ No se pudo eliminar la categoría", "error");
       }
     } catch {
       mostrarAlerta("❌ Error al eliminar la categoría", "error");
