@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Trash2, X, ChevronDown, ChevronUp } from 'lucide-react';
 import './ModalCrearExpediente.css';
 import { useArchiveData } from '../archives_list/useArchiveData';
 import { ArchiveListCore } from '../archives_list/ArchiveListCore';
+import { useCrearExpedienteForm } from './hooks/useCrearExpedienteForm';
 
 function ArchiveExplorerPanel({ selectedFiles, onToggleSelect, onConfirm, onCancel }) {
   const archiveData = useArchiveData();
@@ -41,10 +42,23 @@ function ArchiveExplorerPanel({ selectedFiles, onToggleSelect, onConfirm, onCanc
 }
 
 export function ModalCrearExpediente({ isOpen, onClose }) {
-  const [files, setFiles] = useState([]);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [showExplorer, setShowExplorer] = useState(false);
-  const [selectedFilesMap, setSelectedFilesMap] = useState(new Map());
+  const {
+    nombreExpediente,
+    setNombreExpediente,
+    nombreConvocatoria,
+    setNombreConvocatoria,
+    files,
+    setFiles,
+    isExpanded,
+    setIsExpanded,
+    showExplorer,
+    setShowExplorer,
+    selectedFilesMap,
+    setSelectedFilesMap,
+    submitting,
+    errorMsg,
+    handleSubmit,
+  } = useCrearExpedienteForm({ onCloseModal: onClose });
 
   if (!isOpen) return null;
 
@@ -91,11 +105,15 @@ export function ModalCrearExpediente({ isOpen, onClose }) {
                 type="text"
                 className="modal-input"
                 placeholder="Nombre del expediente"
+                value={nombreExpediente}
+                onChange={(e) => setNombreExpediente(e.target.value)}
               />
               <input
                 type="text"
                 className="modal-input"
                 placeholder="Convocatoria Ejemplo: Webinar de Prácticas Pre Profesionales"
+                value={nombreConvocatoria}
+                onChange={(e) => setNombreConvocatoria(e.target.value)}
               />
             </div>
           </div>
@@ -143,9 +161,14 @@ export function ModalCrearExpediente({ isOpen, onClose }) {
           </div>
 
           <div className="modal-footer-section">
-            <button className="modal-submit-btn">
-              Crear Expediente
+            <button
+              className="modal-submit-btn"
+              onClick={handleSubmit}
+              disabled={submitting}
+            >
+              {submitting ? 'Generando…' : 'Crear Expediente'}
             </button>
+            {errorMsg && <p className="modal-error">{errorMsg}</p>}
             <p className="modal-back-link" onClick={onClose}>
               Regresar al listado de archivos
             </p>

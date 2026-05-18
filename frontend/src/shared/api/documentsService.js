@@ -45,8 +45,11 @@ export const documentsService = {
 
   listExpedientes: () => apiClient.get("/expedientes/"),
 
-  createExpediente: (nombre_convocatoria, descripcion = "") =>
-    apiClient.post("/expedientes/", { nombre_convocatoria, descripcion }),
+  createExpediente: (nombre_convocatoria, descripcion = "", fecha_expedicion = null) =>
+    apiClient.post("/expedientes/", { nombre_convocatoria, descripcion, fecha_expedicion }),
+
+  agregarDocumentoAExpediente: (idExp, idDoc, orden = 0) =>
+    apiClient.post(`/expedientes/${idExp}/agregar-documento/`, { id_doc: idDoc, orden }),
 
   // ---- Categorías personalizadas ----
   listCustomCategories: () => apiClient.get("/categorias-custom/"),
