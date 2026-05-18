@@ -1,10 +1,21 @@
 import json
 import os
+from datetime import datetime
 from rest_framework import serializers
 from .models import (
     CategoriasDoc, InfCarpeta, DocDocumento, DocExpediente,
     ExpedienteContenido, VersionDoc, CategoriaCustom,
 )
+
+
+# SQLite retorna datetime en columnas DateField; DRF rechaza la coerción implícita con AssertionError.
+class SafeDateField(serializers.DateField):
+    def to_representation(self, value):
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            value = value.date()
+        return super().to_representation(value)
 
 
 class CategoriaDocSerializer(serializers.ModelSerializer):
@@ -34,8 +45,9 @@ class DocDocumentoSerializer(serializers.ModelSerializer):
         source='id_tipo.nombre_categoria', read_only=True,
     )
     nombre_carpeta = serializers.CharField(
-        source='id_folder.nombre_carpeta', read_only=True, default=None,
+        source='id_folder.nombre_carpeta', read_only=True, allow_null=True,
     )
+    fecha_expedicion = SafeDateField(allow_null=True)
     fecha_subida = serializers.SerializerMethodField()
 
     class Meta:
@@ -48,7 +60,7 @@ class DocDocumentoSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = [
             'id_doc', 'fecha_creacion', 'fecha_subida', 'ruta_archivo',
-            'tamano_bytes', 'extension_archivo',
+            'tamano_bytes', 'extension_archivo', 'id_profesor', 'id_tipo', 'id_folder',
         ]
     def get_fecha_subida(self, obj):
         version = obj.versiones.order_by('-num_version').first()
