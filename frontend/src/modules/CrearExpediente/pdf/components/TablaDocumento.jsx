@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text } from '@react-pdf/renderer';
 import { pdfStyles } from '../pdfStyles';
+import { getFieldDisplayName } from '../../../../shared/config/fieldNames';
 
 const CLAVES_EXCLUIDAS = new Set(['_categoria', 'tamano_bytes']);
 
@@ -26,9 +27,10 @@ function partirMetadatos(metadatos = {}) {
 }
 
 function Fila({ etiqueta, valor }) {
+  const displayName = getFieldDisplayName(etiqueta);
   return (
     <View style={pdfStyles.tableRow}>
-      <Text style={pdfStyles.th}>{etiqueta}</Text>
+      <Text style={pdfStyles.th}>{displayName}</Text>
       <Text style={pdfStyles.td}>{valor}</Text>
     </View>
   );
@@ -36,9 +38,11 @@ function Fila({ etiqueta, valor }) {
 
 export function TablaDocumento({ doc, nombreCategoria }) {
   const { datos, numericos } = partirMetadatos(doc.metadatos);
+  const displayCategoria = doc.metadatos?._categoria || nombreCategoria;
+
   return (
     <View style={pdfStyles.table}>
-      <Text style={pdfStyles.tableHeader}>{nombreCategoria}</Text>
+      <Text style={pdfStyles.tableHeader}>{displayCategoria}</Text>
 
       <Text style={pdfStyles.subHeader}>Datos</Text>
       <Fila etiqueta="Título" valor={doc.titulo_doc || '—'} />

@@ -83,10 +83,13 @@ export function useArchiveData({ initialFolderId = null, initialFolderPath = [] 
 
   const handleDelete = async (file) => {
     const isFolder = file.type === "folder";
+    const isExpediente = file.type === "expediente";
     try {
       let res;
       if (isFolder) {
         res = await documentsService.deleteCarpeta(file.id.replace("f-", ""));
+      } else if (isExpediente) {
+        res = await documentsService.deleteExpediente(file.id_exp);
       } else {
         res = await documentsService.deleteDocument(file.id_doc);
       }
@@ -96,7 +99,8 @@ export function useArchiveData({ initialFolderId = null, initialFolderPath = [] 
         alert(res?.error || "No se pudo eliminar");
       }
     } catch (err) {
-      alert(err?.response?.data?.error || `Error eliminando ${isFolder ? "carpeta" : "documento"}`);
+      const tipo = isFolder ? "carpeta" : isExpediente ? "expediente" : "documento";
+      alert(err?.response?.data?.error || `Error eliminando ${tipo}`);
     }
   };
 
@@ -159,19 +163,24 @@ export function useArchiveData({ initialFolderId = null, initialFolderPath = [] 
         date: formatFecha(c.fecha_creacion),
       }));
 
-      const docs = (docsRes?.documentos || []).map((d) => ({
-        id: `d-${d.id_doc}`,
-        id_doc: d.id_doc,
-        type: "pdf",
-        name: d.titulo_doc,
-        date: formatFecha(d.fecha_creacion),
-        titulo_doc: d.titulo_doc,
-        categoria: d.nombre_categoria || null,
-        fecha_creacion: d.fecha_creacion,
-        metadatos: d.metadatos || {},
-        descripcion: d.descripcion || "",
-        fecha_expedicion: d.fecha_expedicion || null,
-      }));
+      const docs = (docsRes?.documentos || []).map((d) => {
+        const isExpediente = d.type === "expediente";
+        return {
+          id: isExpediente ? `exp-${d.id_exp}` : `d-${d.id_doc}`,
+          id_doc: isExpediente ? null : d.id_doc,
+          id_exp: isExpediente ? d.id_exp : null,
+          type: isExpediente ? "expediente" : "pdf",
+          name: d.titulo_doc,
+          date: formatFecha(d.fecha_creacion),
+          titulo_doc: d.titulo_doc,
+          categoria: d.nombre_categoria || null,
+          fecha_creacion: d.fecha_creacion,
+          metadatos: d.metadatos || {},
+          descripcion: d.descripcion || "",
+          fecha_expedicion: d.fecha_expedicion || null,
+          documentos_count: d.documentos_count || 0,
+        };
+      });
 
       setFiles([...carpetas, ...docs]);
       setCategorias(catsRes?.categorias || []);
@@ -240,6 +249,8 @@ export function useArchiveData({ initialFolderId = null, initialFolderPath = [] 
       let res;
       if (elementoAMover.type === "folder") {
         res = await documentsService.moverCarpeta(elementoAMover.id.replace("f-", ""), id_destino);
+      } else if (elementoAMover.type === "expediente") {
+        res = await documentsService.moverExpediente(elementoAMover.id_exp, id_destino);
       } else {
         res = await documentsService.moverDocumento(elementoAMover.id_doc, id_destino);
       }
@@ -286,18 +297,26 @@ export function useArchiveData({ initialFolderId = null, initialFolderPath = [] 
     }
 
     try {
-      const res = await documentsService.renombrarCarpeta(
-        renameTarget.id.replace("f-", ""),
-        nuevoNombre
-      );
+      let res;
+      if (renameTarget.type === "folder") {
+        res = await documentsService.renombrarCarpeta(
+          renameTarget.id.replace("f-", ""),
+          nuevoNombre
+        );
+      } else if (renameTarget.type === "expediente") {
+        res = await documentsService.renombrarExpediente(
+          renameTarget.id_exp,
+          nuevoNombre
+        );
+      }
       if (res?.success) {
         cargarDatos();
       } else {
-        alert(res?.error || "Error al renombrar la carpeta");
+        alert(res?.error || "Error al renombrar");
       }
     } catch (err) {
-      alert(err?.data?.error || "Error al renombrar la carpeta");
-    } 
+      alert(err?.data?.error || "Error al renombrar");
+    }
 
     setHighlightedRowId(renameTarget.id);
     if (renameHighlightTimeoutRef.current) {

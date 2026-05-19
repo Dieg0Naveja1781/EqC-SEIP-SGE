@@ -343,12 +343,19 @@ export function ArchiveListCore({
                 onClick={() => handleRowClick(file)}
                 style={{ cursor: "pointer" }}
               >
-                <span>{file.type === "folder" ? "📁" : "📄"}</span>
-                <span className="file_name">{file.name}</span>
+                <span>{file.type === "folder" ? "📁" : file.type === "expediente" ? "📋" : "📄"}</span>
+                <span className="file_name">
+                  {file.name}
+                  {file.type === "expediente" && (
+                    <span className="expediente_badge">
+                      Expediente
+                    </span>
+                  )}
+                </span>
                 <span className="file_date">{file.date}</span>
                 <div className="file_actions">
                   {pickerMode ? (
-                    file.type !== "folder" && (
+                    file.type !== "folder" && file.type !== "expediente" && (
                       <input
                         type="checkbox"
                         readOnly
@@ -358,7 +365,7 @@ export function ArchiveListCore({
                     )
                   ) : (
                     <>
-                      {file.type === "folder" && (
+                      {(file.type === "folder" || file.type === "expediente") && (
                         <button
                           className="btn_ren"
                           onClick={(e) => handleOpenRename(e, file)}
@@ -368,7 +375,7 @@ export function ArchiveListCore({
                           <img src={renombrarArchivoIcon} alt="" aria-hidden="true" className="btn_icon" />
                         </button>
                       )}
-                      {file.type !== "folder" && file.id_doc && (
+                      {file.type === "pdf" && file.id_doc && (
                         <button
                           className="btn_upd"
                           onClick={(e) => { e.stopPropagation(); handleDownload(file.id_doc); }}
@@ -378,46 +385,50 @@ export function ArchiveListCore({
                           <img src={descargasIcon} alt="" aria-hidden="true" className="btn_icon" />
                         </button>
                       )}
-                      <button
-                        className="btn_mov"
-                        aria-label="Mover"
-                        data-tooltip="Mover"
-                        onClick={(e) => handleMover(e, file)}
-                      >
-                        <img src={archivoIcon} alt="" aria-hidden="true" className="btn_icon" />
-                      </button>
-                      <div
-                        className="delete_action_wrapper"
-                        ref={deletePrompt.open && deletePrompt.file?.id === file.id ? deletePromptRef : null}
-                      >
+                      {file.type !== "folder" && (
                         <button
-                          className="btn_del"
-                          aria-label="Eliminar"
-                          data-tooltip="Eliminar"
-                          onClick={(e) => handleOpenDeletePrompt(e, file)}
+                          className="btn_mov"
+                          aria-label="Mover"
+                          data-tooltip="Mover"
+                          onClick={(e) => handleMover(e, file)}
                         >
-                          <img src={basuraIcon} alt="" aria-hidden="true" className="btn_icon" />
+                          <img src={archivoIcon} alt="" aria-hidden="true" className="btn_icon" />
                         </button>
-                        {deletePrompt.open && deletePrompt.file?.id === file.id && (
-                          <div className="delete_confirmation_popover" role="dialog" aria-label="Confirmar eliminación">
-                            <span className="delete_confirmation_title">Confirmar</span>
-                            <div className="delete_confirmation_actions">
-                              <button
-                                type="button"
-                                className="delete_confirmation_button delete_confirmation_button_cancel"
-                                onClick={handleCancelDelete}
-                                aria-label="Cancelar eliminación"
-                              />
-                              <button
-                                type="button"
-                                className="delete_confirmation_button delete_confirmation_button_confirm"
-                                onClick={handleConfirmDelete}
-                                aria-label="Confirmar eliminación"
-                              />
+                      )}
+                      {file.type !== "folder" && (
+                        <div
+                          className="delete_action_wrapper"
+                          ref={deletePrompt.open && deletePrompt.file?.id === file.id ? deletePromptRef : null}
+                        >
+                          <button
+                            className="btn_del"
+                            aria-label="Eliminar"
+                            data-tooltip="Eliminar"
+                            onClick={(e) => handleOpenDeletePrompt(e, file)}
+                          >
+                            <img src={basuraIcon} alt="" aria-hidden="true" className="btn_icon" />
+                          </button>
+                          {deletePrompt.open && deletePrompt.file?.id === file.id && (
+                            <div className="delete_confirmation_popover" role="dialog" aria-label="Confirmar eliminación">
+                              <span className="delete_confirmation_title">Confirmar</span>
+                              <div className="delete_confirmation_actions">
+                                <button
+                                  type="button"
+                                  className="delete_confirmation_button delete_confirmation_button_cancel"
+                                  onClick={handleCancelDelete}
+                                  aria-label="Cancelar eliminación"
+                                />
+                                <button
+                                  type="button"
+                                  className="delete_confirmation_button delete_confirmation_button_confirm"
+                                  onClick={handleConfirmDelete}
+                                  aria-label="Confirmar eliminación"
+                                />
+                              </div>
                             </div>
-                          </div>
-                        )}
-                      </div>
+                          )}
+                        </div>
+                      )}
                     </>
                   )}
                 </div>
