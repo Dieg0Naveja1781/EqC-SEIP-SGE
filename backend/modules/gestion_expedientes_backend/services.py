@@ -218,18 +218,25 @@ class ServicioExpedientes:
             if categoria in CATEGORIAS_FIJAS and id_tipo:
                 categoria_obj = CategoriasDoc.objects.get(id_tipo=id_tipo)
             elif categoria in CATEGORIAS_FIJAS:
-                nombre_map = {
+                # Buscar por nombre en la BD; admite nombres cortos o completos.
+                NOMBRE_MAP = {
                     'Docencia': 'Docencia',
                     'Gestion': 'Gestión Académica',
                     'Titulacion': 'Gestión Académica (Titulación)',
                     'Produccion': 'Producción Académica',
                     'Tutoria': 'Tutoría',
                 }
-                categoria_obj = CategoriasDoc.objects.filter(
-                    nombre_categoria__iexact=nombre_map.get(categoria, categoria)
-                ).first()
-                if not categoria_obj:
-                    return {'success': False, 'error': 'Categoria no valida'}
+                nombre_bd = NOMBRE_MAP.get(categoria, categoria)
+                cat_qs = CategoriasDoc.objects.filter(nombre_categoria__iexact=nombre_bd)
+                if not cat_qs.exists():
+                    cat_qs = CategoriasDoc.objects.filter(nombre_categoria__icontains=categoria[:4])
+                if cat_qs.exists():
+                    categoria_obj = cat_qs.first()
+                else:
+                    categoria_obj, _ = CategoriasDoc.objects.get_or_create(
+                        nombre_categoria='Personalizada',
+                        defaults={'descripcion': 'Categoría comodín para documentos personalizados'},
+                    )
             else:
                 categoria_obj, _ = CategoriasDoc.objects.get_or_create(
                     nombre_categoria='Personalizada',

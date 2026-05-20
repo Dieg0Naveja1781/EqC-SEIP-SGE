@@ -261,11 +261,12 @@ export function SubirDoc() {
 
     if (!validarNumericos()) return;
 
-    // Para categorías fijas: buscar id_tipo real. Para custom: null (el backend usará Gestión).
+    // id_tipo es solo una pista opcional para categorías fijas: si la lista de
+    // categorías no cargó o los nombres no calzan, el backend resuelve la
+    // categoría por nombre cuando id_tipo llega null.
     let id_tipo = null;
     if (!esCustom) {
       id_tipo = categorias.find((c) => c.nombre_categoria === categoria)?.id_tipo || null;
-      if (!id_tipo) { mostrarAlerta("❌ Categoría no disponible en el servidor.", "error"); return; }
     }
 
     const metadatos = { ...formData };
