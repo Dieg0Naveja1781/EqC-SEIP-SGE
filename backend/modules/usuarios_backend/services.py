@@ -1,14 +1,14 @@
 from django.contrib.auth.hashers import make_password, check_password
 from django.db import transaction
-from .models import UserProfe
-from .serializers import RegistroProfesorSerializer, UserProfeSerializer
+from .models import UserProfe, InvestigadorID
+from .serializers import RegistroProfesorSerializer, UserProfeSerializer, InvestigadorIDSerializer
 import logging
 
 logger = logging.getLogger(__name__)
 
 
 class ServicioUsuarios:
-    """Lógica de negocio de usuarios/profesores."""
+  
 
     @staticmethod
     def registrar_profesor(data):
@@ -96,3 +96,40 @@ class ServicioUsuarios:
             return {'success': True, 'message': 'Contraseña actualizada'}
         except UserProfe.DoesNotExist:
             return {'success': False, 'error': 'Profesor no encontrado'}
+
+    @staticmethod
+    def listar_investigador_ids(id_profesor):
+        try:
+            ids = InvestigadorID.objects.filter(id_profesor=id_profesor)
+            return {'success': True, 'investigador_ids': InvestigadorIDSerializer(ids, many=True).data}
+        except Exception as e:
+            logger.error(f"Error al listar IDs de investigador: {str(e)}")
+            return {'success': False, 'error': str(e)}
+
+    @staticmethod
+    def agregar_investigador_id(id_profesor, tipo, valor):
+        if not tipo or not valor:
+            return {'success': False, 'error': 'tipo y valor son requeridos'}
+        try:
+            profe = UserProfe.objects.get(id_profesor=id_profesor)
+            nuevo = InvestigadorID.objects.create(
+                id_profesor=profe, tipo=tipo, valor=valor,
+            )
+            return {'success': True, 'investigador_id': InvestigadorIDSerializer(nuevo).data}
+        except UserProfe.DoesNotExist:
+            return {'success': False, 'error': 'Profesor no encontrado'}
+        except Exception as e:
+            logger.error(f"Error al agregar ID de investigador: {str(e)}")
+            return {'success': False, 'error': str(e)}
+
+    @staticmethod
+    def eliminar_investigador_id(id_inv, id_profesor):
+        try:
+            inv = InvestigadorID.objects.get(id_inv=id_inv, id_profesor=id_profesor)
+            inv.delete()
+            return {'success': True, 'message': 'ID eliminado'}
+        except InvestigadorID.DoesNotExist:
+            return {'success': False, 'error': 'ID no encontrado'}
+        except Exception as e:
+            logger.error(f"Error al eliminar ID de investigador: {str(e)}")
+            return {'success': False, 'error': str(e)}

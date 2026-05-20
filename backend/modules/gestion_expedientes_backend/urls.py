@@ -43,9 +43,12 @@ urlpatterns = [
     path('documentos/<int:pk>/mover/',
          DocumentoViewSet.as_view({'post': 'mover'}),
          name='documento-mover'),
-     path('documentos/<int:pk>/eliminar/',
+    path('documentos/<int:pk>/eliminar/',
           DocumentoViewSet.as_view({'delete': 'eliminar'}),
           name='documento-eliminar'),
+    path('documentos/<int:pk>/portada/',
+         DocumentoViewSet.as_view({'get': 'portada'}),
+         name='documento-portada'),
 
     # Carpetas
     path('carpetas/',

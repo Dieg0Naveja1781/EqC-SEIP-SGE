@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import UserProfe
+from .models import UserProfe, InvestigadorID
 
 
 class UserProfeSerializer(serializers.ModelSerializer):
@@ -37,3 +37,8 @@ class LoginSerializer(serializers.Serializer):
     """Valida los datos de login del profesor."""
     correo_profe = serializers.EmailField()
     password = serializers.CharField(write_only=True)
+class InvestigadorIDSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InvestigadorID
+        fields = ['id_inv', 'tipo', 'valor', 'fecha_creacion']
+        read_only_fields = ['id_inv', 'fecha_creacion']

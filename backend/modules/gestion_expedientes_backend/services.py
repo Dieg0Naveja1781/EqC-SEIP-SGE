@@ -24,7 +24,27 @@ def _media_root():
         django_settings, 'MEDIA_ROOT',
         os.path.join(django_settings.BASE_DIR, 'media'),
     )
-
+def _generar_portada(ruta_pdf, ruta_portada):
+    """Genera una imagen PNG de la primera página de un PDF."""
+    try:
+        import fitz
+    except ImportError:
+        logger.warning("pymupdf no está instalado, no se genera portada")
+        return False
+    try:
+        pdf = fitz.open(ruta_pdf)
+        if pdf.page_count == 0:
+            pdf.close()
+            return False
+        pagina = pdf.load_page(0)
+        imagen = pagina.get_pixmap(matrix=fitz.Matrix(1.5, 1.5))
+        os.makedirs(os.path.dirname(ruta_portada), exist_ok=True)
+        imagen.save(ruta_portada)
+        pdf.close()
+        return True
+    except Exception as e:
+        logger.error(f"Error al generar portada: {str(e)}")
+        return False
 
 class ServicioExpedientes:
     """Lógica de negocio de expedientes, carpetas y documentos."""
@@ -154,6 +174,12 @@ class ServicioExpedientes:
                 for chunk in archivo.chunks():
                     destination.write(chunk)
 
+            # Generar la portada (primera página del PDF)
+            ruta_portada = os.path.join(
+                _media_root(), 'portadas', str(id_profesor), archivo.name + '.png'
+            )
+            _generar_portada(ruta_archivo, ruta_portada)
+
             meta = dict(metadatos or {})
             meta['_categoria'] = categoria
 
@@ -281,6 +307,26 @@ class ServicioExpedientes:
             return {'success': False, 'error': 'Documento no encontrado'}
         except Exception as e:
             logger.error(f"Error al descargar documento: {str(e)}")
+            return {'success': False, 'error': str(e)}
+
+    @staticmethod
+    def obtener_portada(id_doc, id_profesor):
+        try:
+            doc = DocDocumento.objects.get(id_doc=id_doc, id_profesor=id_profesor)
+            nombre_archivo = os.path.basename(doc.ruta_archivo)
+            ruta_portada = os.path.join(
+                _media_root(), 'portadas', str(id_profesor), nombre_archivo + '.png'
+            )
+            # Si la portada no existe, intentar generarla ahora
+            if not os.path.exists(ruta_portada):
+                _generar_portada(doc.ruta_archivo, ruta_portada)
+            if not os.path.exists(ruta_portada):
+                return {'success': False, 'error': 'No se pudo obtener la portada'}
+            return {'success': True, 'ruta_portada': ruta_portada}
+        except DocDocumento.DoesNotExist:
+            return {'success': False, 'error': 'Documento no encontrado'}
+        except Exception as e:
+            logger.error(f"Error al obtener portada: {str(e)}")
             return {'success': False, 'error': str(e)}
 
     @staticmethod
