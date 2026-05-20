@@ -217,8 +217,15 @@ class ServicioExpedientes:
     def obtener_documentos(id_profesor, id_folder=None):
         try:
             qs = DocDocumento.objects.filter(id_profesor=id_profesor)
-            if id_folder is not None:
-                qs = qs.filter(id_folder=id_folder if id_folder else None)
+            if id_folder is None:
+                # Sin parámetro: todos los documentos (historial de la página principal).
+                pass
+            elif id_folder in ('root', 'raiz', '', 'null', 'None', '0'):
+                # Vista raíz del explorador: solo documentos sin carpeta.
+                qs = qs.filter(id_folder__isnull=True)
+            else:
+                # Carpeta concreta.
+                qs = qs.filter(id_folder=id_folder)
             return {'success': True, 'documentos': DocDocumentoSerializer(qs, many=True).data}
         except Exception as e:
             logger.error(f"Error al obtener documentos: {str(e)}")

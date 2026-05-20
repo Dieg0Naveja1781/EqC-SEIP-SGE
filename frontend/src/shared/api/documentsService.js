@@ -1,5 +1,30 @@
 import { apiClient, API_BASE } from "./apiClient";
 
+// Mezcla la respuesta de /documentos/ con la de /expedientes/, normalizando
+// cada expediente al mismo shape que un documento (con type: 'expediente').
+function combinarDocsYExpedientes(docsRes, expsRes) {
+  if (!docsRes?.success) return docsRes;
+
+  const documentos = docsRes.documentos || [];
+  const expedientes = (expsRes?.expedientes || []).map((exp) => ({
+    id_exp: exp.id_exp,
+    id_doc: `exp-${exp.id_exp}`,
+    type: "expediente",
+    titulo_doc: exp.nombre_convocatoria,
+    nombre_categoria: "Expediente",
+    fecha_creacion: exp.fecha_creacion,
+    fecha_expedicion: exp.fecha_expedicion || null,
+    descripcion: exp.descripcion || "",
+    documentos_count: exp.documentos_count,
+    metadatos: {},
+  }));
+
+  return {
+    success: true,
+    documentos: [...documentos, ...expedientes],
+  };
+}
+
 export const documentsService = {
   listCategories: () => apiClient.get("/categorias/"),
 
@@ -11,32 +36,26 @@ export const documentsService = {
   createFolder: (nombre_carpeta, id_padre = null) =>
     apiClient.post("/carpetas/", { nombre_carpeta, id_padre }),
 
+  // Documentos de una ubicación concreta del explorador.
+  // Sin id_folder = raíz (solo documentos sin carpeta) + expedientes.
   listDocuments: async (id_folder = null) => {
-    const qs = id_folder ? `?id_folder=${id_folder}` : "";
+    const esRaiz = !id_folder;
+    const qs = esRaiz ? "?id_folder=root" : `?id_folder=${id_folder}`;
     const [docsRes, expsRes] = await Promise.all([
       apiClient.get(`/documentos/${qs}`),
-      id_folder ? Promise.resolve({ expedientes: [] }) : apiClient.get("/expedientes/"),
+      esRaiz ? apiClient.get("/expedientes/") : Promise.resolve({ expedientes: [] }),
     ]);
+    return combinarDocsYExpedientes(docsRes, expsRes);
+  },
 
-    if (!docsRes?.success) return docsRes;
-
-    const documentos = docsRes.documentos || [];
-    const expedientes = (expsRes?.expedientes || []).map(exp => ({
-      id_exp: exp.id_exp,
-      id_doc: `exp-${exp.id_exp}`,
-      type: 'expediente',
-      titulo_doc: exp.nombre_convocatoria,
-      nombre_categoria: 'Expediente',
-      fecha_creacion: exp.fecha_creacion,
-      fecha_expedicion: exp.fecha_expedicion || exp.fecha_creacion,
-      documentos_count: exp.documentos_count,
-      metadatos: {},
-    }));
-
-    return {
-      success: true,
-      documentos: [...documentos, ...expedientes],
-    };
+  // TODOS los documentos del profesor (de cualquier carpeta) + expedientes.
+  // Lo usa el historial de la página principal.
+  listAllDocuments: async () => {
+    const [docsRes, expsRes] = await Promise.all([
+      apiClient.get("/documentos/"),
+      apiClient.get("/expedientes/"),
+    ]);
+    return combinarDocsYExpedientes(docsRes, expsRes);
   },
 
   uploadDocument: ({ archivo, titulo_doc, id_tipo, id_folder, fecha_expedicion, categoria, metadatos }) => {

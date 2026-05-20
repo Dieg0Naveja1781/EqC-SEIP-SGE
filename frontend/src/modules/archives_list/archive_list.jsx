@@ -26,7 +26,8 @@ export function ArchiveList() {
       const realId = file.id.replace("f-", "");
       archiveData.setFolderPath([...archiveData.folderPath, { id: realId, name: file.name }]);
       archiveData.setCurrentFolderId(realId);
-    } else if (file.type === "pdf") {
+    } else {
+      // Documento (pdf) o expediente: ambos se abren en la vista de archivo.
       navigate("/archive_view", { state: { documento: file } });
     }
   };

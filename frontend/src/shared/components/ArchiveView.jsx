@@ -17,9 +17,13 @@ export function ArchiveView() {
         descripcion: ""
     };
 
-    const fechaTxt = doc.fecha_creacion
-        ? new Date(doc.fecha_creacion).toLocaleDateString("es-MX")
-        : "Sin fecha";
+    // Un expediente y un documento se visualizan de forma distinta.
+    const esExpediente = doc.type === "expediente";
+
+    const formatFecha = (valor) =>
+        valor ? new Date(valor).toLocaleDateString("es-MX") : "Sin fecha";
+
+    const fechaTxt = formatFecha(doc.fecha_creacion);
 
     // --- Portada del documento (primera página del PDF) ---
     const idDoc = doc.id_doc;
@@ -27,7 +31,8 @@ export function ArchiveView() {
     const [portadaSrc, setPortadaSrc] = useState(null);
 
     useEffect(() => {
-        if (!idDoc) {
+        // Los expedientes no tienen un archivo PDF; no se carga portada.
+        if (esExpediente || !idDoc) {
             setPortadaSrc('');
             return;
         }
@@ -60,7 +65,7 @@ export function ArchiveView() {
             cancelado = true;
             if (urlCreada) URL.revokeObjectURL(urlCreada);
         };
-    }, [idDoc]);
+    }, [idDoc, esExpediente]);
 
     const ETIQUETAS = {
         cicloEscolar: "Ciclo Escolar",
@@ -107,7 +112,12 @@ export function ArchiveView() {
                             </svg>
                         </button>
                         <div className="vista-pdf">
-                            {portadaSrc === null ? (
+                            {esExpediente ? (
+                                <>
+                                    <span style={{ fontSize: "3rem" }}>📋</span>
+                                    <p>Expediente</p>
+                                </>
+                            ) : portadaSrc === null ? (
                                 <p>Cargando portada...</p>
                             ) : portadaSrc ? (
                                 <img
@@ -124,41 +134,65 @@ export function ArchiveView() {
                         </div>
                     </div>
 
-                    <div className="info-archivo">
-                        <h3>Información del Archivo</h3>
+                    {esExpediente ? (
+                        <div className="info-archivo">
+                            <h3>Información del Expediente</h3>
 
-                        <div className="info-grid">
-                            <p>Nombre: <strong>{doc.titulo_doc}</strong></p>
-                            <p>Categoría: <span className="badge-categoria"><strong>{doc.categoria}</strong></span></p>
-                            <p>Fecha: <strong>{fechaTxt}</strong></p>
+                            <div className="info-grid">
+                                <p>Nombre: <strong>{doc.titulo_doc}</strong></p>
+                                <p>Categoría: <span className="badge-categoria"><strong>Expediente</strong></span></p>
+                                <p>Fecha de creación: <strong>{fechaTxt}</strong></p>
+                                {doc.fecha_expedicion && (
+                                    <p>Fecha de expedición: <strong>{formatFecha(doc.fecha_expedicion)}</strong></p>
+                                )}
+                                <p>Documentos: <strong>{doc.documentos_count ?? 0}</strong></p>
+                            </div>
+
+                            {doc.descripcion && (
+                                <>
+                                    <hr />
+                                    <p>Descripción:</p>
+                                    <p className="descripcion-texto"><strong>{doc.descripcion}</strong></p>
+                                </>
+                            )}
                         </div>
+                    ) : (
+                        <div className="info-archivo">
+                            <h3>Información del Archivo</h3>
 
-                        <hr />
+                            <div className="info-grid">
+                                <p>Nombre: <strong>{doc.titulo_doc}</strong></p>
+                                <p>Categoría: <span className="badge-categoria"><strong>{doc.categoria}</strong></span></p>
+                                <p>Fecha: <strong>{fechaTxt}</strong></p>
+                            </div>
 
-                        <h4>Detalles Específicos</h4>
-                        <div className="metadatos-render">
-                            {Object.entries(doc.metadatos || {})
-                                .filter(([key]) => !key.startsWith('_'))
-                                .map(([key, value]) => (
-                                    <p key={key}>
-                                        {ETIQUETAS[key] || key}: <strong>{value}</strong>
-                                    </p>
-                                ))}
+                            <hr />
+
+                            <h4>Detalles Específicos</h4>
+                            <div className="metadatos-render">
+                                {Object.entries(doc.metadatos || {})
+                                    .filter(([key]) => !key.startsWith('_'))
+                                    .map(([key, value]) => (
+                                        <p key={key}>
+                                            {ETIQUETAS[key] || key}: <strong>{value}</strong>
+                                        </p>
+                                    ))}
+                            </div>
+
+                            {doc.descripcion && (
+                                <>
+                                    <hr />
+                                    <p>Descripción:</p>
+                                    <p className="descripcion-texto"><strong>{doc.descripcion}</strong></p>
+                                </>
+                            )}
+
+                            <div className="botones">
+                                <button className="descargar">Descargar</button>
+                                <button className="editar" onClick={() => navigate('/editar_doc', { state: { documento: doc } })}>Editar</button>
+                            </div>
                         </div>
-
-                        {doc.descripcion && (
-                            <>
-                                <hr />
-                                <p>Descripción:</p>
-                                <p className="descripcion-texto"><strong>{doc.descripcion}</strong></p>
-                            </>
-                        )}
-
-                        <div className="botones">
-                            <button className="descargar">Descargar</button>
-                            <button className="editar" onClick={() => navigate('/editar_doc', { state: { documento: doc } })}>Editar</button>
-                        </div>
-                    </div>
+                    )}
                 </div>
             </div>
         </DashboardLayout>

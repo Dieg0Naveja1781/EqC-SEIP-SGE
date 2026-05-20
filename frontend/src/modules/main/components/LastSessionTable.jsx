@@ -75,7 +75,12 @@ function LastSessionTable({ records = [], loading = false }) {
             )}
 
             {!loading && sortedRows.map((row, index) => (
-              <tr key={`${row.id_doc}-${index}`} onClick={() => handleVerDocumento(row)} style={{ cursor: "pointer" }}>
+              <tr
+                key={`${row.id_doc}-${index}`}
+                className={row.type === "expediente" ? "expediente-row" : ""}
+                onClick={() => handleVerDocumento(row)}
+                style={{ cursor: "pointer" }}
+              >
                 <td>{row.titulo_doc}</td>
                 <td>{formatDate(getActivityDate(row))}</td>
               </tr>

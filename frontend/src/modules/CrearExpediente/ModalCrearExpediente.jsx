@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Trash2, X, ChevronDown, ChevronUp } from 'lucide-react';
 import './ModalCrearExpediente.css';
 import { useArchiveData } from '../archives_list/useArchiveData';
@@ -60,6 +60,14 @@ export function ModalCrearExpediente({ isOpen, onClose }) {
     handleSubmit,
   } = useCrearExpedienteForm({ onCloseModal: onClose });
 
+  // Bloquea el scroll del fondo mientras el modal está abierto.
+  useEffect(() => {
+    if (!isOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleToggleSelect = (file) => {
@@ -120,9 +128,11 @@ export function ModalCrearExpediente({ isOpen, onClose }) {
 
           <div className="modal-mid-section">
             <div className="upload-container">
-              <button className="modal-action-btn" onClick={() => setShowExplorer(true)}>
-                Explorar Archivos
-              </button>
+              {!showExplorer && (
+                <button className="modal-action-btn" onClick={() => setShowExplorer(true)}>
+                  Explorar Archivos
+                </button>
+              )}
               <span className="upload-hint">Formato PDF solamente</span>
             </div>
 

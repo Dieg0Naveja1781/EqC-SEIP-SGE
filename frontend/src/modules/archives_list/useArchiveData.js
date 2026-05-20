@@ -21,9 +21,17 @@ export function formatFecha(iso) {
 
 export function parseDate(str) {
   if (!str) return new Date(0);
-  const partes = str.split("/");
+  // Tomar solo la parte de fecha (ignorar hora/zona horaria).
+  const soloFecha = String(str).split("T")[0];
+  const sep = soloFecha.includes("/") ? "/" : "-";
+  const partes = soloFecha.split(sep);
   if (partes.length === 3) {
-    return new Date(`${partes[2]}-${partes[1].padStart(2, "0")}-${partes[0].padStart(2, "0")}`);
+    const [a, b, c] = partes;
+    // "DD/MM/YYYY" vs "YYYY-MM-DD". Se construye con componentes locales
+    // para evitar el desfase de mes en zonas horarias negativas.
+    return sep === "/"
+      ? new Date(Number(c), Number(b) - 1, Number(a))
+      : new Date(Number(a), Number(b) - 1, Number(c));
   }
   return new Date(str);
 }
@@ -152,7 +160,6 @@ export function useArchiveData({ initialFolderId = null, initialFolderPath = [] 
         documentsService.listFolders(currentFolderId).catch(() => ({ carpetas: [] })),
         documentsService.listDocuments(currentFolderId).catch(() => ({ documentos: [] })),
         documentsService.listCategories().catch(() => ({ categorias: [] })),
-        documentsService.listCustomCategories().catch(() => ({ categorias_custom: [] })),
         documentsService.listCustomCategories().catch(() => ({ categorias_custom: [] })),
       ]);
 
@@ -400,11 +407,13 @@ export function useArchiveData({ initialFolderId = null, initialFolderPath = [] 
 
   const filtradosFecha = archivosFiltrados.filter((f) => {
     if (f.type === "folder") return true;
-    const fechaObj = f.fecha_expedicion ? parseDate(f.fecha_expedicion) : null;
+    // fecha_expedicion suele venir null; se respalda con fecha_creacion,
+    // que siempre existe, para que el filtro no descarte el archivo.
+    const fechaRef = f.fecha_expedicion || f.fecha_creacion;
+    const fechaObj = fechaRef ? parseDate(fechaRef) : null;
     if (tipoFiltroFecha === "Ninguno") return true;
     if (!fechaObj) return !rangoInicio && !rangoFin;
     if (tipoFiltroFecha === "Por Mes") {
-      if (fechaObj.getFullYear() !== CURRENT_YEAR) return false;
       const fileMes = fechaObj.getMonth() + 1;
       if (rangoInicio && fileMes < parseInt(rangoInicio)) return false;
       if (rangoFin && fileMes > parseInt(rangoFin)) return false;
@@ -431,8 +440,10 @@ export function useArchiveData({ initialFolderId = null, initialFolderPath = [] 
     if (a.type !== "folder" && b.type === "folder") return 1;
     if (ordenarPor === "Nombre A-Z") return a.name.localeCompare(b.name);
     if (ordenarPor === "Nombre Z-A") return b.name.localeCompare(a.name);
-    if (ordenarPor === "Fecha ↑") return parseDate(a.fecha_expedicion) - parseDate(b.fecha_expedicion);
-    if (ordenarPor === "Fecha ↓") return parseDate(b.fecha_expedicion) - parseDate(a.fecha_expedicion);
+    if (ordenarPor === "Fecha ↑")
+      return parseDate(a.fecha_expedicion || a.fecha_creacion) - parseDate(b.fecha_expedicion || b.fecha_creacion);
+    if (ordenarPor === "Fecha ↓")
+      return parseDate(b.fecha_expedicion || b.fecha_creacion) - parseDate(a.fecha_expedicion || a.fecha_creacion);
     return 0;
   });
 

@@ -508,6 +508,24 @@
   font-style: italic;
 }
 
+/* Filas de expedientes en el historial: fondo rojo claro adaptado al tema. */
+.session-table tbody tr.expediente-row {
+  background: #ffe3e3;
+  transition: background-color 0.2s ease;
+}
+
+.session-table tbody tr.expediente-row:hover {
+  background: #ffd0d0;
+}
+
+[data-theme="dark"] .session-table tbody tr.expediente-row {
+  background: rgba(255, 82, 82, 0.15);
+}
+
+[data-theme="dark"] .session-table tbody tr.expediente-row:hover {
+  background: rgba(255, 82, 82, 0.28);
+}
+
 @media (max-width: 860px) {
   .main-header {
     display: grid;
@@ -684,7 +702,7 @@
 .history-delete-btn {
   background: transparent;
   border: none;
-  color: white;
+  color: var(--main-text-secondary);
   font-size: 0.8rem;
   cursor: pointer;
   padding: 0.25rem 0.5rem;
@@ -696,6 +714,7 @@
 
 .history-delete-btn:hover {
   opacity: 1;
-  background: rgba(255, 255, 255, 0.3);
+  color: var(--main-accent-primary);
+  background: rgba(29, 154, 226, 0.12);
   transform: scale(1.1);
 }
