@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import "./Styles/ArchiveView.css";
 import { DashboardLayout } from "./DashboardLayout";
+import { apiClient } from "../api/apiClient";
 
 export function ArchiveView() {
     const navigate = useNavigate();
@@ -19,6 +20,47 @@ export function ArchiveView() {
     const fechaTxt = doc.fecha_creacion
         ? new Date(doc.fecha_creacion).toLocaleDateString("es-MX")
         : "Sin fecha";
+
+    // --- Portada del documento (primera página del PDF) ---
+    const idDoc = doc.id_doc;
+    // null = todavía cargando | '' = no hay portada | url = portada lista
+    const [portadaSrc, setPortadaSrc] = useState(null);
+
+    useEffect(() => {
+        if (!idDoc) {
+            setPortadaSrc('');
+            return;
+        }
+
+        let urlCreada = null;
+        let cancelado = false;
+
+        const cargarPortada = async () => {
+            try {
+                // apiClient.download usa la misma autenticación que el
+                // resto del proyecto (cookie de sesión + X-Profesor-Id)
+                const blob = await apiClient.download(
+                    `/documentos/${idDoc}/portada/`
+                );
+                urlCreada = URL.createObjectURL(blob);
+                if (!cancelado) {
+                    setPortadaSrc(urlCreada);
+                } else {
+                    URL.revokeObjectURL(urlCreada);
+                }
+            } catch (error) {
+                if (!cancelado) setPortadaSrc('');
+            }
+        };
+
+        cargarPortada();
+
+        // Limpieza: liberar la imagen de memoria al salir
+        return () => {
+            cancelado = true;
+            if (urlCreada) URL.revokeObjectURL(urlCreada);
+        };
+    }, [idDoc]);
 
     const ETIQUETAS = {
         cicloEscolar: "Ciclo Escolar",
@@ -65,14 +107,26 @@ export function ArchiveView() {
                             </svg>
                         </button>
                         <div className="vista-pdf">
-                            <span style={{fontSize: "3rem"}}>📄</span>
-                            <p>Previsualización del PDF</p>
+                            {portadaSrc === null ? (
+                                <p>Cargando portada...</p>
+                            ) : portadaSrc ? (
+                                <img
+                                    src={portadaSrc}
+                                    alt="Portada del documento"
+                                    style={{ maxWidth: "100%", maxHeight: "100%" }}
+                                />
+                            ) : (
+                                <>
+                                    <span style={{ fontSize: "3rem" }}>📄</span>
+                                    <p>Previsualización del PDF</p>
+                                </>
+                            )}
                         </div>
                     </div>
 
                     <div className="info-archivo">
                         <h3>Información del Archivo</h3>
-                        
+
                         <div className="info-grid">
                             <p>Nombre: <strong>{doc.titulo_doc}</strong></p>
                             <p>Categoría: <span className="badge-categoria"><strong>{doc.categoria}</strong></span></p>
@@ -80,14 +134,16 @@ export function ArchiveView() {
                         </div>
 
                         <hr />
-                        
+
                         <h4>Detalles Específicos</h4>
                         <div className="metadatos-render">
-                            {Object.entries(doc.metadatos || {}).map(([key, value]) => (
-                                <p key={key}>
-                                    {ETIQUETAS[key] || key}: <strong>{value}</strong>
-                                </p>
-                            ))}
+                            {Object.entries(doc.metadatos || {})
+                                .filter(([key]) => !key.startsWith('_'))
+                                .map(([key, value]) => (
+                                    <p key={key}>
+                                        {ETIQUETAS[key] || key}: <strong>{value}</strong>
+                                    </p>
+                                ))}
                         </div>
 
                         {doc.descripcion && (

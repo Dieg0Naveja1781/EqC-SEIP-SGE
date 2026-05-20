@@ -199,6 +199,27 @@ class DocumentoViewSet(viewsets.ViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
+    @action(detail=True, methods=['get'])
+    def portada(self, request, pk=None):
+        id_profesor = _get_id_profesor(request)
+        if not id_profesor:
+            return _no_auth()
+
+        resultado = ServicioExpedientes.obtener_portada(pk, id_profesor)
+        if not resultado['success']:
+            return Response(resultado, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            return FileResponse(
+                open(resultado['ruta_portada'], 'rb'),
+                content_type='image/png',
+            )
+        except FileNotFoundError:
+            return Response(
+                {'success': False, 'error': 'Portada no encontrada'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
     @action(detail=True, methods=['put'])
     def editar(self, request, pk=None):
         id_profesor = _get_id_profesor(request)

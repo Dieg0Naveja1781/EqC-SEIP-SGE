@@ -111,3 +111,32 @@ class UsuarioViewSet(viewsets.ViewSet):
         resultado = ServicioUsuarios.cambiar_password(id_profesor, actual, nuevo)
         code = status.HTTP_200_OK if resultado['success'] else status.HTTP_400_BAD_REQUEST
         return Response(resultado, status=code)
+
+    @action(detail=False, methods=['get', 'post'], url_path='investigador-ids')
+    def investigador_ids(self, request):
+        id_profesor = _get_id_profesor(request)
+        if not id_profesor:
+            return _no_auth()
+
+        if request.method == 'GET':
+            resultado = ServicioUsuarios.listar_investigador_ids(id_profesor)
+            code = status.HTTP_200_OK if resultado['success'] else status.HTTP_400_BAD_REQUEST
+            return Response(resultado, status=code)
+
+        # POST: agregar un ID
+        resultado = ServicioUsuarios.agregar_investigador_id(
+            id_profesor,
+            request.data.get('tipo'),
+            request.data.get('valor'),
+        )
+        code = status.HTTP_201_CREATED if resultado['success'] else status.HTTP_400_BAD_REQUEST
+        return Response(resultado, status=code)
+
+    @action(detail=False, methods=['delete'], url_path='investigador-ids/(?P<id_inv>[^/.]+)')
+    def eliminar_investigador_id(self, request, id_inv=None):
+        id_profesor = _get_id_profesor(request)
+        if not id_profesor:
+            return _no_auth()
+        resultado = ServicioUsuarios.eliminar_investigador_id(id_inv, id_profesor)
+        code = status.HTTP_200_OK if resultado['success'] else status.HTTP_404_NOT_FOUND
+        return Response(resultado, status=code)

@@ -18,3 +18,23 @@ class UserProfe(models.Model):
 
     def __str__(self):
         return self.correo_profe
+class InvestigadorID(models.Model):
+    """IDs de investigador de un profesor (ORC ID, arXiv, PubMed, etc.).
+    El 'tipo' es texto libre para permitir IDs personalizados."""
+    id_inv = models.AutoField(primary_key=True)
+    id_profesor = models.ForeignKey(
+        UserProfe, on_delete=models.CASCADE,
+        db_column='id_profesor', related_name='investigador_ids',
+    )
+    tipo = models.CharField(max_length=100)
+    valor = models.CharField(max_length=100)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'investigador_id'
+        verbose_name = 'ID de Investigador'
+        verbose_name_plural = 'IDs de Investigador'
+        ordering = ['fecha_creacion']
+
+    def __str__(self):
+        return f"{self.tipo}: {self.valor}"

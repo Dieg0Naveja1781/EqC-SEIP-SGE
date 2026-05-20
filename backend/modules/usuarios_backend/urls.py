@@ -22,4 +22,10 @@ urlpatterns = [
     path('usuarios/cambiar-password/',
          UsuarioViewSet.as_view({'post': 'cambiar_password'}),
          name='usuario-cambiar-password'),
+path('usuarios/investigador-ids/',
+         UsuarioViewSet.as_view({'get': 'investigador_ids', 'post': 'investigador_ids'}),
+         name='usuario-investigador-ids'),
+    path('usuarios/investigador-ids/<int:id_inv>/',
+         UsuarioViewSet.as_view({'delete': 'eliminar_investigador_id'}),
+         name='usuario-investigador-id-detail'),
 ]
