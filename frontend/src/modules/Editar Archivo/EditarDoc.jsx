@@ -19,14 +19,6 @@ const CATEGORIA_DESDE_BD = {
   "Tutoría": "Tutoria",
 };
 
-const CATEGORIA_A_BD = {
-  Docencia: "Docencia",
-  Gestion: "Gestión Académica",
-  Titulacion: "Gestión Académica (Titulación)",
-  Produccion: "Producción Académica",
-  Tutoria: "Tutoría",
-};
-
 const DOCUMENTO_VACIO = {
   titulo_doc: "Sin nombre",
   categoria: "Docencia",
@@ -296,12 +288,12 @@ const handleEliminarCategoria = (cat) => {
 
     if (!validarNumericos()) return;
 
-    // Para categorías fijas: buscar id_tipo real. Para custom: null (el backend usará Gestión).
+    // id_tipo es solo una pista opcional para categorías fijas: si la lista de
+    // categorías no cargó o los nombres no calzan, el backend resuelve la
+    // categoría por nombre cuando id_tipo llega null.
     let id_tipo = null;
     if (!esCustom) {
-      const nombreCategoriaBd = CATEGORIA_A_BD[categoria] || categoria;
-      id_tipo = categorias.find((c) => c.nombre_categoria === nombreCategoriaBd)?.id_tipo || null;
-      if (!id_tipo) { mostrarAlerta("❌ Categoría no disponible en el servidor.", "error"); return; }
+      id_tipo = categorias.find((c) => c.nombre_categoria === categoria)?.id_tipo || null;
     }
 
     const metadatos = { ...formData };
@@ -601,7 +593,7 @@ const handleEliminarCategoria = (cat) => {
             </div>
 
             <button className="btn-submit full-width" type="submit">
-              Editar
+              Guardar cambios
             </button>
           </form>
         </div>
