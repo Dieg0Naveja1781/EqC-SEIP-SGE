@@ -129,3 +129,51 @@
   cursor: not-allowed;
   transform: none;
 }
+
+/* ---- Mejorar input type="date" y type="number" ---- */
+.field-group input[type="date"],
+.field-group input[type="number"] {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-body);
+  color: var(--text-p);
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.field-group input[type="date"]:focus,
+.field-group input[type="number"]:focus {
+  outline: none;
+  border-color: var(--color-main);
+  box-shadow: 0 0 0 3px rgba(29, 154, 226, 0.1);
+  background: var(--bg-card);
+}
+
+.field-group input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  border-radius: 4px;
+  margin-right: 4px;
+  opacity: 0.6;
+  filter: invert(0.8);
+  transition: opacity 0.2s ease;
+}
+
+.field-group input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+.full-width {
+  grid-column: span 2;
+}
+
+.regreso {
+  width: 60px;
+  height: 60px;
+  background-size: contain;
+  cursor: pointer;
+  background-color: #6fbeec;
+  border-radius: 100%;
+}

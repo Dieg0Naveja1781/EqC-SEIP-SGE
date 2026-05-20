@@ -2,6 +2,7 @@ import logging
 import os
 from django.conf import settings as django_settings
 from django.db import transaction
+from django.utils import timezone
 
 from modules.usuarios_backend.models import UserProfe
 from .models import (
@@ -243,18 +244,25 @@ class ServicioExpedientes:
             if categoria in CATEGORIAS_FIJAS and id_tipo:
                 categoria_obj = CategoriasDoc.objects.get(id_tipo=id_tipo)
             elif categoria in CATEGORIAS_FIJAS:
-                nombre_map = {
+                # Buscar por nombre en la BD; admite nombres cortos o completos.
+                NOMBRE_MAP = {
                     'Docencia': 'Docencia',
                     'Gestion': 'Gestión Académica',
                     'Titulacion': 'Gestión Académica (Titulación)',
                     'Produccion': 'Producción Académica',
                     'Tutoria': 'Tutoría',
                 }
-                categoria_obj = CategoriasDoc.objects.filter(
-                    nombre_categoria__iexact=nombre_map.get(categoria, categoria)
-                ).first()
-                if not categoria_obj:
-                    return {'success': False, 'error': 'Categoria no valida'}
+                nombre_bd = NOMBRE_MAP.get(categoria, categoria)
+                cat_qs = CategoriasDoc.objects.filter(nombre_categoria__iexact=nombre_bd)
+                if not cat_qs.exists():
+                    cat_qs = CategoriasDoc.objects.filter(nombre_categoria__icontains=categoria[:4])
+                if cat_qs.exists():
+                    categoria_obj = cat_qs.first()
+                else:
+                    categoria_obj, _ = CategoriasDoc.objects.get_or_create(
+                        nombre_categoria='Personalizada',
+                        defaults={'descripcion': 'Categoría comodín para documentos personalizados'},
+                    )
             else:
                 categoria_obj, _ = CategoriasDoc.objects.get_or_create(
                     nombre_categoria='Personalizada',
@@ -269,6 +277,11 @@ class ServicioExpedientes:
             doc.fecha_expedicion = fecha_expedicion
             doc.metadatos = meta
             doc.save(update_fields=['titulo_doc', 'id_tipo', 'fecha_expedicion', 'metadatos'])
+            
+            ultima_version = VersionDoc.objects.filter(id_doc=doc).order_by('-num_version').first()
+            if ultima_version:
+                ultima_version.fecha_subida = timezone.now()
+                ultima_version.save(update_fields=['fecha_subida'])
 
             return {'success': True, 'documento': DocDocumentoSerializer(doc).data}
         except UserProfe.DoesNotExist:
@@ -507,6 +520,32 @@ class ServicioExpedientes:
                 "success": False,
                 "error": str(e)
             }
+        
+    @staticmethod
+    def renombrar_carpeta(id_carpeta, id_profesor, nuevo_nombre):
+        try:
+            profe = UserProfe.objects.get(id_profesor=id_profesor)
+            carpeta = InfCarpeta.objects.get(id_folder=id_carpeta, id_profesor=profe)
+            nombre_carpeta = nuevo_nombre.strip()
+            if not nuevo_nombre:
+                return {'success': False, 'error': 'El nuevo nombre no puede estar vacío'}
+            duplicado = InfCarpeta.objects.filter(
+                id_profesor=profe,
+                nombre_carpeta=nombre_carpeta,
+                id_padre=carpeta.id_padre,
+            ).exclude(id_folder=id_carpeta).exists()
+            if duplicado:
+                return {'success': False, 'error': 'Ya existe una carpeta con ese nombre en esta ubicación'}
+            carpeta.nombre_carpeta = nombre_carpeta
+            carpeta.save(update_fields=['nombre_carpeta'])
+            return {'success': True, 'carpeta': InfCarpetaSerializer(carpeta).data}
+        except UserProfe.DoesNotExist:
+            return {'success': False, 'error': 'Profesor no encontrado'}
+        except InfCarpeta.DoesNotExist:
+            return {'success': False, 'error': 'Carpeta no encontrada'}
+        except Exception as e:
+            logger.error(f"Error al renombrar carpeta: {str(e)}")
+            return {'success': False, 'error': str(e)}
 
     # ---------------- CATEGORÍAS ----------------
     @staticmethod

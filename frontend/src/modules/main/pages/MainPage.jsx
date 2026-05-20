@@ -14,6 +14,8 @@ const recentFolders = [
   { id: "folder-5", name: "Carpeta 5" },
 ];
 
+const getDocumentActivityDate = (documento) => documento.fecha_subida || documento.fecha_creacion;
+
 function SearchBar() {
   const [query, setQuery] = useState("");
   const [history, setHistory] = useState([]);
@@ -31,13 +33,34 @@ function SearchBar() {
 
     console.log("Llamando a API con query:", searchQuery);
     try {
-      const response = await documentsService.buscarDocumentos(searchQuery);
-      console.log("Respuesta de API:", response);
-      if (response.success) {
-        setResults(response.documentos);
+      const [docsResponse, foldersResponse] = await Promise.all([
+        documentsService.buscarDocumentos(searchQuery),
+        documentsService.listFolders("all")
+      ]);
+      console.log("Respuesta de API:", docsResponse);
+      
+      // Filtrar carpetas por query
+      const filteredFolders = (foldersResponse?.carpetas || []).filter(f =>
+        f.nombre_carpeta.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      
+      // Combinar resultados: carpetas primero, luego documentos
+      const combinedResults = [
+        ...filteredFolders.map(f => ({
+          ...f,
+          id_doc: `f-${f.id_folder}`,
+          titulo_doc: f.nombre_carpeta,
+          nombre_categoria: "Carpeta",
+          type: "folder"
+        })),
+        ...(docsResponse?.documentos || [])
+      ];
+
+      if (combinedResults.length > 0 || docsResponse?.success) {
+        setResults(combinedResults);
         setShowHistory(false);
         // Guardar en historial
-        const newHistory = [searchQuery, ...history.filter(h => h !== searchQuery)].slice(0, 5);
+        const newHistory = [searchQuery, ...history.filter(h => h !== searchQuery)].slice(0, 10);
         setHistory(newHistory);
         localStorage.setItem("searchHistory", JSON.stringify(newHistory));
       }
@@ -56,8 +79,12 @@ function SearchBar() {
     handleSearch(histQuery);
   };
 
-  const handleResultClick = (doc) => {
-    navigate(`/archive_view?id=${doc.id_doc}`);
+  const handleResultClick = (item) => {
+    if (item.type === "folder") {
+      navigate(`/archive_list`, { state: { folderId: item.id_folder, folderName: item.nombre_carpeta } });
+    } else {
+      navigate(`/archive_view`, { state: { documento: item } });
+    }
   };
 
   const handleInputFocus = () => {
@@ -66,18 +93,44 @@ function SearchBar() {
     }
   };
 
+  const handleClearInput = () => {
+    setQuery("");
+    setResults([]);
+    setShowHistory(false);
+  };
+
+  const handleDeleteFromHistory = (historyItem, e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const newHistory = history.filter(h => h !== historyItem);
+    setHistory(newHistory);
+    localStorage.setItem("searchHistory", JSON.stringify(newHistory));
+  };
+
   return (
     <div className="search-section">
       <form onSubmit={handleSubmit} className="search-form">
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onFocus={handleInputFocus}
-          onBlur={() => setTimeout(() => setShowHistory(false), 200)}
-          placeholder="🔍 Buscar documentos por título, categoría..."
-          className="search-input"
-        />
+        <div className="search-input-wrapper">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onFocus={handleInputFocus}
+            onBlur={() => setTimeout(() => setShowHistory(false), 200)}
+            placeholder="🔍 Buscar documentos, carpetas por título..."
+            className="search-input"
+          />
+          {query && (
+            <button 
+              type="button" 
+              className="search-clear-button" 
+              onClick={handleClearInput}
+              aria-label="Limpiar búsqueda"
+            >
+              ✕
+            </button>
+          )}
+        </div>
         <button type="submit" className="search-button" aria-label="Buscar">
           <img src={lupaIcon} alt="" aria-hidden="true" className="search-button-icon" />
         </button>
@@ -85,15 +138,27 @@ function SearchBar() {
       {showHistory && history.length > 0 && (
         <div className="search-history">
           <p>📋 Búsquedas recientes</p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-            {history.map((hist, index) => (
-              <button
-                key={index}
-                onMouseDown={() => handleHistoryClick(hist)}
-                className="history-item"
-              >
-                {hist}
-              </button>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center" }}>
+            {history.map((hist) => (
+              <div key={hist} className="history-item-wrapper">
+                <button
+                  onMouseDown={() => handleHistoryClick(hist)}
+                  className="history-item"
+                  type="button"
+                >
+                  {hist}
+                </button>
+                <button
+                  className="history-delete-btn"
+                  onClick={(e) => handleDeleteFromHistory(hist, e)}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  title="Eliminar del historial"
+                  aria-label="Eliminar del historial"
+                  type="button"
+                >
+                  ✕
+                </button>
+              </div>
             ))}
           </div>
         </div>
@@ -102,9 +167,10 @@ function SearchBar() {
         <div className="search-results">
           <h3>📄 Resultados encontrados ({results.length})</h3>
           <ul>
-            {results.map((doc) => (
-              <li key={doc.id_doc} onClick={() => handleResultClick(doc)} className="result-item">
-                <strong>{doc.titulo_doc}</strong> <span style={{opacity: 0.7}}>({doc.nombre_categoria})</span>
+            {results.map((item) => (
+              <li key={item.id_doc} onClick={() => handleResultClick(item)} className="result-item">
+                <span style={{ marginRight: "8px" }}>{item.type === "folder" ? "📁" : "📄"}</span>
+                <strong>{item.titulo_doc}</strong> <span style={{opacity: 0.7}}>({item.nombre_categoria})</span>
               </li>
             ))}
           </ul>
@@ -112,7 +178,7 @@ function SearchBar() {
       )}
       {results.length === 0 && query.trim() !== "" && (
         <div className="no-results">
-          <p>No se encontraron documentos para "{query}"</p>
+          <p>No se encontraron documentos ni carpetas para "{query}"</p>
         </div>
       )}
     </div>
@@ -180,8 +246,8 @@ function MainPage() {
         if (docsResponse?.success && docsResponse?.documentos) {
           const sortedDocs = [...docsResponse.documentos]
             .sort((a, b) => {
-              const dateA = new Date(a.fecha_creacion).getTime();
-              const dateB = new Date(b.fecha_creacion).getTime();
+              const dateA = new Date(getDocumentActivityDate(a)).getTime();
+              const dateB = new Date(getDocumentActivityDate(b)).getTime();
               return dateB - dateA; // Descendente: más recientes primero
             })
             .slice(0, 10); // Tomar los últimos 10

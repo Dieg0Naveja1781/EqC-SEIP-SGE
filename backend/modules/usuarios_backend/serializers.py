@@ -8,7 +8,12 @@ class UserProfeSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfe
         fields = ['id_profesor', 'correo_profe', 'numero_profe',
-                  'full_name', 'fecha_registro']
+                  'full_name',
+                  'rfc', 'curp',
+                  'profesion', 'nivel_estudios', 'universidad',
+                  'empresa', 'puesto', 'ubicacion',
+                  'descripcion',
+                  'fecha_registro']
         read_only_fields = ['id_profesor', 'fecha_registro']
 
 

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 function LastSessionTable({ records = [], loading = false }) {
   const [sortDirection, setSortDirection] = useState('desc');
   const navigate = useNavigate();
+  const getActivityDate = (record) => record.fecha_subida || record.fecha_creacion;
 
   const handleVerDocumento = (file) => {
       navigate("/archive_view", { state: { documento: file } });
@@ -11,9 +12,9 @@ function LastSessionTable({ records = [], loading = false }) {
 
   const sortedRows = useMemo(() => {
     return [...records].sort((a, b) => {
-      // Usar fecha_creacion del backend
-      const dateA = new Date(a.fecha_creacion).getTime();
-      const dateB = new Date(b.fecha_creacion).getTime();
+      // Usar fecha_subida del backend
+      const dateA = new Date(getActivityDate(a)).getTime();
+      const dateB = new Date(getActivityDate(b)).getTime();
       return sortDirection === 'desc' ? dateB - dateA : dateA - dateB;
     });
   }, [records, sortDirection]);
@@ -76,7 +77,7 @@ function LastSessionTable({ records = [], loading = false }) {
             {!loading && sortedRows.map((row, index) => (
               <tr key={`${row.id_doc}-${index}`} onClick={() => handleVerDocumento(row)} style={{ cursor: "pointer" }}>
                 <td>{row.titulo_doc}</td>
-                <td>{formatDate(row.fecha_creacion)}</td>
+                <td>{formatDate(getActivityDate(row))}</td>
               </tr>
             ))}
           </tbody>

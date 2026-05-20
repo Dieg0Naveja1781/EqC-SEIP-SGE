@@ -11,9 +11,32 @@ export const documentsService = {
   createFolder: (nombre_carpeta, id_padre = null) =>
     apiClient.post("/carpetas/", { nombre_carpeta, id_padre }),
 
-  listDocuments: (id_folder = null) => {
+  listDocuments: async (id_folder = null) => {
     const qs = id_folder ? `?id_folder=${id_folder}` : "";
-    return apiClient.get(`/documentos/${qs}`);
+    const [docsRes, expsRes] = await Promise.all([
+      apiClient.get(`/documentos/${qs}`),
+      id_folder ? Promise.resolve({ expedientes: [] }) : apiClient.get("/expedientes/"),
+    ]);
+
+    if (!docsRes?.success) return docsRes;
+
+    const documentos = docsRes.documentos || [];
+    const expedientes = (expsRes?.expedientes || []).map(exp => ({
+      id_exp: exp.id_exp,
+      id_doc: `exp-${exp.id_exp}`,
+      type: 'expediente',
+      titulo_doc: exp.nombre_convocatoria,
+      nombre_categoria: 'Expediente',
+      fecha_creacion: exp.fecha_creacion,
+      fecha_expedicion: exp.fecha_expedicion || exp.fecha_creacion,
+      documentos_count: exp.documentos_count,
+      metadatos: {},
+    }));
+
+    return {
+      success: true,
+      documentos: [...documentos, ...expedientes],
+    };
   },
 
   uploadDocument: ({ archivo, titulo_doc, id_tipo, id_folder, fecha_expedicion, categoria, metadatos }) => {
@@ -45,8 +68,11 @@ export const documentsService = {
 
   listExpedientes: () => apiClient.get("/expedientes/"),
 
-  createExpediente: (nombre_convocatoria, descripcion = "") =>
-    apiClient.post("/expedientes/", { nombre_convocatoria, descripcion }),
+  createExpediente: (nombre_convocatoria, descripcion = "", fecha_expedicion = null) =>
+    apiClient.post("/expedientes/", { nombre_convocatoria, descripcion, fecha_expedicion }),
+
+  agregarDocumentoAExpediente: (idExp, idDoc, orden = 0) =>
+    apiClient.post(`/expedientes/${idExp}/agregar-documento/`, { id_doc: idDoc, orden }),
 
   // ---- Categorías personalizadas ----
   listCustomCategories: () => apiClient.get("/categorias-custom/"),
@@ -65,4 +91,15 @@ export const documentsService = {
 
   moverCarpeta: (id_carpeta, id_destino) =>
     apiClient.post(`/carpetas/${id_carpeta}/mover/`, { id_destino }),
+  
+  renombrarCarpeta: (id_carpeta, nombre_carpeta) =>
+    apiClient.put(`/carpetas/${id_carpeta}/renombrar/`, { nombre_carpeta }),
+
+  deleteExpediente: (id_exp) => apiClient.delete(`/expedientes/${id_exp}/eliminar/`),
+
+  moverExpediente: (id_exp, id_destino) =>
+    apiClient.post(`/expedientes/${id_exp}/mover/`, { id_destino }),
+
+  renombrarExpediente: (id_exp, nombre_convocatoria) =>
+    apiClient.put(`/expedientes/${id_exp}/renombrar/`, { nombre_convocatoria }),
 };

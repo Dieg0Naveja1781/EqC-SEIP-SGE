@@ -13,6 +13,16 @@ export function UserData() {
   const [form, setForm] = useState({
     full_name: "",
     correo_profe: "",
+    numero_profe: "",
+    rfc: "",
+    curp: "",
+    profesion: "",
+    nivel_estudios: "",
+    universidad: "",
+    empresa: "",
+    puesto: "",
+    ubicacion: "",
+    descripcion: "",
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -30,6 +40,16 @@ export function UserData() {
           setForm({
             full_name: p.full_name || "",
             correo_profe: p.correo_profe || "",
+            numero_profe: p.numero_profe ?? "",
+            rfc: p.rfc || "",
+            curp: p.curp || "",
+            profesion: p.profesion || "",
+            nivel_estudios: p.nivel_estudios || "",
+            universidad: p.universidad || "",
+            empresa: p.empresa || "",
+            puesto: p.puesto || "",
+            ubicacion: p.ubicacion || "",
+            descripcion: p.descripcion || "",
           });
         } else {
           setMessage(data?.error || "No se pudo cargar el perfil");
@@ -58,9 +78,13 @@ export function UserData() {
     setSaving(true);
     setMessage("");
     try {
-      const data = await userService.updateProfile({
-        full_name: form.full_name,
-      });
+      const { correo_profe: _ignore, numero_profe, ...editable } = form;
+      const payload = {
+        ...editable,
+        numero_profe:
+          numero_profe === "" || numero_profe === null ? null : Number(numero_profe),
+      };
+      const data = await userService.updateProfile(payload);
       if (data?.success) {
         setMessage("Cambios guardados");
         setProfile(data.profile);
@@ -112,6 +136,41 @@ export function UserData() {
               name="correo_profe"
               value={form.correo_profe}
               readOnly
+            />
+          </div>
+
+          <div className="campo-grupo">
+            <label>RFC</label>
+            <input
+              type="text"
+              name="rfc"
+              maxLength={13}
+              placeholder="XAXX010101000"
+              value={form.rfc}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="campo-grupo">
+            <label>CURP</label>
+            <input
+              type="text"
+              name="curp"
+              maxLength={18}
+              placeholder="XAXX010101HDFXXX01"
+              value={form.curp}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="campo-grupo">
+            <label>Teléfono</label>
+            <input
+              type="tel"
+              name="numero_profe"
+              placeholder="10 dígitos"
+              value={form.numero_profe}
+              onChange={handleChange}
             />
           </div>
 

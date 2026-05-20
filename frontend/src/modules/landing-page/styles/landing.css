@@ -247,12 +247,12 @@ body.dark .theme-slider {
   transition: all 0.2s ease;
 }
 
-body.light .btn-outline {
+.btn-outline {
   background-color: rgba(255, 255, 255, 0.85);
   color: #374151;
 }
 
-body.dark .btn-outline {
+[data-theme="dark"] .btn-outline {
   background-color: rgba(15, 23, 42, 0.85);
   color: #f1f5f9;
   border-color: #334155;
@@ -275,4 +275,12 @@ body.light .register-hint {
 
 body.dark .register-hint {
   color: #e5e7eb;
+}
+
+html[data-theme="dark"] .navbar {
+  background-color: #091f3a;
+}
+
+html[data-theme="dark"] .lpage-footer {
+  background-color: #091f3a;
 }

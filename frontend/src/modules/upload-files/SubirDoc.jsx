@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import "./SubirDoc.css";
 import { DashboardLayout } from "../../shared/components/DashboardLayout";
 import { documentsService } from "../../shared/api/documentsService";
+import DeleteCategoryModal from "../../shared/components/DeleteCategoryModal";
 
 // Pool completo de campos disponibles para categorías personalizadas
 const TODOS_LOS_CAMPOS = [
@@ -61,6 +62,11 @@ export function SubirDoc() {
   const [nuevoNombre, setNuevoNombre]           = useState("");
   const [camposSeleccionados, setCamposSeleccionados] = useState([]);
   const [guardandoCat, setGuardandoCat]         = useState(false);
+
+  // Modal de eliminación de categoría
+  const [deleteModalOpen, setDeleteModalOpen]   = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState(null);
+  const [deletingCategory, setDeletingCategory] = useState(false);
 
   const [alertMsg, setAlertMsg] = useState({ visible: false, text: "", type: "" });
   const timerRef = useRef(null);
@@ -171,23 +177,39 @@ export function SubirDoc() {
     }
   };
 
-  const handleEliminarCategoria = async (cat) => {
-    if (!window.confirm(`¿Eliminar la categoría "${cat.nombre}"?`)) return;
+  const handleEliminarCategoria = (cat) => {
+    setCategoryToDelete(cat);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!categoryToDelete) return;
+    setDeletingCategory(true);
+    
     try {
-      const res = await documentsService.deleteCustomCategory(cat.id_cat_custom);
+      const res = await documentsService.deleteCustomCategory(categoryToDelete.id_cat_custom);
       if (res?.success) {
-        setCategoriasCustom((prev) => prev.filter((c) => c.id_cat_custom !== cat.id_cat_custom));
-        if (categoria === cat.nombre) {
+        setCategoriasCustom((prev) => prev.filter((c) => c.id_cat_custom !== categoryToDelete.id_cat_custom));
+        if (categoria === categoryToDelete.nombre) {
           setCategoria("Docencia");
           setFormData({ nombreNube: formData.nombreNube });
         }
-        mostrarAlerta(`🗑️ Categoría "${cat.nombre}" eliminada`, "success");
+        mostrarAlerta(`🗑️ Categoría "${categoryToDelete.nombre}" eliminada correctamente`, "success");
+        setDeleteModalOpen(false);
+        setCategoryToDelete(null);
       } else {
-        mostrarAlerta(res?.error || "❌ No se pudo eliminar", "error");
+        mostrarAlerta(res?.error || "❌ No se pudo eliminar la categoría", "error");
       }
     } catch {
       mostrarAlerta("❌ Error al eliminar la categoría", "error");
+    } finally {
+      setDeletingCategory(false);
     }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteModalOpen(false);
+    setCategoryToDelete(null);
   };
 
   // ---- Validación numérica ----
@@ -239,11 +261,12 @@ export function SubirDoc() {
 
     if (!validarNumericos()) return;
 
-    // Para categorías fijas: buscar id_tipo real. Para custom: null (el backend usará Gestión).
+    // id_tipo es solo una pista opcional para categorías fijas: si la lista de
+    // categorías no cargó o los nombres no calzan, el backend resuelve la
+    // categoría por nombre cuando id_tipo llega null.
     let id_tipo = null;
     if (!esCustom) {
       id_tipo = categorias.find((c) => c.nombre_categoria === categoria)?.id_tipo || null;
-      if (!id_tipo) { mostrarAlerta("❌ Categoría no disponible en el servidor.", "error"); return; }
     }
 
     const metadatos = { ...formData };
@@ -528,6 +551,15 @@ export function SubirDoc() {
           </form>
         </div>
       </div>
+
+      {/* Modal de eliminación de categoría */}
+      <DeleteCategoryModal
+        isOpen={deleteModalOpen}
+        categoryName={categoryToDelete?.nombre}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        isLoading={deletingCategory}
+      />
     </DashboardLayout>
   );
 }

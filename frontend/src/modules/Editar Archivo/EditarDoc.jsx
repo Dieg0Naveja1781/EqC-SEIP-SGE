@@ -3,6 +3,7 @@ import "./EditarDoc.css";
 import { useNavigate, useLocation } from 'react-router-dom';
 import { DashboardLayout } from "../../shared/components/DashboardLayout";
 import { documentsService } from "../../shared/api/documentsService";
+import DeleteCategoryModal from "../../shared/components/DeleteCategoryModal";
 
 const CATEGORIAS_FIJAS = ["Docencia", "Gestion", "Titulacion", "Produccion", "Tutoria"];
 
@@ -16,14 +17,6 @@ const CATEGORIA_DESDE_BD = {
   "Producción Académica": "Produccion",
   Tutoria: "Tutoria",
   "Tutoría": "Tutoria",
-};
-
-const CATEGORIA_A_BD = {
-  Docencia: "Docencia",
-  Gestion: "Gestión Académica",
-  Titulacion: "Gestión Académica (Titulación)",
-  Produccion: "Producción Académica",
-  Tutoria: "Tutoría",
 };
 
 const DOCUMENTO_VACIO = {
@@ -89,6 +82,11 @@ export function EditarDoc() {
   const [nuevoNombre, setNuevoNombre]           = useState("");
   const [camposSeleccionados, setCamposSeleccionados] = useState([]);
   const [guardandoCat, setGuardandoCat]         = useState(false);
+
+  // Modal de eliminación de categoría
+  const [deleteModalOpen, setDeleteModalOpen]   = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState(null);
+  const [deletingCategory, setDeletingCategory] = useState(false);
 
   const [alertMsg, setAlertMsg] = useState({ visible: false, text: "", type: "" });
   const timerRef = useRef(null);
@@ -208,23 +206,39 @@ export function EditarDoc() {
     }
   };
   
-    const handleEliminarCategoria = async (cat) => {
-      if (!window.confirm(`¿Eliminar la categoría "${cat.nombre}"?`)) return;
-      try {
-        const res = await documentsService.deleteCustomCategory(cat.id_cat_custom);
-        if (res?.success) {
-          setCategoriasCustom((prev) => prev.filter((c) => c.id_cat_custom !== cat.id_cat_custom));
-          if (categoria === cat.nombre) {
-            setCategoria("Docencia");
-            setFormData({ nombreNube: formData.nombreNube });
-          }
-          mostrarAlerta(`🗑️ Categoría "${cat.nombre}" eliminada`, "success");
-        } else {
-          mostrarAlerta(res?.error || "❌ No se pudo eliminar", "error");
+const handleEliminarCategoria = (cat) => {
+    setCategoryToDelete(cat);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!categoryToDelete) return;
+    setDeletingCategory(true);
+    
+    try {
+      const res = await documentsService.deleteCustomCategory(categoryToDelete.id_cat_custom);
+      if (res?.success) {
+        setCategoriasCustom((prev) => prev.filter((c) => c.id_cat_custom !== categoryToDelete.id_cat_custom));
+        if (categoria === categoryToDelete.nombre) {
+          setCategoria("Docencia");
+          setFormData({ nombreNube: formData.nombreNube });
         }
-      } catch {
-        mostrarAlerta("❌ Error al eliminar la categoría", "error");
+        mostrarAlerta(`🗑️ Categoría "${categoryToDelete.nombre}" eliminada correctamente`, "success");
+        setDeleteModalOpen(false);
+        setCategoryToDelete(null);
+      } else {
+        mostrarAlerta(res?.error || "❌ No se pudo eliminar la categoría", "error");
       }
+    } catch {
+      mostrarAlerta("❌ Error al eliminar la categoría", "error");
+    } finally {
+      setDeletingCategory(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteModalOpen(false);
+    setCategoryToDelete(null);
     };
   
     // ---- Validación numérica ----
@@ -274,12 +288,12 @@ export function EditarDoc() {
 
     if (!validarNumericos()) return;
 
-    // Para categorías fijas: buscar id_tipo real. Para custom: null (el backend usará Gestión).
+    // id_tipo es solo una pista opcional para categorías fijas: si la lista de
+    // categorías no cargó o los nombres no calzan, el backend resuelve la
+    // categoría por nombre cuando id_tipo llega null.
     let id_tipo = null;
     if (!esCustom) {
-      const nombreCategoriaBd = CATEGORIA_A_BD[categoria] || categoria;
-      id_tipo = categorias.find((c) => c.nombre_categoria === nombreCategoriaBd)?.id_tipo || null;
-      if (!id_tipo) { mostrarAlerta("❌ Categoría no disponible en el servidor.", "error"); return; }
+      id_tipo = categorias.find((c) => c.nombre_categoria === categoria)?.id_tipo || null;
     }
 
     const metadatos = { ...formData };
@@ -425,7 +439,13 @@ export function EditarDoc() {
   const categoriaCustomActual = categoriasCustom.find((c) => c.nombre === categoria);
 
   return (
+    <>
     <DashboardLayout title="Editar Documento">
+      <button className="regreso" onClick={() => navigate(-1)}>
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M15 18L9 12L15 6" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                        </button>
       {/* NOTIFICACIÓN FLOTANTE (TOAST) */}
       {alertMsg.visible && (
         <div
@@ -573,13 +593,23 @@ export function EditarDoc() {
             </div>
 
             <button className="btn-submit full-width" type="submit">
-              Editar
+              Guardar cambios
             </button>
           </form>
         </div>
       </div>
+
+      {/* Modal de eliminación de categoría */}
+      <DeleteCategoryModal
+        isOpen={deleteModalOpen}
+        categoryName={categoryToDelete?.nombre}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        isLoading={deletingCategory}
+      />
     </DashboardLayout>
-  );
+    </>
+  )
 }
 
 // ReactDOM.createRoot(document.getElementById('root')).render(<SubirDocumento />);
