@@ -242,7 +242,7 @@ function MainPage() {
         }
 
         // Obtener todos los documentos y ordenarlos por fecha de creación descendente
-        const docsResponse = await documentsService.listDocuments();
+        const docsResponse = await documentsService.listAllDocuments();
         if (docsResponse?.success && docsResponse?.documentos) {
           const sortedDocs = [...docsResponse.documentos]
             .sort((a, b) => {
