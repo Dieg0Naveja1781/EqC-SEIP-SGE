@@ -1,0 +1,34 @@
+MIT License
+
+Copyright (c) 2026 Naveja López Diego Armando
+Copyright (c) 2026 Jiménez García Santiago
+Copyright (c) 2026 Perez Zamora Roberto
+Copyright (c) 2026 González Serna Mateo
+Copyright (c) 2026 Valdivia Franco Silvano Joset
+Copyright (c) 2026 Guzmán Barba Uriel
+Copyright (c) 2026 González Rodríguez Carlos
+Copyright (c) 2026 Rizo Romo Mario
+Copyright (c) 2026 Rocha Navarro José Manuel
+Copyright (c) 2026 Jiménez Carmona Diego Andrei
+Copyright (c) 2026 González de la Torre Jesús
+Copyright (c) 2026 Iñiguez Muñoz Alan
+Copyright (c) 2026 Navarro Martín Angel Simón
+Copyright (c) 2026 Falcón Márquez Kaleb Alejandro
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
